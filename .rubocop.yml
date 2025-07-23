@@ -1,0 +1,99 @@
+require: rubocop-rails
+
+Rails:
+  Enabled: true
+
+AllCops:
+  TargetRubyVersion: 3.2
+  Exclude:
+    - "bin/*"
+    - "db/seeds.rb"
+    - "db/schema.rb"
+    - "vendor/bundle/**/*"
+    - "vendor/cache/**/*"
+  NewCops: enable
+
+Lint/AmbiguousBlockAssociation:
+  Enabled: false
+
+Lint/MissingCopEnableDirective:
+  Enabled: false
+
+Style/FormatStringToken:
+  Enabled: false
+
+Style/Lambda:
+  Enabled: false
+
+Style/LambdaCall:
+  Enabled: false
+
+Style/DateTime:
+  Enabled: false
+
+Style/PercentLiteralDelimiters:
+  Enabled: false
+  PreferredDelimiters:
+    default: ()
+    "%i": ()
+    "%w": ()
+
+Layout/ExtraSpacing:
+  Enabled: false
+Layout/SpaceInsideBlockBraces:
+  Enabled: false
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+Layout/LineEndStringConcatenationIndentation:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+Layout/LineLength:
+  Max: 110
+
+Style/NestedParenthesizedCalls:
+  Exclude:
+    - spec/**/*
+    - "cashier_engine/spec/**/*"
+
+Style/StringConcatenation:
+  Mode: conservative
+
+Rails/SkipsModelValidations:
+  Enabled: false
+
+Rails/ApplicationRecord:
+  Enabled: false
+
+Naming/RescuedExceptionsVariableName:
+  Enabled: false
+
+Naming/MethodParameterName:
+  Enabled: false
+
+Metrics/MethodLength:
+  Exclude:
+    - "spec/**/*"
+    - "db/**/*"
+    - "cashier_engine/spec/**/*"
+
+Metrics/AbcSize:
+  Exclude:
+    - "spec/**/*"
+    - "cashier_engine/spec/**/*"
+
+Metrics/BlockLength:
+  Exclude:
+    - "spec/**/*"
+    - "**/*.rake"
+    - "cashier_engine/spec/**/*"
+
+Style/FrozenStringLiteralComment:
+  Exclude:
+    - "**/*.jbuilder"
+
+Style/FetchEnvVar:
+  Exclude:
+    - "spec/**/*"
