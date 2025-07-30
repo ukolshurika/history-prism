@@ -1,0 +1,5 @@
+MYSQL_HOST=mysql
+MYSQL_PORT=23306
+MYSQL_DB=hystory_prism_dev
+MYSQL_USER=root
+MYSQL_PASS=qwerty
