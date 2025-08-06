@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title inertia>History Prism</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    
+    <%= vite_stylesheet_tag "application" %>
+    <%= vite_javascript_tag "application" %>
+    <%= inertia_headers %>
+  </head>
+
+  <body>
+    <%= yield %>
+  </body>
+</html>

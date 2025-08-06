@@ -1,0 +1,18 @@
+development:
+  adapter:  mysql2
+  encoding: utf8
+  pool:     25
+  host:     <%= ENV['MYSQL_HOST'] %>
+  port:     <%= ENV['MYSQL_PORT'] || 3306 %>
+  database: <%= ENV['MYSQL_DB'] %>
+  username: <%= ENV['MYSQL_USER'] %>
+  password: <%= ENV['MYSQL_PASS'] %>
+test:
+  adapter:  mysql2
+  encoding: utf8
+  host:     <%= ENV['MYSQL_HOST'] %>
+  port:     <%= ENV['MYSQL_PORT'] || 3306 %>
+  database: <%= ENV['MYSQL_DB'] %>_test
+  pool:     5
+  username: <%= ENV['MYSQL_USER'] %>
+  password: <%= ENV['MYSQL_PASS'] %>

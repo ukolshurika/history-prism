@@ -5,7 +5,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 ruby '~> 3.2.0'
 
-gem 'dotenv-rails', require: 'dotenv/rails-now'
+gem 'dotenv-rails', require: 'dotenv/load'
 gem 'mysql2'
 gem 'rails', '~> 8.0'
 
@@ -24,6 +24,7 @@ gem 'dry-types'
 gem 'dry-validation'
 gem 'faraday', '~> 1.10'
 gem 'faraday_middleware'
+gem 'inertia_rails'
 gem 'jbuilder', '~> 2.0'
 gem 'lograge'
 gem 'puma'
@@ -32,7 +33,7 @@ gem 'responders'
 gem 'sentry-rails'
 gem 'sentry-ruby'
 gem 'sentry-sidekiq'
-gem 'sidekiq', '< 7'
+gem 'sidekiq', '~> 6.5'
 gem 'sidekiq-cron'
 gem 'sidekiq-worker-killer'
 gem 'statesman', '~> 10.0.0'
@@ -87,3 +88,5 @@ group :test do
   gem 'timecop'
   gem 'webmock'
 end
+
+gem "vite_rails", "~> 3.0"
