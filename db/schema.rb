@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_22_123111) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_06_000004) do
   create_table "brands", charset: "utf8mb3", force: :cascade do |t|
     t.string "name", null: false
     t.string "callback"
@@ -40,6 +40,37 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_22_123111) do
     t.datetime "updated_at", null: false
     t.index ["code"], name: "index_casino_games_on_code"
     t.index ["source_id"], name: "index_casino_games_on_source_id"
+  end
+
+  create_table "events", charset: "utf8mb3", force: :cascade do |t|
+    t.string "title", null: false
+    t.text "description", null: false
+    t.datetime "start_date", precision: nil, null: false
+    t.datetime "end_date", precision: nil, null: false
+    t.integer "category", null: false
+    t.bigint "creator_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["creator_id"], name: "index_events_on_creator_id"
+  end
+
+  create_table "events_people", id: false, charset: "utf8mb3", force: :cascade do |t|
+    t.bigint "event_id", null: false
+    t.bigint "person_id", null: false
+    t.index ["event_id", "person_id"], name: "index_events_people_on_event_id_and_person_id"
+    t.index ["person_id", "event_id"], name: "index_events_people_on_person_id_and_event_id"
+  end
+
+  create_table "people", charset: "utf8mb3", force: :cascade do |t|
+    t.string "first_name", null: false
+    t.string "middle_name"
+    t.string "last_name"
+    t.string "gedcom_uuid", null: false
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["gedcom_uuid"], name: "index_people_on_gedcom_uuid", unique: true
+    t.index ["user_id"], name: "index_people_on_user_id"
   end
 
   create_table "prizes", charset: "utf8mb3", force: :cascade do |t|
@@ -90,4 +121,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_22_123111) do
     t.index ["completed_at"], name: "index_sprints_on_completed_at"
     t.index ["starts_at", "ends_at"], name: "index_sprints_on_starts_at_and_ends_at"
   end
+
+  create_table "users", charset: "utf8mb3", force: :cascade do |t|
+    t.string "email", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_users_on_email", unique: true
+  end
+
+  add_foreign_key "events", "users", column: "creator_id"
+  add_foreign_key "people", "users"
 end
