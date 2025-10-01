@@ -9,4 +9,7 @@ export default defineConfig({
     tailwindcss(),
     RubyPlugin(),
   ],
+  server: {
+    host: '0.0.0.0',
+  },
 })

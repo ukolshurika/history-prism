@@ -9,7 +9,7 @@ class CreateEvents < ActiveRecord::Migration[6.0]
       t.datetime :end_date, null: false
       t.integer :category, null: false
       t.references :creator, null: false, foreign_key: { to_table: :users }
-      
+
       t.timestamps
     end
   end

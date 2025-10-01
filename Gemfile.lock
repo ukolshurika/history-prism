@@ -462,6 +462,10 @@ GEM
       prettier_print
       rbs
       syntax_tree (>= 2.0.1)
+    tailwindcss-rails (4.3.0)
+      railties (>= 7.0.0)
+      tailwindcss-ruby (~> 4.0)
+    tailwindcss-ruby (4.1.13-x86_64-linux-gnu)
     temple (0.10.3)
     thor (1.3.2)
     tilt (2.6.1)
@@ -573,6 +577,8 @@ DEPENDENCIES
   syntax_tree
   syntax_tree-haml
   syntax_tree-rbs
+  tailwindcss-rails (~> 4.3)
+  tailwindcss-ruby (~> 4.1)
   timecop
   vite_rails (~> 3.0)
   webmock

@@ -8,10 +8,10 @@ class CreatePeople < ActiveRecord::Migration[6.0]
       t.string :last_name
       t.string :gedcom_uuid, null: false
       t.references :user, null: false, foreign_key: true
-      
+
       t.timestamps
     end
-    
+
     add_index :people, :gedcom_uuid, unique: true
   end
 end
