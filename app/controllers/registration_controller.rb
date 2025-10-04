@@ -1,10 +1,10 @@
 #frozen_string_literal: true
 
-class RegistrationsController < ApplicationController
+class RegistrationController < ApplicationController
   allow_unauthenticated_access
 
   def new
-    @user = User.new
+    render inertia: 'Registration', props: {}
   end
 
   def create
@@ -13,7 +13,9 @@ class RegistrationsController < ApplicationController
       start_new_session_for @user
       redirect_to root_path, notice: 'Successfully signed up!'
     else
-      render :new
+      render inertia: 'Registration', props: {
+        errors: @user.errors.full_messages
+      }
     end
   end
 
