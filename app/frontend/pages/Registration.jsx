@@ -3,7 +3,7 @@ import { Head, useForm } from '@inertiajs/react'
 export default function Registration({ errors = [] }) {
   const { data, setData, post, processing } = useForm({
     user: {
-      email_address: '',
+      email: '',
       password: '',
       password_confirmation: '',
     }
@@ -38,8 +38,9 @@ export default function Registration({ errors = [] }) {
               <input
                 type="email"
                 id="email"
-                value={data.user.email_address}
-                onChange={(e) => setData('user.email_address', e.target.value)}
+                name="user[email]"
+                value={data.user.email}
+                onChange={(e) => setData('user.email', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
@@ -52,6 +53,7 @@ export default function Registration({ errors = [] }) {
               <input
                 type="password"
                 id="password"
+                name="user[password]"
                 value={data.user.password}
                 onChange={(e) => setData('user.password', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -66,6 +68,7 @@ export default function Registration({ errors = [] }) {
               <input
                 type="password"
                 id="password_confirmation"
+                name="user[password_confirmation]"
                 value={data.user.password_confirmation}
                 onChange={(e) => setData('user.password_confirmation', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"

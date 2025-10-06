@@ -83,6 +83,7 @@ group :test do
   gem 'database_cleaner'
   gem 'fakeredis', require: 'fakeredis/rspec'
   gem 'rspec-rails'
+  gem 'selenium-webdriver'
   gem 'shoulda-matchers', '~> 5.0'
   gem 'simplecov', require: false
   gem 'timecop'

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_02_000003) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_06_000004) do
   create_table "events", charset: "utf8mb3", force: :cascade do |t|
     t.string "title", null: false
     t.text "description", null: false
@@ -52,11 +52,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_02_000003) do
   end
 
   create_table "users", charset: "utf8mb3", force: :cascade do |t|
-    t.string "email_address", null: false
+    t.string "email", null: false
     t.string "password_digest", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["email"], name: "index_users_on_email", unique: true
   end
 
   add_foreign_key "events", "users", column: "creator_id"

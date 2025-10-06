@@ -10,6 +10,7 @@ ActiveRecord::Migration.maintain_test_schema!
 
 require 'spec_helper'
 require 'rspec/rails'
+require 'capybara/rspec'
 # Add additional requires below this line. Rails is not loaded until this point!
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
@@ -59,6 +60,19 @@ RSpec.configure do |config|
   # config.filter_gems_from_backtrace("gem name")
 
   Capybara.ignore_hidden_elements = false
+  Capybara.javascript_driver = :selenium_chrome_headless
+  Capybara.default_max_wait_time = 5
+
+  Capybara.register_driver :selenium_chrome_headless do |app|
+    options = Selenium::WebDriver::Chrome::Options.new
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--disable-gpu')
+
+    Capybara::Selenium::Driver.new(app, browser: :chrome, options: options)
+  end
+
   def capybara_redirects(b)
     opts = page.driver.instance_variable_get(:@options)
     opts[:follow_redirects] = b
