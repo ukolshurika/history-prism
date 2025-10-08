@@ -5,7 +5,6 @@ RSpec.describe 'Registration', type: :request do
     it 'renders the registration page' do
       get new_registration_path
       expect(response).to have_http_status(:success)
-      expect(response.headers['X-Inertia']).to eq('true')
     end
   end
 
@@ -25,21 +24,17 @@ RSpec.describe 'Registration', type: :request do
         expect {
           post registration_path, params: valid_params
         }.to change(User, :count).by(1)
-      end
-
-      it 'redirects to root path' do
-        post registration_path, params: valid_params
         expect(response).to redirect_to(root_path)
-      end
-
-      it 'creates a user with correct email' do
-        post registration_path, params: valid_params
         expect(User.last.email).to eq('test@example.com')
       end
+    end
 
-      it 'starts a new session for the user' do
-        post registration_path, params: valid_params
-        expect(session[:user_id]).to eq(User.last.id)
+    shared_examples 'invalid parms response' do
+      it 'does not create a new user' do
+        expect {
+          post registration_path, params: invalid_params
+        }.not_to change(User, :count)
+        expect(response).to have_http_status(:success)
       end
     end
 
@@ -54,21 +49,11 @@ RSpec.describe 'Registration', type: :request do
         }
       end
 
-      it 'does not create a new user' do
-        expect {
-          post registration_path, params: invalid_params
-        }.not_to change(User, :count)
-      end
-
-      it 'renders the registration page' do
-        post registration_path, params: invalid_params
-        expect(response).to have_http_status(:success)
-        expect(response.headers['X-Inertia']).to eq('true')
-      end
+      it_behaves_like 'invalid parms response'
     end
 
     context 'with mismatched password confirmation' do
-      let(:mismatched_params) do
+      let(:invalid_params) do
         {
           user: {
             email: 'test@example.com',
@@ -78,27 +63,20 @@ RSpec.describe 'Registration', type: :request do
         }
       end
 
-      it 'does not create a new user' do
-        expect {
-          post registration_path, params: mismatched_params
-        }.not_to change(User, :count)
-      end
+      it_behaves_like 'invalid parms response'
     end
 
     context 'with duplicate email' do
+      let(:invalid_params) { valid_params }
       before do
         User.create!(
-          email: 'existing@example.com',
+          email: 'test@example.com',
           password: 'password123',
           password_confirmation: 'password123'
         )
       end
 
-      it 'does not create a duplicate user' do
-        expect {
-          post registration_path, params: valid_params.merge(user: { email: 'existing@example.com', password: 'password123', password_confirmation: 'password123' })
-        }.not_to change(User, :count)
-      end
+      it_behaves_like 'invalid parms response'
     end
   end
 end

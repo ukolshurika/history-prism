@@ -30,13 +30,19 @@ Dir[Rails.root.join('spec/support/*/*.rb')].sort.each { |f| require f }
 Dir[Rails.root.join('spec/support/*.rb')].sort.each { |f| require f }
 
 RSpec.configure do |config|
+  # Show full error details for 500 errors in request specs
+  config.include RSpec::Rails::RequestExampleGroup, type: :request
+  config.before(:each, type: :request) do
+    Rails.application.config.action_dispatch.show_exceptions = :none
+  end
+
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
   # config.fixture_path = "#{::Rails.root}/spec/fixtures"
 
   # If you're not using ActiveRecord, or you'd prefer not to run each of your
   # examples within a transaction, remove the following line or assign false
   # instead of true.
-  config.use_transactional_fixtures = false
+  config.use_transactional_fixtures = true
 
   # RSpec Rails can automatically mix in different behaviours to your tests
   # based on their file location, for example enabling you to call `get` and

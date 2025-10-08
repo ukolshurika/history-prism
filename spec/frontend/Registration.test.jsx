@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { router } from '@inertiajs/react';
-import Registration from '../Registration';
+import Registration from '../../app/frontend/pages/Registration';
 
 // Mock Inertia
 jest.mock('@inertiajs/react', () => ({

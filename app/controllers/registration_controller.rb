@@ -8,13 +8,13 @@ class RegistrationController < ApplicationController
   end
 
   def create
-    @user = User.new(user_params)
-    if @user.save
-      start_new_session_for @user
+    user = User.new(user_params)
+    if user.save
+      start_new_session_for user
       redirect_to root_path, notice: 'Successfully signed up!'
     else
       render inertia: 'Registration', props: {
-        errors: @user.errors.full_messages
+        errors: user.errors.full_messages
       }
     end
   end
@@ -22,6 +22,6 @@ class RegistrationController < ApplicationController
   private
 
   def user_params
-    params.require(:user).permit(:email_address, :password, :password_confirmation)
+    params.require(:user).permit(:email, :password, :password_confirmation)
   end
 end
