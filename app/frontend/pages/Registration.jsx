@@ -1,6 +1,7 @@
 import { Head, useForm } from '@inertiajs/react'
+import Layout from './Layout'
 
-export default function Registration({ errors = [] }) {
+export default function Registration({ current_user, flash, errors = [] }) {
   const { data, setData, post, processing } = useForm({
     user: {
       email: '',
@@ -15,10 +16,10 @@ export default function Registration({ errors = [] }) {
   }
 
   return (
-    <>
+    <Layout current_user={current_user} flash={flash}>
       <Head title="Sign Up" />
 
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
           <h1 className="text-2xl font-bold mb-6">Sign Up</h1>
 
@@ -86,6 +87,6 @@ export default function Registration({ errors = [] }) {
           </form>
         </div>
       </div>
-    </>
+    </Layout>
   )
 }

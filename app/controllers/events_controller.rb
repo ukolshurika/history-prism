@@ -1,38 +1,90 @@
 # frozen_string_literal: true
 
 class EventsController < ApplicationController
-  before_action :set_event, only: [:show, :update, :destroy]
+  before_action :set_event, only: [:show, :edit, :update, :destroy]
 
   def index
-    @events = Event.all
-    render json: @events
+    @events = Event.includes(:user).order(start_date: :desc)
+
+    render inertia: 'Events/Index', props: {
+      events: @events.map { |event| event_json(event) },
+      current_user: current_user
+    }
   end
 
   def show
-    render json: @event
+    authorize @event
+
+    render inertia: 'Events/Show', props: {
+      event: event_json(@event),
+      can_edit: policy(@event).update?,
+      can_delete: policy(@event).destroy?
+    }
+  end
+
+  def new
+    @event = Event.new
+    authorize @event
+
+    render inertia: 'Events/Form', props: {
+      event: {
+        title: '',
+        description: '',
+        start_date: '',
+        end_date: '',
+        category: 'person'
+      },
+      categories: Event.categories.keys,
+      isEdit: false
+    }
+  end
+
+  def edit
+    authorize @event
+
+    render inertia: 'Events/Form', props: {
+      event: event_json(@event),
+      categories: Event.categories.keys,
+      isEdit: true
+    }
   end
 
   def create
-    @event = Event.new(event_params)
-    
+    @event = Current.user.events.build(event_params)
+    authorize @event
+
     if @event.save
-      render json: @event, status: :created
+      redirect_to event_path(@event), notice: 'Event was successfully created.'
     else
-      render json: { errors: @event.errors }, status: :unprocessable_entity
+      render inertia: 'Events/Form', props: {
+        event: event_params,
+        categories: Event.categories.keys,
+        errors: @event.errors.full_messages,
+        isEdit: false
+      }
     end
   end
 
   def update
+    authorize @event
+
     if @event.update(event_params)
-      render json: @event
+      redirect_to event_path(@event), notice: 'Event was successfully updated.'
     else
-      render json: { errors: @event.errors }, status: :unprocessable_entity
+      render inertia: 'Events/Form', props: {
+        event: event_json(@event),
+        categories: Event.categories.keys,
+        errors: @event.errors.full_messages,
+        isEdit: true
+      }
     end
   end
 
   def destroy
+    authorize @event
     @event.destroy
-    head :no_content
+
+    redirect_to events_path, notice: 'Event was successfully deleted.'
   end
 
   private
@@ -42,6 +94,23 @@ class EventsController < ApplicationController
   end
 
   def event_params
-    params.require(:event).permit(:title, :description, :start_date, :end_date, :category, :creator_id, person_ids: [])
+    params.require(:event).permit(:title, :description, :start_date, :end_date, :category, person_ids: [])
+  end
+
+  def event_json(event)
+    {
+      id: event.id,
+      title: event.title,
+      description: event.description,
+      start_date: event.start_date,
+      end_date: event.end_date,
+      category: event.category,
+      creator: {
+        id: event.user.id,
+        email: event.user.email
+      },
+      created_at: event.created_at,
+      updated_at: event.updated_at
+    }
   end
 end

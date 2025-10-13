@@ -1,8 +1,9 @@
 class User < ApplicationRecord
   has_secure_password
   has_many :sessions, dependent: :destroy
+  has_many :events, foreign_key: 'creator_id', dependent: :destroy
 
-  normalizes :email_address, with: ->(e) { e.strip.downcase }
+  normalizes :email, with: ->(e) { e.strip.downcase }
   validates :email,
             uniqueness: {
               case_sensitive: false

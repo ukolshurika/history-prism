@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Event < ApplicationRecord
-  enum category: { person: 0, world: 1, country: 2, local: 3 }
+  enum :category, { person: 0, world: 1, country: 2, local: 3 }
 
   belongs_to :user, foreign_key: 'creator_id'
   has_and_belongs_to_many :people
