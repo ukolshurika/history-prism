@@ -1,23 +1,24 @@
 require 'rails_helper'
 
 RSpec.describe 'Events', type: :request do
-  let(:user) { User.create!(email: 'test@example.com', password: 'password123', password_confirmation: 'password123') }
-  let(:other_user) { User.create!(email: 'other@example.com', password: 'password123', password_confirmation: 'password123') }
-  let(:event) { Event.create!(title: 'Test Event', description: 'Test Description', start_date: Time.now, end_date: Time.now + 1.day, category: :person, creator_id: user.id) }
+  let(:user) { create :user }
+  let(:other_user) { create :user }
+  let(:event) { create(:event, user: user, title: 'Test Event', description: 'Test Description') }
 
   def sign_in(user)
-    post session_path, params: { email: user.email, password: 'password123' }
+    log_in_as_user user
   end
 
   describe 'GET /events' do
+    before { sign_in(user) }
     it 'renders the events index page' do
       get events_path
       expect(response).to have_http_status(:success)
     end
 
     it 'displays all events' do
-      event1 = Event.create!(title: 'Event 1', description: 'Desc 1', start_date: Time.now, end_date: Time.now + 1.day, category: :person, creator_id: user.id)
-      event2 = Event.create!(title: 'Event 2', description: 'Desc 2', start_date: Time.now, end_date: Time.now + 1.day, category: :world, creator_id: user.id)
+      create(:event, user: user, title: 'Event 1', description: 'Desc 1', category: :person)
+      create(:event, user: user, title: 'Event 2', description: 'Desc 2', category: :world)
 
       get events_path
       expect(response).to have_http_status(:success)
@@ -25,6 +26,7 @@ RSpec.describe 'Events', type: :request do
   end
 
   describe 'GET /events/:id' do
+    before { sign_in(user) }
     it 'renders the event show page' do
       get event_path(event)
       expect(response).to have_http_status(:success)
@@ -183,7 +185,7 @@ RSpec.describe 'Events', type: :request do
       before { sign_in(user) }
 
       it 'deletes the event' do
-        event_to_delete = Event.create!(title: 'To Delete', description: 'Will be deleted', start_date: Time.now, end_date: Time.now + 1.day, category: :person, creator_id: user.id)
+        event_to_delete = create(:event, user: user, title: 'To Delete', description: 'Will be deleted')
 
         expect {
           delete event_path(event_to_delete)
@@ -196,6 +198,7 @@ RSpec.describe 'Events', type: :request do
       before { sign_in(other_user) }
 
       it 'does not delete the event' do
+        event
         expect {
           delete event_path(event)
         }.not_to change(Event, :count)
