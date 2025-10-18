@@ -14,6 +14,7 @@ gem 'yabeda-puma-plugin'
 gem 'yabeda-rails'
 gem 'yabeda-sidekiq'
 
+gem 'active_model_serializers', '~> 0.10.0'
 gem 'after_commit_everywhere'
 gem 'bcrypt', '~> 3.1.7'
 gem 'dry-initializer'

@@ -3,7 +3,7 @@ require 'rails_helper'
 RSpec.describe 'Events', type: :request do
   let(:user) { create :user }
   let(:other_user) { create :user }
-  let(:event) { create(:event, user: user, title: 'Test Event', description: 'Test Description') }
+  let(:event) { create(:event, creator: user, title: 'Test Event', description: 'Test Description') }
 
   def sign_in(user)
     log_in_as_user user
@@ -17,8 +17,8 @@ RSpec.describe 'Events', type: :request do
     end
 
     it 'displays all events' do
-      create(:event, user: user, title: 'Event 1', description: 'Desc 1', category: :person)
-      create(:event, user: user, title: 'Event 2', description: 'Desc 2', category: :world)
+      create(:event, creator: user, title: 'Event 1', description: 'Desc 1', category: :person)
+      create(:event, creator: user, title: 'Event 2', description: 'Desc 2', category: :world)
 
       get events_path
       expect(response).to have_http_status(:success)
@@ -59,6 +59,7 @@ RSpec.describe 'Events', type: :request do
         get edit_event_path(event)
         expect(response).to have_http_status(:success)
       end
+
     end
 
     context 'when user does not own the event' do
@@ -185,7 +186,7 @@ RSpec.describe 'Events', type: :request do
       before { sign_in(user) }
 
       it 'deletes the event' do
-        event_to_delete = create(:event, user: user, title: 'To Delete', description: 'Will be deleted')
+        event_to_delete = create(:event, creator: user, title: 'To Delete', description: 'Will be deleted')
 
         expect {
           delete event_path(event_to_delete)

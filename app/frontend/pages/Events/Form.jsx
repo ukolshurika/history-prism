@@ -1,7 +1,7 @@
 import { Head, useForm, Link } from '@inertiajs/react'
 import Layout from '../Layout'
 
-export default function Form({ event, categories, isEdit, current_user, flash, errors = [] }) {
+export default function Form({ event, categories, people = [], isEdit, current_user, flash, errors = [] }) {
   const { data, setData, post, put, processing } = useForm({
     event: {
       title: event.title || '',
@@ -9,6 +9,7 @@ export default function Form({ event, categories, isEdit, current_user, flash, e
       start_date: event.start_date || '',
       end_date: event.end_date || '',
       category: event.category || 'person',
+      person_ids: event.person_ids || [],
     }
   })
 
@@ -130,6 +131,32 @@ export default function Form({ event, categories, isEdit, current_user, flash, e
                     required
                   />
                 </div>
+              </div>
+
+              <div className="mb-4">
+                <label htmlFor="people" className="block text-sm font-medium text-gray-700 mb-1">
+                  Associated People
+                </label>
+                <select
+                  id="people"
+                  name="event[person_ids][]"
+                  multiple
+                  value={data.event.person_ids}
+                  onChange={(e) => {
+                    const selected = Array.from(e.target.selectedOptions, option => parseInt(option.value))
+                    setData('event.person_ids', selected)
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
+                >
+                  {people.map((person) => (
+                    <option key={person.id} value={person.id}>
+                      {person.full_name}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Hold Ctrl (Windows) or Cmd (Mac) to select multiple people
+                </p>
               </div>
 
               <div className="flex gap-2">

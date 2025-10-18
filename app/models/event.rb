@@ -3,8 +3,9 @@
 class Event < ApplicationRecord
   enum :category, { person: 0, world: 1, country: 2, local: 3 }
 
-  belongs_to :user, foreign_key: 'creator_id'
+  belongs_to :creator, foreign_key: 'creator_id', class_name: 'User'
   has_and_belongs_to_many :people
+  accepts_nested_attributes_for :people, allow_destroy: true, reject_if: :all_blank
 
   validates :title, presence: true
   validates :description, presence: true

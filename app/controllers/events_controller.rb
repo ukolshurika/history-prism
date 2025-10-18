@@ -4,10 +4,10 @@ class EventsController < ApplicationController
   before_action :set_event, only: [:show, :edit, :update, :destroy]
 
   def index
-    @events = Event.includes(:user).order(start_date: :desc)
+    @events = Event.includes(:creator).order(start_date: :desc)
 
     render inertia: 'Events/Index', props: {
-      events: @events.map { |event| event_json(event) },
+      events: ActiveModelSerializers::SerializableResource.new(@events, each_serializer: EventSerializer).as_json,
       current_user: current_user
     }
   end
@@ -16,7 +16,7 @@ class EventsController < ApplicationController
     authorize @event
 
     render inertia: 'Events/Show', props: {
-      event: event_json(@event),
+      event: EventSerializer.new(@event).as_json,
       can_edit: policy(@event).update?,
       can_delete: policy(@event).destroy?
     }
@@ -32,9 +32,11 @@ class EventsController < ApplicationController
         description: '',
         start_date: '',
         end_date: '',
-        category: 'person'
+        category: 'person',
+        person_ids: []
       },
       categories: Event.categories.keys,
+      # people: ActiveModelSerializers::SerializableResource.new(People, each_serializer: PersonSerializer).as_json,
       isEdit: false
     }
   end
@@ -43,8 +45,9 @@ class EventsController < ApplicationController
     authorize @event
 
     render inertia: 'Events/Form', props: {
-      event: event_json(@event),
+      event: EventSerializer.new(@event).as_json,
       categories: Event.categories.keys,
+      # people: ActiveModelSerializers::SerializableResource.new(Current.user.people, each_serializer: PersonSerializer).as_json,
       isEdit: true
     }
   end
@@ -72,7 +75,7 @@ class EventsController < ApplicationController
       redirect_to event_path(@event), notice: 'Event was successfully updated.'
     else
       render inertia: 'Events/Form', props: {
-        event: event_json(@event),
+        event: EventSerializer.new(@event).as_json,
         categories: Event.categories.keys,
         errors: @event.errors.full_messages,
         isEdit: true
@@ -94,23 +97,6 @@ class EventsController < ApplicationController
   end
 
   def event_params
-    params.require(:event).permit(:title, :description, :start_date, :end_date, :category, person_ids: [])
-  end
-
-  def event_json(event)
-    {
-      id: event.id,
-      title: event.title,
-      description: event.description,
-      start_date: event.start_date,
-      end_date: event.end_date,
-      category: event.category,
-      creator: {
-        id: event.user.id,
-        email: event.user.email
-      },
-      created_at: event.created_at,
-      updated_at: event.updated_at
-    }
+    params.require(:event).permit(:title, :description, :start_date, :end_date, :category, person_ids: [], people_attributes: [:id, :first_name, :middle_name, :last_name, :gedcom_uuid, :_destroy])
   end
 end

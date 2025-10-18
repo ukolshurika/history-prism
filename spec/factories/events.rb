@@ -8,7 +8,7 @@ FactoryBot.define do
     end_date { Time.current + 1.day }
     category { :person }
 
-    association :user, foreign_key: 'creator_id'
+    association :creator, factory: :user
 
     trait :world_event do
       category { :world }
