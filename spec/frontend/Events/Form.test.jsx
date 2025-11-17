@@ -478,4 +478,142 @@ describe('Events Form', () => {
       expect(descriptionField.tagName).toBe('TEXTAREA');
     });
   });
+
+  describe('Conditional display based on category', () => {
+    const mockPeople = [
+      { id: 1, full_name: 'John Adams' },
+      { id: 2, full_name: 'Marie Curie' },
+    ];
+
+    it('shows Associated People field when category is person', () => {
+      mockUseForm.data.event.category = 'person';
+      const { useForm } = require('@inertiajs/react');
+      useForm.mockReturnValue(mockUseForm);
+
+      render(
+        <Form
+          event={{}}
+          categories={mockCategories}
+          people={mockPeople}
+          isEdit={false}
+          current_user={mockCurrentUser}
+          flash={{}}
+          errors={[]}
+        />
+      );
+
+      expect(screen.getByLabelText('Associated People')).toBeInTheDocument();
+    });
+
+    it('hides Associated People field when category is not person', () => {
+      mockUseForm.data.event.category = 'war';
+      const { useForm } = require('@inertiajs/react');
+      useForm.mockReturnValue(mockUseForm);
+
+      render(
+        <Form
+          event={{}}
+          categories={mockCategories}
+          people={mockPeople}
+          isEdit={false}
+          current_user={mockCurrentUser}
+          flash={{}}
+          errors={[]}
+        />
+      );
+
+      expect(screen.queryByLabelText('Associated People')).not.toBeInTheDocument();
+    });
+
+    it('clears person_ids when changing category from person to another type', () => {
+      mockUseForm.data.event.category = 'person';
+      mockUseForm.data.event.person_ids = [1, 2];
+      const { useForm } = require('@inertiajs/react');
+      useForm.mockReturnValue(mockUseForm);
+
+      render(
+        <Form
+          event={{}}
+          categories={mockCategories}
+          people={mockPeople}
+          isEdit={false}
+          current_user={mockCurrentUser}
+          flash={{}}
+          errors={[]}
+        />
+      );
+
+      const categorySelect = screen.getByLabelText('Category');
+      fireEvent.change(categorySelect, { target: { value: 'war' } });
+
+      // Should call setData twice: once for category, once to clear person_ids
+      expect(mockSetData).toHaveBeenCalledWith('event.category', 'war');
+      expect(mockSetData).toHaveBeenCalledWith('event.person_ids', []);
+    });
+
+    it('does not clear person_ids when changing to person category', () => {
+      mockUseForm.data.event.category = 'war';
+      const { useForm } = require('@inertiajs/react');
+      useForm.mockReturnValue(mockUseForm);
+
+      render(
+        <Form
+          event={{}}
+          categories={mockCategories}
+          people={mockPeople}
+          isEdit={false}
+          current_user={mockCurrentUser}
+          flash={{}}
+          errors={[]}
+        />
+      );
+
+      const categorySelect = screen.getByLabelText('Category');
+      fireEvent.change(categorySelect, { target: { value: 'person' } });
+
+      // Should only call setData once for category change, not for clearing person_ids
+      expect(mockSetData).toHaveBeenCalledWith('event.category', 'person');
+      expect(mockSetData).not.toHaveBeenCalledWith('event.person_ids', []);
+    });
+
+    it('shows Associated People field for place category', () => {
+      mockUseForm.data.event.category = 'place';
+      const { useForm } = require('@inertiajs/react');
+      useForm.mockReturnValue(mockUseForm);
+
+      render(
+        <Form
+          event={{}}
+          categories={mockCategories}
+          people={mockPeople}
+          isEdit={false}
+          current_user={mockCurrentUser}
+          flash={{}}
+          errors={[]}
+        />
+      );
+
+      expect(screen.queryByLabelText('Associated People')).not.toBeInTheDocument();
+    });
+
+    it('shows Associated People field for achievement category', () => {
+      mockUseForm.data.event.category = 'achievement';
+      const { useForm } = require('@inertiajs/react');
+      useForm.mockReturnValue(mockUseForm);
+
+      render(
+        <Form
+          event={{}}
+          categories={mockCategories}
+          people={mockPeople}
+          isEdit={false}
+          current_user={mockCurrentUser}
+          flash={{}}
+          errors={[]}
+        />
+      );
+
+      expect(screen.queryByLabelText('Associated People')).not.toBeInTheDocument();
+    });
+  });
 });

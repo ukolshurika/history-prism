@@ -16,6 +16,7 @@ gem 'yabeda-sidekiq'
 
 gem 'active_model_serializers', '~> 0.10.0'
 gem 'after_commit_everywhere'
+gem 'aws-sdk-s3'
 gem 'bcrypt', '~> 3.1.7'
 gem 'dry-initializer'
 gem 'dry-monads'

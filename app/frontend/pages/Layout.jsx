@@ -16,6 +16,27 @@ export default function Layout({ children, current_user, flash = {} }) {
               History Prism
             </Link>
 
+            <div className="flex items-center gap-6">
+              <Link
+                href="/events"
+                className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+              >
+                Events
+              </Link>
+              <Link
+                href="/people"
+                className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+              >
+                People
+              </Link>
+              <Link
+                href="/gedcom_files"
+                className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+              >
+                GEDCOM Files
+              </Link>
+            </div>
+
             <div className="flex items-center gap-4">
               {current_user ? (
                 <>

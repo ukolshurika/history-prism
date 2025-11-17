@@ -38,6 +38,7 @@ pickle-email-*.html
 .zeus.sock
 .DS_Store
 .env.local
+.env.development
 .powenv
 config/database.yml
 .idea/

@@ -89,7 +89,14 @@ export default function Form({ event, categories, people = [], isEdit, current_u
                   id="category"
                   name="event[category]"
                   value={data.event.category}
-                  onChange={(e) => setData('event.category', e.target.value)}
+                  onChange={(e) => {
+                    const newCategory = e.target.value
+                    setData('event.category', newCategory)
+                    // Clear person_ids when switching away from person category
+                    if (newCategory !== 'person') {
+                      setData('event.person_ids', [])
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >
@@ -133,31 +140,33 @@ export default function Form({ event, categories, people = [], isEdit, current_u
                 </div>
               </div>
 
-              <div className="mb-4">
-                <label htmlFor="people" className="block text-sm font-medium text-gray-700 mb-1">
-                  Associated People
-                </label>
-                <select
-                  id="people"
-                  name="event[person_ids][]"
-                  multiple
-                  value={data.event.person_ids}
-                  onChange={(e) => {
-                    const selected = Array.from(e.target.selectedOptions, option => parseInt(option.value))
-                    setData('event.person_ids', selected)
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
-                >
-                  {people.map((person) => (
-                    <option key={person.id} value={person.id}>
-                      {person.full_name}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1 text-xs text-gray-500">
-                  Hold Ctrl (Windows) or Cmd (Mac) to select multiple people
-                </p>
-              </div>
+              {data.event.category === 'person' && (
+                <div className="mb-4">
+                  <label htmlFor="people" className="block text-sm font-medium text-gray-700 mb-1">
+                    Associated People
+                  </label>
+                  <select
+                    id="people"
+                    name="event[person_ids][]"
+                    multiple
+                    value={data.event.person_ids}
+                    onChange={(e) => {
+                      const selected = Array.from(e.target.selectedOptions, option => parseInt(option.value))
+                      setData('event.person_ids', selected)
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
+                  >
+                    {people.map((person) => (
+                      <option key={person.id} value={person.id}>
+                        {person.full_name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Hold Ctrl (Windows) or Cmd (Mac) to select multiple people
+                  </p>
+                </div>
+              )}
 
               <div className="flex gap-2">
                 <button
