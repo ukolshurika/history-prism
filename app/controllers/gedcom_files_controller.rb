@@ -15,6 +15,7 @@ class GedcomFilesController < ApplicationController
     authorize @gedcom_file
 
     if @gedcom_file.save
+      GedcomParser::UploadWorker(@gedcom_file.id, current_user.id).perform_async
       redirect_to gedcom_files_path, notice: 'GEDCOM file was successfully uploaded.'
     else
       render inertia: 'GedcomFiles/Index', props: {

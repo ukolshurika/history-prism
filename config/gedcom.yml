@@ -1,0 +1,15 @@
+default: &default
+  api_key: secret_key
+  api_url: "http://history-prism-gedcom-app:8000"
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+  api_key: secret_cake
+  callback_url: "http://localhost:3000/callbacks/test"
+
+production:
+  api_key: <%= ENV.fetch("GEDCOM_SECRET") { Rails.application.credentials.gedcom&.secret } %>
+  api_url: <%= ENV.fetch("GEDCOM_API_URL") { Rails.application.credentials.gedcom&.api_url } %>
