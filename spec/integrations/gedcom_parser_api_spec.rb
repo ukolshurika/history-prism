@@ -18,7 +18,7 @@ RSpec.describe GedcomParserApi, '.get_events' do
     )
   end
 
-  let(:request_body) { { file: file_blob, user_id: user_id } }
+  let(:request_body) { { file: file_blob.key, user_id: user_id } }
 
   let(:expected_endpoint) { "#{api_url}/events" }
   let(:expected_request_body) { request_body.to_json }
@@ -54,10 +54,9 @@ RSpec.describe GedcomParserApi, '.get_events' do
     end
 
     it 'makes POST request to correct endpoint' do
-      described_class.get_events(file_id, user_id)
+      described_class.get_events(file_blob.key, user_id)
 
-      expect(correct_request).to have_been_made
-      expect(JSON.parse(response.body)['status']).to eq('Ok')
+      expect(correct_request).to have_been_made.once
     end
   end
 
@@ -73,7 +72,7 @@ RSpec.describe GedcomParserApi, '.get_events' do
     end
 
     it 'raises ClientError with fail status' do
-      expect { described_class.get_events(file_id, user_id) }.to raise_error(
+      expect { described_class.get_events(file_blob.key, user_id) }.to raise_error(
         GedcomParserApi::Transport::ClientError,
         /422/
       )
@@ -92,7 +91,7 @@ RSpec.describe GedcomParserApi, '.get_events' do
     end
 
     it 'raises ClientError' do
-      expect { described_class.get_events(file_id, user_id) }.to raise_error(
+      expect { described_class.get_events(file_blob.key, user_id) }.to raise_error(
         GedcomParserApi::Transport::ClientError,
         '422 Invalid GEDCOM file format'
       )
@@ -111,7 +110,7 @@ RSpec.describe GedcomParserApi, '.get_events' do
     end
 
     it 'raises ClientError with authentication message' do
-      expect { described_class.get_events(file_id, user_id) }.to raise_error(
+      expect { described_class.get_events(file_blob.key, user_id) }.to raise_error(
         GedcomParserApi::Transport::ClientError,
         '401 Unauthorized'
       )
@@ -130,7 +129,7 @@ RSpec.describe GedcomParserApi, '.get_events' do
     end
 
     it 'raises ClientError' do
-      expect { described_class.get_events(file_id, user_id) }.to raise_error(
+      expect { described_class.get_events(file_blob.key, user_id) }.to raise_error(
         GedcomParserApi::Transport::ClientError
       )
     end
@@ -142,7 +141,7 @@ RSpec.describe GedcomParserApi, '.get_events' do
     end
 
     it 'raises Transport Error' do
-      expect { described_class.get_events(file_id, user_id) }.to raise_error(
+      expect { described_class.get_events(file_blob.key, user_id) }.to raise_error(
         GedcomParserApi::Transport::Error,
         'Connection refused'
       )
@@ -153,28 +152,10 @@ RSpec.describe GedcomParserApi, '.get_events' do
     before { stub_request(:post, expected_endpoint).to_raise(Faraday::TimeoutError.new('Request timeout')) }
 
     it 'raises Transport Error on timeout' do
-      expect { described_class.get_events(file_id, user_id) }.to raise_error(
+      expect { described_class.get_events(file_blob.key, user_id) }.to raise_error(
         GedcomParserApi::Transport::Error,
         'Request timeout'
       )
-    end
-  end
-
-  context 'with invalid file_id' do
-    let(:invalid_file_id) { 99_999 }
-
-    before do
-      allow(ActiveStorage::Blob).to receive(:find).with(invalid_file_id).and_raise(
-        ActiveRecord::RecordNotFound
-      )
-    end
-
-    it 'raises RecordNotFound error before making request' do
-      expect { described_class.get_events(invalid_file_id, user_id) }.to raise_error(
-        ActiveRecord::RecordNotFound
-      )
-
-      expect(WebMock).not_to have_requested(:post, expected_endpoint)
     end
   end
 
@@ -190,7 +171,7 @@ RSpec.describe GedcomParserApi, '.get_events' do
     end
 
     it 'raises ClientError with response body as message' do
-      expect { described_class.get_events(file_id, user_id) }.to raise_error(
+      expect { described_class.get_events(file_blob.key, user_id) }.to raise_error(
         GedcomParserApi::Transport::ClientError,
         /500/
       )

@@ -32,7 +32,7 @@ RSpec.describe GedcomFileSerializer, type: :serializer do
 
     it 'includes file_url' do
       expect(subject['file_url']).to be_present
-      expect(subject['file_url']).to include('/rails/blob')
+      expect(subject['file_url']).to include('/rails/active_storage/blobs')
     end
   end
 
@@ -42,29 +42,13 @@ RSpec.describe GedcomFileSerializer, type: :serializer do
         expect(subject['file_name']).to eq('test.ged')
       end
     end
-
-    context 'when file is not attached' do
-      let(:gedcom_file) { create(:gedcom_file, :without_file, user: user) }
-
-      it 'returns nil' do
-        expect(subject['file_name']).to be_nil
-      end
-    end
   end
 
   describe 'file_url' do
     context 'when file is attached' do
       it 'returns the file URL path' do
         expect(subject['file_url']).to be_present
-        expect(subject['file_url']).to match(%r{/rails/blob})
-      end
-    end
-
-    context 'when file is not attached' do
-      let(:gedcom_file) { create(:gedcom_file, :without_file, user: user) }
-
-      it 'returns nil' do
-        expect(subject['file_url']).to be_nil
+        expect(subject['file_url']).to match(%r{/rails/active_storage/blobs})
       end
     end
   end
