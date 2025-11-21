@@ -1,6 +1,6 @@
 default: &default
   api_key: secret_key
-  api_url: "http://history-prism-gedcom-app:8000"
+  api_url: "http://gedcom-app:8000"
 
 development:
   <<: *default

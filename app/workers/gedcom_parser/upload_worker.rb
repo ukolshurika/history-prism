@@ -4,7 +4,7 @@ module GedcomParser
   class UploadWorker
     include Sidekiq::Worker
 
-    def perform(user_id, file_id)
+    def perform(file_id, user_id)
       GedcomParserApi.get_events(GedcomFile.find(file_id).file.attachment.key, user_id)
     end
   end
