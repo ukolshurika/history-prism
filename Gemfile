@@ -64,6 +64,7 @@ group :development, :test do
   gem 'bootsnap', '>= 1.1.0', require: false
   gem 'factory_bot_rails', '~> 5.0.1'
   gem 'faker', '1.9.1'
+  gem 'faraday-detailed_logger'
   gem 'pry'
   gem 'pry-rails'
   gem 'pry-rescue'

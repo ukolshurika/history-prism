@@ -28,11 +28,23 @@ module GedcomParserApi
       private
 
       def http
-        @http ||= FaradayClient.json(GedcomClient.url) { |conn| conn.use SignatureMiddleware }
+        logger = Logger.new(STDOUT)
+
+        @http ||= FaradayClient.json(GedcomClient.url) do |conn|
+          conn.use SignatureMiddleware
+          conn.response :detailed_logger, logger
+        end
       end
 
       class SignatureMiddleware < ::Faraday::Middleware
         def call(env)
+          p GedcomClient.key
+          p data(env)
+          p OpenSSL::HMAC.hexdigest(
+            'SHA256',
+            GedcomClient.key,
+            data(env)
+          )
           env[:request_headers]['X-Signature'] = OpenSSL::HMAC.hexdigest(
             'SHA256',
             GedcomClient.key,
