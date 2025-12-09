@@ -30,6 +30,12 @@ export default function Layout({ children, current_user, flash = {} }) {
                 People
               </Link>
               <Link
+                href="/timelines"
+                className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+              >
+                Timelines
+              </Link>
+              <Link
                 href="/gedcom_files"
                 className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
               >

@@ -4,10 +4,13 @@ class PeopleController < ApplicationController
   before_action :set_person, only: [:show, :edit, :update, :destroy]
 
   def index
-    @people = Current.user.people.includes(:events).order(first_name: :asc)
+    @q = Current.user.people.ransack(params[:q])
+    @people = @q.result.includes(:events).order(first_name: :asc)
+    @gedcom_files = Current.user.gedcom_files.order(created_at: :desc)
 
     render inertia: 'People/Index', props: {
       people: ActiveModelSerializers::SerializableResource.new(@people, each_serializer: PersonSerializer).as_json,
+      gedcom_files: @gedcom_files.map { |gf| { id: gf.id, name: gf.file.filename.to_s } },
       current_user: current_user
     }
   end
@@ -28,6 +31,7 @@ class PeopleController < ApplicationController
 
     render inertia: 'People/Form', props: {
       person: {
+        name: '',
         first_name: '',
         middle_name: '',
         last_name: '',
@@ -94,7 +98,7 @@ class PeopleController < ApplicationController
   end
 
   def person_params
-    params.require(:person).permit(:first_name, :middle_name, :last_name, :gedcom_uuid, event_ids: [], events_attributes: [:id, :title, :description, :start_date, :end_date, :category, :_destroy])
+    params.require(:person).permit(:name, :first_name, :middle_name, :last_name, :gedcom_uuid, event_ids: [], events_attributes: [:id, :title, :description, :start_date, :end_date, :category, :_destroy])
   end
 
   def available_person_events

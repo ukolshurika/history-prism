@@ -14,7 +14,7 @@ RUN apt-get update && \
     apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y \
     build-essential nodejs libsodium-dev yarn libyaml-dev \
-    default-mysql-client default-libmysqlclient-dev && \
+    postgresql-client libpq-dev && \
     apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

@@ -2,6 +2,7 @@
 
 FactoryBot.define do
   factory :person do
+    sequence(:name) { |n| "Name#{n}" }
     sequence(:first_name) { |n| "FirstName#{n}" }
     sequence(:middle_name) { |n| "MiddleName#{n}" }
     sequence(:last_name) { |n| "LastName#{n}" }

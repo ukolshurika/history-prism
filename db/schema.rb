@@ -10,8 +10,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_14_201754) do
-  create_table "active_storage_attachments", charset: "utf8mb3", force: :cascade do |t|
+ActiveRecord::Schema[8.0].define(version: 2025_12_05_212138) do
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "pg_catalog.plpgsql"
+
+  create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
     t.bigint "record_id", null: false
@@ -21,7 +24,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_14_201754) do
     t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
   end
 
-  create_table "active_storage_blobs", charset: "utf8mb3", force: :cascade do |t|
+  create_table "active_storage_blobs", force: :cascade do |t|
     t.string "key", null: false
     t.string "filename", null: false
     t.string "content_type"
@@ -33,13 +36,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_14_201754) do
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
   end
 
-  create_table "active_storage_variant_records", charset: "utf8mb3", force: :cascade do |t|
+  create_table "active_storage_variant_records", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
-  create_table "events", charset: "utf8mb3", force: :cascade do |t|
+  create_table "events", force: :cascade do |t|
     t.string "title", null: false
     t.text "description", null: false
     t.datetime "start_date", precision: nil, null: false
@@ -53,21 +56,21 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_14_201754) do
     t.index ["gedcom_file_id"], name: "index_events_on_gedcom_file_id"
   end
 
-  create_table "events_people", id: false, charset: "utf8mb3", force: :cascade do |t|
+  create_table "events_people", id: false, force: :cascade do |t|
     t.bigint "event_id", null: false
     t.bigint "person_id", null: false
     t.index ["event_id", "person_id"], name: "index_events_people_on_event_id_and_person_id"
     t.index ["person_id", "event_id"], name: "index_events_people_on_person_id_and_event_id"
   end
 
-  create_table "gedcom_files", charset: "utf8mb3", force: :cascade do |t|
+  create_table "gedcom_files", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_gedcom_files_on_user_id"
   end
 
-  create_table "people", charset: "utf8mb3", force: :cascade do |t|
+  create_table "people", force: :cascade do |t|
     t.string "first_name", null: false
     t.string "middle_name"
     t.string "last_name"
@@ -76,12 +79,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_14_201754) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "gedcom_file_id"
+    t.string "name", null: false
     t.index ["gedcom_file_id"], name: "index_people_on_gedcom_file_id"
     t.index ["gedcom_uuid"], name: "index_people_on_gedcom_uuid", unique: true
     t.index ["user_id"], name: "index_people_on_user_id"
   end
 
-  create_table "sessions", charset: "utf8mb3", force: :cascade do |t|
+  create_table "sessions", force: :cascade do |t|
     t.bigint "user_id"
     t.string "ip_address"
     t.string "user_agent"
@@ -90,7 +94,25 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_14_201754) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
-  create_table "users", charset: "utf8mb3", force: :cascade do |t|
+  create_table "timelines", force: :cascade do |t|
+    t.bigint "person_id", null: false
+    t.bigint "user_id", null: false
+    t.boolean "visible", default: false, null: false
+    t.string "title", null: false
+    t.datetime "start_at"
+    t.datetime "end_at"
+    t.jsonb "event_configuration", default: {}
+    t.jsonb "cached_events_for_display", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["end_at"], name: "index_timelines_on_end_at"
+    t.index ["person_id"], name: "index_timelines_on_person_id"
+    t.index ["start_at"], name: "index_timelines_on_start_at"
+    t.index ["user_id"], name: "index_timelines_on_user_id"
+    t.index ["visible"], name: "index_timelines_on_visible"
+  end
+
+  create_table "users", force: :cascade do |t|
     t.string "email", null: false
     t.string "password_digest", null: false
     t.datetime "created_at", null: false
@@ -106,4 +128,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_14_201754) do
   add_foreign_key "people", "gedcom_files"
   add_foreign_key "people", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "timelines", "people"
+  add_foreign_key "timelines", "users"
 end

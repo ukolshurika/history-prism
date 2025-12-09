@@ -6,7 +6,10 @@ Rails.application.routes.draw do
   resources :passwords, param: :token, only: %i(new create update edit)
   resources :events
   resources :people
-  resources :gedcom_files, only: %i[index create]
+  resources :timelines
+  resources :gedcom_files, only: %i[index create] do
+    resource :reprocess, only: [:create], controller: 'gedcom_file_reprocesses'
+  end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

@@ -8,6 +8,15 @@ class GedcomFile < ApplicationRecord
   validates :file, presence: true
   validate :file_must_be_ged
 
+  # Ransack configuration
+  def self.ransackable_attributes(auth_object = nil)
+    %w[id user_id created_at updated_at]
+  end
+
+  def self.ransackable_associations(auth_object = nil)
+    %w[file_attachment file_blob]
+  end
+
   private
 
   def file_must_be_ged

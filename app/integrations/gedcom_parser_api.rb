@@ -5,6 +5,7 @@ module GedcomParserApi
   EVENTS_PATH = '/events'
   PERSONS_PATH = '/persons'
   PERSON_PATH = '/person'
+  TIMELINE_PATH = '/timeline'
 
 
   class Event < Dry::Struct
@@ -31,7 +32,7 @@ module GedcomParserApi
   module_function
 
   def people(blob_key)
-    Transport.get(PERSONS_PATH, { file: blob_key })
+    Transport.get(PERSONS_PATH, { file: blob_key }).body
   end
 
   def person(blob_key, person_gedid)

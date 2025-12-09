@@ -97,6 +97,7 @@ RSpec.describe 'People', type: :request do
     let(:valid_params) do
       {
         person: {
+          name: 'Alice Marie Johnson',
           first_name: 'Alice',
           middle_name: 'Marie',
           last_name: 'Johnson',
@@ -143,6 +144,7 @@ RSpec.describe 'People', type: :request do
         let(:params_with_events) do
           {
             person: {
+              name: 'Bob',
               first_name: 'Bob',
               gedcom_uuid: '@P456@',
               event_ids: [person_event.id]

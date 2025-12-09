@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react'
+import { Head, Link, useForm, router } from '@inertiajs/react'
 import Layout from '../Layout'
 import { useState } from 'react'
 
@@ -7,6 +7,7 @@ export default function Index({ gedcom_files, current_user, flash, errors }) {
     file: null,
   })
   const [selectedFileName, setSelectedFileName] = useState('')
+  const [reprocessingId, setReprocessingId] = useState(null)
 
   const handleFileChange = (e) => {
     const file = e.target.files[0]
@@ -21,6 +22,13 @@ export default function Index({ gedcom_files, current_user, flash, errors }) {
         reset()
         setSelectedFileName('')
       },
+    })
+  }
+
+  const handleReprocess = (gedcomFileId) => {
+    setReprocessingId(gedcomFileId)
+    router.post(`/gedcom_files/${gedcomFileId}/reprocess`, {}, {
+      onFinish: () => setReprocessingId(null),
     })
   }
 
@@ -109,15 +117,24 @@ export default function Index({ gedcom_files, current_user, flash, errors }) {
                       </p>
                     </div>
                   </div>
-                  {gedcom_file.file_url && (
-                    <a
-                      href={gedcom_file.file_url}
-                      className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 mt-2"
-                      download
+                  <div className="flex items-center gap-3 mt-4">
+                    {gedcom_file.file_url && (
+                      <a
+                        href={gedcom_file.file_url}
+                        className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700"
+                        download
+                      >
+                        Download
+                      </a>
+                    )}
+                    <button
+                      onClick={() => handleReprocess(gedcom_file.id)}
+                      disabled={reprocessingId === gedcom_file.id}
+                      className="inline-flex items-center text-sm text-green-600 hover:text-green-700 disabled:text-gray-400 disabled:cursor-not-allowed"
                     >
-                      Download
-                    </a>
-                  )}
+                      {reprocessingId === gedcom_file.id ? 'Processing...' : 'Reprocess'}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

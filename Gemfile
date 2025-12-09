@@ -6,7 +6,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 ruby '~> 3.2.0'
 
 gem 'dotenv-rails', require: 'dotenv/load'
-gem 'mysql2'
+gem 'pg'
 gem 'rails', '~> 8.0'
 
 gem 'yabeda-prometheus'
@@ -32,6 +32,7 @@ gem 'lograge'
 gem 'puma'
 gem 'puma_worker_killer'
 gem 'pundit', '~> 2.2'
+gem 'ransack'
 gem 'responders'
 gem 'sentry-rails'
 gem 'sentry-ruby'

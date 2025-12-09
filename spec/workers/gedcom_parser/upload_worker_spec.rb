@@ -10,20 +10,30 @@ RSpec.describe GedcomParser::UploadWorker, type: :worker do
 
   describe '#perform' do
     context 'when gedcom file exists' do
+      let(:api_response) { { 'persons' => ['person1', 'person2', 'person3'] } }
+
       before do
-        allow(GedcomParserApi).to receive(:get_events).and_return(
-          double(status: 200, body: { status: 'Ok' }.to_json)
-        )
+        allow(GedcomParserApi).to receive(:people).and_return(api_response)
+        allow(GedcomParser::CreatePersonWorker).to receive(:perform_async)
       end
 
-      it 'calls GedcomParserApi.get_events with correct arguments' do
-        worker.perform(user.id, gedcom_file.id)
+      it 'calls GedcomParserApi.people with correct key' do
+        worker.perform(gedcom_file.id, user.id)
 
-        expect(GedcomParserApi).to have_received(:get_events).with(blob_key, user.id)
+        expect(GedcomParserApi).to have_received(:people).with(blob_key)
+      end
+
+      it 'enqueues CreatePersonWorker for each person' do
+        worker.perform(gedcom_file.id, user.id)
+
+        expect(GedcomParser::CreatePersonWorker).to have_received(:perform_async).exactly(3).times
+        expect(GedcomParser::CreatePersonWorker).to have_received(:perform_async).with(gedcom_file.id, blob_key, 'person1', user.id)
+        expect(GedcomParser::CreatePersonWorker).to have_received(:perform_async).with(gedcom_file.id, blob_key, 'person2', user.id)
+        expect(GedcomParser::CreatePersonWorker).to have_received(:perform_async).with(gedcom_file.id, blob_key, 'person3', user.id)
       end
 
       it 'does not raise an error' do
-        expect { worker.perform(user.id, gedcom_file.id) }.not_to raise_error
+        expect { worker.perform(gedcom_file.id, user.id) }.not_to raise_error
       end
     end
 
@@ -31,31 +41,31 @@ RSpec.describe GedcomParser::UploadWorker, type: :worker do
       let(:invalid_file_id) { 99_999 }
 
       it 'raises ActiveRecord::RecordNotFound' do
-        expect { worker.perform(user.id, invalid_file_id) }.to raise_error(ActiveRecord::RecordNotFound)
+        expect { worker.perform(invalid_file_id, user.id) }.to raise_error(ActiveRecord::RecordNotFound)
       end
 
-      it 'does not call GedcomParserApi.get_events' do
-        allow(GedcomParserApi).to receive(:get_events)
+      it 'does not call GedcomParserApi.people' do
+        allow(GedcomParserApi).to receive(:people)
 
         begin
-          worker.perform(user.id, invalid_file_id)
+          worker.perform(invalid_file_id, user.id)
         rescue ActiveRecord::RecordNotFound
           # Expected error
         end
 
-        expect(GedcomParserApi).not_to have_received(:get_events)
+        expect(GedcomParserApi).not_to have_received(:people)
       end
     end
 
     context 'when API returns error' do
       before do
-        allow(GedcomParserApi).to receive(:get_events).and_raise(
+        allow(GedcomParserApi).to receive(:people).and_raise(
           GedcomParserApi::Transport::ClientError.new('422 Invalid file format')
         )
       end
 
       it 'raises GedcomParserApi::Transport::ClientError' do
-        expect { worker.perform(user.id, gedcom_file.id) }.to raise_error(
+        expect { worker.perform(gedcom_file.id, user.id) }.to raise_error(
           GedcomParserApi::Transport::ClientError,
           '422 Invalid file format'
         )
@@ -64,31 +74,31 @@ RSpec.describe GedcomParser::UploadWorker, type: :worker do
 
     context 'when network error occurs' do
       before do
-        allow(GedcomParserApi).to receive(:get_events).and_raise(
+        allow(GedcomParserApi).to receive(:people).and_raise(
           GedcomParserApi::Transport::Error.new('Connection refused')
         )
       end
 
       it 'raises GedcomParserApi::Transport::Error' do
-        expect { worker.perform(user.id, gedcom_file.id) }.to raise_error(
+        expect { worker.perform(gedcom_file.id, user.id) }.to raise_error(
           GedcomParserApi::Transport::Error,
           'Connection refused'
         )
       end
     end
 
-    context 'integration with API stub' do
-      let(:api_response) do
-        double(status: 200, body: { status: 'Ok', processed: true }.to_json, success?: true)
+    context 'when API returns empty persons list' do
+      let(:api_response) { { 'persons' => [] } }
+
+      before do
+        allow(GedcomParserApi).to receive(:people).and_return(api_response)
+        allow(GedcomParser::CreatePersonWorker).to receive(:perform_async)
       end
 
-      before { allow(GedcomParserApi).to receive(:get_events).and_return(api_response) }
+      it 'does not enqueue any CreatePersonWorker' do
+        worker.perform(gedcom_file.id, user.id)
 
-      it 'successfully processes the file' do
-        result = worker.perform(user.id, gedcom_file.id)
-
-        expect(result).to eq(api_response)
-        expect(GedcomParserApi).to have_received(:get_events).once
+        expect(GedcomParser::CreatePersonWorker).not_to have_received(:perform_async)
       end
     end
   end
