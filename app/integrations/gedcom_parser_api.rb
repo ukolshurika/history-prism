@@ -40,7 +40,7 @@ module GedcomParserApi
   end
 
   def timeline(blob_key, person_id)
-    Transport.get(TIMELINE_PATH, { file: blob_key, person: person_id })
+    Transport.get(TIMELINE_PATH, { file: blob_key, gedcom_id: person_id })
   end
 
   def parse_events(persons, events, user_id)

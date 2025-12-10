@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_05_212138) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_10_191825) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -81,7 +81,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_05_212138) do
     t.bigint "gedcom_file_id"
     t.string "name", null: false
     t.index ["gedcom_file_id"], name: "index_people_on_gedcom_file_id"
-    t.index ["gedcom_uuid"], name: "index_people_on_gedcom_uuid", unique: true
+    t.index ["gedcom_uuid", "gedcom_file_id"], name: "index_people_on_gedcom_uuid_and_gedcom_file_id"
+    t.index ["gedcom_uuid"], name: "index_people_on_gedcom_uuid"
     t.index ["user_id"], name: "index_people_on_user_id"
   end
 
