@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_10_191825) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_11_193606) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -45,15 +45,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_10_191825) do
   create_table "events", force: :cascade do |t|
     t.string "title", null: false
     t.text "description", null: false
-    t.datetime "start_date", precision: nil, null: false
-    t.datetime "end_date", precision: nil, null: false
     t.integer "category", null: false
     t.bigint "creator_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "gedcom_file_id"
+    t.bigint "start_date_id"
+    t.bigint "end_date_id"
     t.index ["creator_id"], name: "index_events_on_creator_id"
+    t.index ["end_date_id"], name: "index_events_on_end_date_id"
     t.index ["gedcom_file_id"], name: "index_events_on_gedcom_file_id"
+    t.index ["start_date_id"], name: "index_events_on_start_date_id"
   end
 
   create_table "events_people", id: false, force: :cascade do |t|
@@ -61,6 +63,24 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_10_191825) do
     t.bigint "person_id", null: false
     t.index ["event_id", "person_id"], name: "index_events_people_on_event_id_and_person_id"
     t.index ["person_id", "event_id"], name: "index_events_people_on_person_id_and_event_id"
+  end
+
+  create_table "fuzzy_dates", force: :cascade do |t|
+    t.string "original_text", null: false
+    t.integer "date_type", default: 0
+    t.integer "calendar_type", default: 0
+    t.integer "year"
+    t.integer "month"
+    t.integer "day"
+    t.integer "year_end"
+    t.integer "month_end"
+    t.integer "day_end"
+    t.date "earliest_gregorian"
+    t.date "latest_gregorian"
+    t.date "sort_value"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["sort_value"], name: "index_fuzzy_dates_on_sort_value"
   end
 
   create_table "gedcom_files", force: :cascade do |t|
@@ -81,8 +101,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_10_191825) do
     t.bigint "gedcom_file_id"
     t.string "name", null: false
     t.index ["gedcom_file_id"], name: "index_people_on_gedcom_file_id"
-    t.index ["gedcom_uuid", "gedcom_file_id"], name: "index_people_on_gedcom_uuid_and_gedcom_file_id"
-    t.index ["gedcom_uuid"], name: "index_people_on_gedcom_uuid"
+    t.index ["gedcom_uuid"], name: "index_people_on_gedcom_uuid", unique: true
     t.index ["user_id"], name: "index_people_on_user_id"
   end
 
@@ -123,6 +142,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_10_191825) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "events", "fuzzy_dates", column: "end_date_id"
+  add_foreign_key "events", "fuzzy_dates", column: "start_date_id"
   add_foreign_key "events", "gedcom_files"
   add_foreign_key "events", "users", column: "creator_id"
   add_foreign_key "gedcom_files", "users"

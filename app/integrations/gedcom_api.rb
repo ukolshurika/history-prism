@@ -1,20 +1,18 @@
 # frozen_string_literal: true
 
-module GedcomParserApi
+module GedcomApi
   Error = Class.new StandardError
   EVENTS_PATH = '/events'
   PERSONS_PATH = '/persons'
   PERSON_PATH = '/person'
   TIMELINE_PATH = '/timeline'
 
-
   class Event < Dry::Struct
-    schema schema.strict
-    attribute :begin, Types::Coercible::String
-    attribute :end, Types::Coercible::String
-    attribute :identificator, Types::Coercible::String
     attribute :name, Types::Coercible::String
+    attribute :date, Types::Coercible::String
     attribute :description, Types::Coercible::String
+    attribute :place, Types::Coercible::String
+    attribute :notes, Types::Coercible::String
   end
 
   class Person < Dry::Struct
@@ -25,7 +23,7 @@ module GedcomParserApi
     attribute :gender, Types::Coercible::String.optional.default(nil)
   end
 
-  class CallbackResponse <Dry::Struct
+  class CallbackResponse < Dry::Struct
     attribute :people, Types::Nominal::Array.of(Person)
   end
 
@@ -40,9 +38,8 @@ module GedcomParserApi
   end
 
   def timeline(blob_key, person_id)
-    Transport.get(TIMELINE_PATH, { file: blob_key, gedcom_id: person_id })
-  end
-
-  def parse_events(persons, events, user_id)
+    Transport.get(TIMELINE_PATH, { file: blob_key, gedcom_id: person_id }).body['timeline'].map do |e|
+      Event.new(e.deep_symbolize_keys)
+    end
   end
 end

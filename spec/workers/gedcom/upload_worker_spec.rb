@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe GedcomParser::UploadWorker, type: :worker do
+RSpec.describe Gedcom::UploadWorker, type: :worker do
   let(:user) { create(:user) }
   let(:gedcom_file) { create(:gedcom_file, user: user) }
   let(:blob_key) { gedcom_file.file.attachment.key }
@@ -13,23 +13,23 @@ RSpec.describe GedcomParser::UploadWorker, type: :worker do
       let(:api_response) { { 'persons' => ['person1', 'person2', 'person3'] } }
 
       before do
-        allow(GedcomParserApi).to receive(:people).and_return(api_response)
-        allow(GedcomParser::CreatePersonWorker).to receive(:perform_async)
+        allow(GedcomApi).to receive(:people).and_return(api_response)
+        allow(Gedcom::CreatePersonWorker).to receive(:perform_async)
       end
 
-      it 'calls GedcomParserApi.people with correct key' do
+      it 'calls GedcomApi.people with correct key' do
         worker.perform(gedcom_file.id, user.id)
 
-        expect(GedcomParserApi).to have_received(:people).with(blob_key)
+        expect(GedcomApi).to have_received(:people).with(blob_key)
       end
 
       it 'enqueues CreatePersonWorker for each person' do
         worker.perform(gedcom_file.id, user.id)
 
-        expect(GedcomParser::CreatePersonWorker).to have_received(:perform_async).exactly(3).times
-        expect(GedcomParser::CreatePersonWorker).to have_received(:perform_async).with(gedcom_file.id, blob_key, 'person1', user.id)
-        expect(GedcomParser::CreatePersonWorker).to have_received(:perform_async).with(gedcom_file.id, blob_key, 'person2', user.id)
-        expect(GedcomParser::CreatePersonWorker).to have_received(:perform_async).with(gedcom_file.id, blob_key, 'person3', user.id)
+        expect(Gedcom::CreatePersonWorker).to have_received(:perform_async).exactly(3).times
+        expect(Gedcom::CreatePersonWorker).to have_received(:perform_async).with(gedcom_file.id, blob_key, 'person1', user.id)
+        expect(Gedcom::CreatePersonWorker).to have_received(:perform_async).with(gedcom_file.id, blob_key, 'person2', user.id)
+        expect(Gedcom::CreatePersonWorker).to have_received(:perform_async).with(gedcom_file.id, blob_key, 'person3', user.id)
       end
 
       it 'does not raise an error' do
@@ -44,8 +44,8 @@ RSpec.describe GedcomParser::UploadWorker, type: :worker do
         expect { worker.perform(invalid_file_id, user.id) }.to raise_error(ActiveRecord::RecordNotFound)
       end
 
-      it 'does not call GedcomParserApi.people' do
-        allow(GedcomParserApi).to receive(:people)
+      it 'does not call GedcomApi.people' do
+        allow(GedcomApi).to receive(:people)
 
         begin
           worker.perform(invalid_file_id, user.id)
@@ -53,20 +53,20 @@ RSpec.describe GedcomParser::UploadWorker, type: :worker do
           # Expected error
         end
 
-        expect(GedcomParserApi).not_to have_received(:people)
+        expect(GedcomApi).not_to have_received(:people)
       end
     end
 
     context 'when API returns error' do
       before do
-        allow(GedcomParserApi).to receive(:people).and_raise(
-          GedcomParserApi::Transport::ClientError.new('422 Invalid file format')
+        allow(GedcomApi).to receive(:people).and_raise(
+          GedcomApi::Transport::ClientError.new('422 Invalid file format')
         )
       end
 
-      it 'raises GedcomParserApi::Transport::ClientError' do
+      it 'raises GedcomApi::Transport::ClientError' do
         expect { worker.perform(gedcom_file.id, user.id) }.to raise_error(
-          GedcomParserApi::Transport::ClientError,
+          GedcomApi::Transport::ClientError,
           '422 Invalid file format'
         )
       end
@@ -74,14 +74,14 @@ RSpec.describe GedcomParser::UploadWorker, type: :worker do
 
     context 'when network error occurs' do
       before do
-        allow(GedcomParserApi).to receive(:people).and_raise(
-          GedcomParserApi::Transport::Error.new('Connection refused')
+        allow(GedcomApi).to receive(:people).and_raise(
+          GedcomApi::Transport::Error.new('Connection refused')
         )
       end
 
-      it 'raises GedcomParserApi::Transport::Error' do
+      it 'raises GedcomApi::Transport::Error' do
         expect { worker.perform(gedcom_file.id, user.id) }.to raise_error(
-          GedcomParserApi::Transport::Error,
+          GedcomApi::Transport::Error,
           'Connection refused'
         )
       end
@@ -91,14 +91,14 @@ RSpec.describe GedcomParser::UploadWorker, type: :worker do
       let(:api_response) { { 'persons' => [] } }
 
       before do
-        allow(GedcomParserApi).to receive(:people).and_return(api_response)
-        allow(GedcomParser::CreatePersonWorker).to receive(:perform_async)
+        allow(GedcomApi).to receive(:people).and_return(api_response)
+        allow(Gedcom::CreatePersonWorker).to receive(:perform_async)
       end
 
       it 'does not enqueue any CreatePersonWorker' do
         worker.perform(gedcom_file.id, user.id)
 
-        expect(GedcomParser::CreatePersonWorker).not_to have_received(:perform_async)
+        expect(Gedcom::CreatePersonWorker).not_to have_received(:perform_async)
       end
     end
   end

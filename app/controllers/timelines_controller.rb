@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 class TimelinesController < ApplicationController
-  before_action :set_timeline, only: [:show, :edit, :update, :destroy]
+  before_action :set_timeline, only: %i(show edit update destroy)
 
   def index
     @timelines = policy_scope(Timeline).includes(:person).order(created_at: :desc)
 
     render inertia: 'Timelines/Index', props: {
-      timelines: ActiveModelSerializers::SerializableResource.new(@timelines, each_serializer: TimelineSerializer).as_json,
+      timelines: ActiveModelSerializers::SerializableResource.new(@timelines,
+                                                                  each_serializer: TimelineSerializer).as_json,
       current_user: current_user
     }
   end
@@ -37,12 +38,22 @@ class TimelinesController < ApplicationController
     }
   end
 
+  def edit
+    authorize @timeline
+
+    render inertia: 'Timelines/Form', props: {
+      timeline: TimelineSerializer.new(@timeline).as_json,
+      people: available_people,
+      isEdit: true
+    }
+  end
+
   def create
     @timeline = Current.user.timelines.build(timeline_params)
     authorize @timeline
 
     if @timeline.save
-      TimelineWorker.perform_async(@timeline.id, current_user.id)
+      Gedcom::TimelineWorker.perform_async(@timeline.id, current_user.id)
       redirect_to timelines_path, notice: 'Timeline was successfully created and is being processed.'
     else
       render inertia: 'Timelines/Form', props: {
@@ -52,16 +63,6 @@ class TimelinesController < ApplicationController
         isEdit: false
       }
     end
-  end
-
-  def edit
-    authorize @timeline
-
-    render inertia: 'Timelines/Form', props: {
-      timeline: TimelineSerializer.new(@timeline).as_json,
-      people: available_people,
-      isEdit: true
-    }
   end
 
   def update

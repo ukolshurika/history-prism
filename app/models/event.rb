@@ -3,15 +3,17 @@
 class Event < ApplicationRecord
   enum :category, { person: 0, world: 1, country: 2, local: 3 }
 
-  belongs_to :creator, foreign_key: 'creator_id', class_name: 'User'
+  belongs_to :creator, class_name: 'User'
   belongs_to :gedcom_file, optional: true
+  belongs_to :start_date, class_name: 'FuzzyDate', optional: true
+  belongs_to :end_date, class_name: 'FuzzyDate', optional: true
+
   has_and_belongs_to_many :people
   accepts_nested_attributes_for :people, allow_destroy: true, reject_if: :all_blank
 
   validates :title, presence: true
   validates :description, presence: true
   validates :start_date, presence: true
-  validates :end_date, presence: true
   validates :category, presence: true
 
   before_validation :set_default_end_date

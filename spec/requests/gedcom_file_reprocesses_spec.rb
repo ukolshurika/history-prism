@@ -20,9 +20,9 @@ RSpec.describe 'GedcomFileReprocesses', type: :request do
         it 'enqueues UploadWorker with correct arguments' do
           expect {
             post gedcom_file_reprocess_path(gedcom_file)
-          }.to change(GedcomParser::UploadWorker.jobs, :size).by(1)
+          }.to change(Gedcom::UploadWorker.jobs, :size).by(1)
 
-          job = GedcomParser::UploadWorker.jobs.last
+          job = Gedcom::UploadWorker.jobs.last
           expect(job['args']).to eq([gedcom_file.id, user.id])
         end
 
@@ -51,7 +51,7 @@ RSpec.describe 'GedcomFileReprocesses', type: :request do
         it 'does not enqueue UploadWorker' do
           expect {
             post gedcom_file_reprocess_path(other_user_gedcom_file)
-          }.not_to change(GedcomParser::UploadWorker.jobs, :size)
+          }.not_to change(Gedcom::UploadWorker.jobs, :size)
         end
       end
 
@@ -73,7 +73,7 @@ RSpec.describe 'GedcomFileReprocesses', type: :request do
       it 'does not enqueue UploadWorker' do
         expect {
           post gedcom_file_reprocess_path(gedcom_file)
-        }.not_to change(GedcomParser::UploadWorker.jobs, :size)
+        }.not_to change(Gedcom::UploadWorker.jobs, :size)
       end
     end
   end

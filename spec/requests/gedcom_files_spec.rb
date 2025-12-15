@@ -55,9 +55,9 @@ RSpec.describe 'GedcomFiles', type: :request do
         it 'enqueues upload worker with correct arguments' do
           expect {
             post gedcom_files_path, params: valid_params
-          }.to change(GedcomParser::UploadWorker.jobs, :size).by(1)
+          }.to change(Gedcom::UploadWorker.jobs, :size).by(1)
 
-          job = GedcomParser::UploadWorker.jobs.last
+          job = Gedcom::UploadWorker.jobs.last
           expect(job['args']).to eq([GedcomFile.last.id, user.id])
         end
       end

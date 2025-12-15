@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-module GedcomParserApi
+module GedcomApi
   class Transport
-    Error = Class.new GedcomParserApi::Error
+    Error = Class.new GedcomApi::Error
     ClientError = Class.new Error
 
     class << self
@@ -38,13 +38,6 @@ module GedcomParserApi
 
       class SignatureMiddleware < ::Faraday::Middleware
         def call(env)
-          p GedcomClient.key
-          p data(env)
-          p OpenSSL::HMAC.hexdigest(
-            'SHA256',
-            GedcomClient.key,
-            data(env)
-          )
           env[:request_headers]['X-Signature'] = OpenSSL::HMAC.hexdigest(
             'SHA256',
             GedcomClient.key,
