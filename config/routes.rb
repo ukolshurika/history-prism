@@ -6,7 +6,12 @@ Rails.application.routes.draw do
   resources :passwords, param: :token, only: %i(new create update edit)
   resources :events
   resources :people
-  resources :timelines
+  resources :timelines do
+    member do
+      post :export_pdf
+      get :download_pdf
+    end
+  end
   resources :gedcom_files, only: %i[index create] do
     resource :reprocess, only: [:create], controller: 'gedcom_file_reprocesses'
   end
@@ -17,5 +22,5 @@ Rails.application.routes.draw do
   get 'up' => 'rails/health#show', as: :rails_health_check
 
   # Defines the root path route ("/")
-  root "home#index"
+  root "timelines#index"
 end

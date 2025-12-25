@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_11_193606) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_23_202832) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -125,7 +125,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_11_193606) do
     t.jsonb "cached_events_for_display", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "pdf_url"
+    t.datetime "pdf_generated_at"
     t.index ["end_at"], name: "index_timelines_on_end_at"
+    t.index ["pdf_generated_at"], name: "index_timelines_on_pdf_generated_at"
     t.index ["person_id"], name: "index_timelines_on_person_id"
     t.index ["start_at"], name: "index_timelines_on_start_at"
     t.index ["user_id"], name: "index_timelines_on_user_id"

@@ -14,7 +14,12 @@ RUN apt-get update && \
     apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get install -y \
     build-essential nodejs libsodium-dev yarn libyaml-dev \
-    postgresql-client libpq-dev && \
+    postgresql-client libpq-dev \
+    texlive-latex-base \
+    texlive-latex-extra \
+    texlive-fonts-recommended \
+    texlive-lang-cyrillic \
+    lmodern && \
     apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

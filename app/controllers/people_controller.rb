@@ -5,7 +5,7 @@ class PeopleController < ApplicationController
 
   def index
     @q = Current.user.people.ransack(params[:q])
-    @people = @q.result.includes(:events).order(first_name: :asc)
+    @people = @q.result.includes(:events, :timelines).order(first_name: :asc)
     @gedcom_files = Current.user.gedcom_files.order(created_at: :desc)
 
     render inertia: 'People/Index', props: {

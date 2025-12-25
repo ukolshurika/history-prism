@@ -24,6 +24,9 @@ module Gedcom
         start_at: events.first&.start_date&.date,
         end_at: events.last&.end_date&.date
       )
+
+      # Schedule global events worker to run after personal events are loaded
+      Gedcom::GlobalEventsWorker.perform_async(timeline_id)
     end
   end
 end

@@ -18,12 +18,6 @@ export default function Layout({ children, current_user, flash = {} }) {
 
             <div className="flex items-center gap-6">
               <Link
-                href="/events"
-                className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-              >
-                Events
-              </Link>
-              <Link
                 href="/people"
                 className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
               >

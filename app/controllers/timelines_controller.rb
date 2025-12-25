@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class TimelinesController < ApplicationController
-  before_action :set_timeline, only: %i(show edit update destroy)
+  before_action :set_timeline, only: %i(show edit update destroy export_pdf download_pdf)
 
   def index
     @timelines = policy_scope(Timeline).includes(:person).order(created_at: :desc)
@@ -30,7 +30,7 @@ class TimelinesController < ApplicationController
     render inertia: 'Timelines/Form', props: {
       timeline: {
         title: '',
-        person_id: nil,
+        person_id: params[:person_id],
         visible: false
       },
       people: available_people,
@@ -87,6 +87,36 @@ class TimelinesController < ApplicationController
     redirect_to timelines_path, notice: 'Timeline was successfully deleted.'
   end
 
+  def export_pdf
+    authorize @timeline
+
+    TimelineWorkers::PdfGeneratorWorker.perform_async(@timeline.id)
+
+    redirect_to timeline_path(@timeline),
+      notice: 'PDF generation started. Please refresh the page in a few moments to see the download button.'
+  end
+
+  def download_pdf
+    authorize @timeline
+
+    if @timeline.pdf_url.blank?
+      redirect_to timeline_path(@timeline), alert: 'PDF has not been generated yet.'
+      return
+    end
+
+    pdf_path = Rails.root.join(@timeline.pdf_url.sub('/app/', ''))
+
+    unless File.exist?(pdf_path)
+      redirect_to timeline_path(@timeline), alert: 'PDF file not found. Please regenerate.'
+      return
+    end
+
+    send_file pdf_path,
+      filename: "timeline_#{@timeline.id}_#{@timeline.title.parameterize}.pdf",
+      type: 'application/pdf',
+      disposition: 'attachment'
+  end
+
   private
 
   def set_timeline
@@ -98,7 +128,7 @@ class TimelinesController < ApplicationController
   end
 
   def timeline_update_params
-    params.require(:timeline).permit(:title, :visible)
+    params.require(:timeline).permit(:title, :visible, cached_events_for_display: {})
   end
 
   def available_people

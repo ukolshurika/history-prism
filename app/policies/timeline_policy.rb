@@ -26,4 +26,12 @@ class TimelinePolicy < ApplicationPolicy
   def destroy?
     user.present? && record.user_id == user.id
   end
+
+  def export_pdf?
+    user.present? && (record.visible? || record.user_id == user.id)
+  end
+
+  def download_pdf?
+    user.present? && (record.visible? || record.user_id == user.id)
+  end
 end
