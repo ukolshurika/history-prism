@@ -16,17 +16,21 @@ module Gedcom
       timeline_events = GedcomApi.timeline(blob_key, person.gedcom_uuid)
 
       events = timeline_events.map do |e|
-        CreateEvent.new(e, person, user_id).call
+        CreateEvent.new(e, person, user_id, gedcom_file.id).call
       end
+
+      # Calculate date range from all events
+      start_dates = events.filter_map { |e| e.start_date&.earliest_gregorian }
+      end_dates = events.filter_map { |e| e.end_date&.latest_gregorian || e.start_date&.latest_gregorian }
 
       timeline.update(
         cached_events_for_display: timeline.cached_events_for_display.merge({ person: events.map(&:id) }),
-        start_at: events.first&.start_date&.date,
-        end_at: events.last&.end_date&.date
+        start_at: start_dates.min,
+        end_at: end_dates.max
       )
 
       # Schedule global events worker to run after personal events are loaded
-      Gedcom::GlobalEventsWorker.perform_async(timeline_id)
+      GlobalEventsWorker.perform_async(timeline_id)
     end
   end
 end
