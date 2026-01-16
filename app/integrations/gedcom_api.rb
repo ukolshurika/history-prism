@@ -33,12 +33,12 @@ module GedcomApi
     Transport.get(PERSONS_PATH, { file: blob_key }).body
   end
 
-  def person(blob_key, person_gedid)
-    Person.new(Transport.get(PERSON_PATH, { file: blob_key, id: person_gedid }).body.deep_symbolize_keys)
+  def person(blob_key, person_id)
+    Person.new(Transport.get(PERSON_PATH, { file: blob_key, id: "@#{person_id}@" }).body.deep_symbolize_keys)
   end
 
   def timeline(blob_key, person_id)
-    Transport.get(TIMELINE_PATH, { file: blob_key, gedcom_id: person_id }).body['timeline'].map do |e|
+    Transport.get(TIMELINE_PATH, { file: blob_key, gedcom_id: "@#{person_id}@" }).body['timeline'].map do |e|
       Event.new(e.deep_symbolize_keys)
     end
   end

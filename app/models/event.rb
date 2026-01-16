@@ -13,7 +13,6 @@ class Event < ApplicationRecord
 
   validates :title, presence: true
   validates :description, presence: true
-  validates :start_date, presence: true
   validates :category, presence: true
 
   before_validation :set_default_end_date

@@ -644,5 +644,74 @@ RSpec.describe Gedcom::TimelineWorker, type: :worker do
         expect(Event.find_by(title: 'Death').start_date.date_type).to eq('after')
       end
     end
+
+    context 'when re-uploading (deduplication)' do
+      before do
+        allow(GedcomApi).to receive(:timeline).with(blob_key, person.gedcom_uuid).and_return(api_events)
+      end
+
+      it 'does not create duplicate events on re-upload' do
+        # First upload
+        worker.perform(timeline.id, user.id)
+        expect(Event.count).to eq(3)
+
+        # Second upload of same data
+        expect {
+          worker.perform(timeline.id, user.id)
+        }.not_to change(Event, :count)
+      end
+
+      it 'updates existing events on re-upload' do
+        # First upload
+        worker.perform(timeline.id, user.id)
+        birth_event = Event.find_by(title: 'Birth')
+        original_id = birth_event.id
+
+        # Second upload
+        worker.perform(timeline.id, user.id)
+
+        # Same event should be updated, not duplicated
+        expect(Event.where(title: 'Birth').count).to eq(1)
+        expect(Event.find_by(title: 'Birth').id).to eq(original_id)
+      end
+
+      it 'does not create duplicate FuzzyDate records on re-upload' do
+        # First upload
+        worker.perform(timeline.id, user.id)
+        initial_fuzzy_date_count = FuzzyDate.count
+
+        # Second upload
+        worker.perform(timeline.id, user.id)
+
+        # No new FuzzyDate records should be created
+        expect(FuzzyDate.count).to eq(initial_fuzzy_date_count)
+      end
+
+      it 'updates event description when data changes' do
+        # First upload
+        worker.perform(timeline.id, user.id)
+        birth_event = Event.find_by(title: 'Birth')
+        expect(birth_event.description).to include('Born in London')
+
+        # Update the API response with new description
+        updated_events = [
+          GedcomApi::Event.new(
+            name: 'Birth',
+            date: '1 JAN 1900',
+            description: 'Born in Manchester',
+            place: 'Manchester, England',
+            notes: 'Updated notes'
+          )
+        ]
+        allow(GedcomApi).to receive(:timeline).with(blob_key, person.gedcom_uuid).and_return(updated_events)
+
+        # Re-upload
+        worker.perform(timeline.id, user.id)
+
+        birth_event.reload
+        expect(birth_event.description).to include('Born in Manchester')
+        expect(birth_event.description).to include('Place: Manchester, England')
+      end
+    end
   end
 end

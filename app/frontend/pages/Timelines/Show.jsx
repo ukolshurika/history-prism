@@ -536,7 +536,17 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
                   {timeline.title}
                 </h1>
                 <p className="text-gray-600">
-                  Person: {timeline.person_name || 'Unknown'}
+                  Person:{' '}
+                  {timeline.person_id ? (
+                    <Link
+                      href={`/people/${timeline.person_id}`}
+                      className="text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                      {timeline.person_name || 'Unknown'}
+                    </Link>
+                  ) : (
+                    timeline.person_name || 'Unknown'
+                  )}
                 </p>
               </div>
               <div className="flex gap-3">

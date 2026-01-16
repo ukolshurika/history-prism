@@ -6,6 +6,7 @@ module Gedcom
       param :gedcom_event, GedcomApi::Event
       param :person
       param :user_id
+      param :gedcom_file_id
     }
 
     include Dry::Initializer.define params
@@ -20,11 +21,19 @@ module Gedcom
     private
 
     def event
-      @event ||= Event.find_or_initialize_by(
-        title: gedcom_event.name,
-        start_date: fuzzy_date,
-        category: :person
-      )
+      @event ||= find_existing_event || Event.new
+    end
+
+    def find_existing_event
+      # Find existing event by title, gedcom_file_id, and person association
+      Event.joins(:people)
+           .where(
+             title: gedcom_event.name,
+             gedcom_file_id: gedcom_file_id,
+             category: :person,
+             people: { id: person.id }
+           )
+           .first
     end
 
     def normalize_attributes
@@ -32,6 +41,7 @@ module Gedcom
         title: gedcom_event.name,
         category: :person,
         creator_id: user_id,
+        gedcom_file_id: gedcom_file_id,
         description: description_text,
         start_date: fuzzy_date,
         end_date: fuzzy_date
@@ -58,9 +68,13 @@ module Gedcom
 
     def fuzzy_date
       @fuzzy_date ||= begin
-        parsed = DateParser.new(gedcom_event.date).to_fuzzy_date
-        parsed&.save!
-        parsed
+        attrs = DateParser.new(gedcom_event.date).parse
+        return nil unless attrs
+
+        # Find existing FuzzyDate by original_text to avoid duplicates
+        FuzzyDate.find_or_create_by!(original_text: attrs[:original_text]) do |fd|
+          fd.assign_attributes(attrs.except(:original_text))
+        end
       end
     end
   end
