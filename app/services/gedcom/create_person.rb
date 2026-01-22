@@ -11,7 +11,7 @@ module Gedcom
     include Dry::Initializer.define params
 
     def call
-      person.update!(normalize_attrs)
+      person.tap { |p| p.update!(normalize_attrs) }
     end
 
     private
