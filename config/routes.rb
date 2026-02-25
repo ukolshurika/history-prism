@@ -15,6 +15,9 @@ Rails.application.routes.draw do
   resources :gedcom_files, only: %i[index create] do
     resource :reprocess, only: [:create], controller: 'gedcom_file_reprocesses'
   end
+  resources :books do
+    resources :events, only: [:create], controller: 'books/events'
+  end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

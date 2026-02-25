@@ -25,11 +25,12 @@ module Gedcom
     end
 
     def find_existing_event
-      # Find existing event by title, gedcom_file_id, and person association
+      # Find existing event by title, source, and person association
       Event.joins(:people)
            .where(
              title: gedcom_event.name,
-             gedcom_file_id: gedcom_file_id,
+             source_type: 'GedcomFile',
+             source_id: gedcom_file_id,
              category: :person,
              people: { id: person.id }
            )
@@ -41,7 +42,7 @@ module Gedcom
         title: gedcom_event.name,
         category: :person,
         creator_id: user_id,
-        gedcom_file_id: gedcom_file_id,
+        source: GedcomFile.find(gedcom_file_id),
         description: description_text,
         start_date: fuzzy_date,
         end_date: fuzzy_date

@@ -13,7 +13,8 @@ class ApplicationController < ActionController::Base
             notice: flash.notice,
             alert: flash.alert
           },
-          current_user: Current.user&.slice(:id, :email)
+          current_user: Current.user&.slice(:id, :email),
+          yandex_maps_api_key: ENV['YANDEX_MAPS_API_KEY']
         }
       end
 

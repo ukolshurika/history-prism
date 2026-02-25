@@ -2,7 +2,7 @@ class GedcomFile < ApplicationRecord
   belongs_to :user
   has_one_attached :file
 
-  has_many :events, dependent: :nullify
+  has_many :events, as: :source, dependent: :nullify
   has_many :people, dependent: :nullify
 
   validates :file, presence: true

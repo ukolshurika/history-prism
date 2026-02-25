@@ -4,11 +4,18 @@ class EventsController < ApplicationController
   before_action :set_event, only: [:show, :edit, :update, :destroy]
 
   def index
-    @events = Event.includes(:creator).order(start_date: :desc)
+    @events = Event.includes(:creator, :source).order(created_at: :desc)
+    @events = apply_source_filters(@events)
+    @events = @events.page(params[:page]).per(25)
 
     render inertia: 'Events/Index', props: {
       events: ActiveModelSerializers::SerializableResource.new(@events, each_serializer: EventSerializer).as_json,
-      current_user: current_user
+      current_user: current_user,
+      pagination: pagination_meta(@events),
+      filters: {
+        source_type: params[:source_type],
+        source_id: params[:source_id]
+      }
     }
   end
 
@@ -160,5 +167,20 @@ class EventsController < ApplicationController
       date_type: attrs[:date_type] || 'exact',
       calendar_type: attrs[:calendar_type] || 'gregorian'
     )
+  end
+
+  def apply_source_filters(scope)
+    scope = scope.where(source_type: params[:source_type]) if params[:source_type].present?
+    scope = scope.where(source_id: params[:source_id]) if params[:source_id].present?
+    scope
+  end
+
+  def pagination_meta(collection)
+    {
+      current_page: collection.current_page,
+      total_pages: collection.total_pages,
+      total_count: collection.total_count,
+      per_page: collection.limit_value
+    }
   end
 end

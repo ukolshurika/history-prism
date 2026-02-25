@@ -4,6 +4,7 @@ class User < ApplicationRecord
   has_many :events, foreign_key: 'creator_id', dependent: :destroy
   has_many :people, dependent: :destroy
   has_many :gedcom_files, dependent: :destroy
+  has_many :books, foreign_key: 'creator_id', dependent: :destroy
   has_many :timelines, dependent: :destroy
 
   normalizes :email, with: ->(e) { e.strip.downcase }

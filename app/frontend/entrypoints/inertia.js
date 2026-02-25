@@ -14,7 +14,7 @@ createInertiaApp({
   // progress: false,
 
   resolve: (name) => {
-    const pages = import.meta.glob('../pages/**/*.jsx', {
+    const pages = import.meta.glob(['../pages/**/*.jsx', '!../pages/**/__tests__/**', '!../pages/**/*.test.jsx', '!../pages/**/*.spec.jsx'], {
       eager: true,
     })
     const page = pages[`../pages/${name}.jsx`]

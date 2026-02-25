@@ -4,7 +4,7 @@ class Event < ApplicationRecord
   enum :category, { person: 0, world: 1, country: 2, local: 3 }
 
   belongs_to :creator, class_name: 'User'
-  belongs_to :gedcom_file, optional: true
+  belongs_to :source, polymorphic: true, optional: true
   belongs_to :start_date, class_name: 'FuzzyDate', optional: true
   belongs_to :end_date, class_name: 'FuzzyDate', optional: true
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_23_202832) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_24_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -42,6 +42,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_23_202832) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "books", force: :cascade do |t|
+    t.bigint "creator_id", null: false
+    t.string "name"
+    t.string "location"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.decimal "latitude", precision: 10, scale: 6
+    t.decimal "longitude", precision: 10, scale: 6
+    t.index ["creator_id"], name: "index_books_on_creator_id"
+  end
+
   create_table "events", force: :cascade do |t|
     t.string "title", null: false
     t.text "description", null: false
@@ -49,12 +60,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_23_202832) do
     t.bigint "creator_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.bigint "gedcom_file_id"
     t.bigint "start_date_id"
     t.bigint "end_date_id"
+    t.string "source_type"
+    t.bigint "source_id"
     t.index ["creator_id"], name: "index_events_on_creator_id"
     t.index ["end_date_id"], name: "index_events_on_end_date_id"
-    t.index ["gedcom_file_id"], name: "index_events_on_gedcom_file_id"
+    t.index ["source_type", "source_id"], name: "index_events_on_source_type_and_source_id"
     t.index ["start_date_id"], name: "index_events_on_start_date_id"
   end
 
@@ -145,9 +157,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_23_202832) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "books", "users", column: "creator_id"
   add_foreign_key "events", "fuzzy_dates", column: "end_date_id"
   add_foreign_key "events", "fuzzy_dates", column: "start_date_id"
-  add_foreign_key "events", "gedcom_files"
   add_foreign_key "events", "users", column: "creator_id"
   add_foreign_key "gedcom_files", "users"
   add_foreign_key "people", "gedcom_files"
