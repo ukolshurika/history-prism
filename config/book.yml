@@ -1,0 +1,18 @@
+default: &default
+  api_key: book_secret_key
+  api_url: "http://book-events-parser:8001"
+  callback_host: "http://prism-puma:9292"
+  callback_secret: book_callback_secret
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+  api_key: test_book_key
+  callback_secret: test_callback_secret
+
+production:
+  api_key: <%= ENV.fetch("BOOK_SECRET") { Rails.application.credentials.book&.secret } %>
+  api_url: <%= ENV.fetch("BOOK_API_URL") { Rails.application.credentials.book&.api_url } %>
+  callback_secret: <%= ENV.fetch("BOOK_CALLBACK_SECRET") { Rails.application.credentials.book&.callback_secret } %>

@@ -1,7 +1,9 @@
-import { Head, useForm, Link } from '@inertiajs/react'
+import { Head, useForm, Link, usePage } from '@inertiajs/react'
 import Layout from '../Layout'
+import YandexMapPicker from '../../components/YandexMapPicker'
 
 export default function Form({ event, categories, people = [], isEdit, current_user, flash, errors = [] }) {
+  const { yandex_maps_api_key } = usePage().props
   const { data, setData, post, put, processing } = useForm({
     event: {
       title: event.title || '',
@@ -10,6 +12,12 @@ export default function Form({ event, categories, people = [], isEdit, current_u
       end_date: event.end_date || '',
       category: event.category || 'person',
       person_ids: event.person_ids || [],
+      location_attributes: {
+        id: event.location?.id || null,
+        place: event.location?.place || '',
+        latitude: event.location?.latitude || null,
+        longitude: event.location?.longitude || null,
+      },
     }
   })
 
@@ -167,6 +175,27 @@ export default function Form({ event, categories, people = [], isEdit, current_u
                   </p>
                 </div>
               )}
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Event Location
+                </label>
+                <YandexMapPicker
+                  lat={data.event.location_attributes.latitude}
+                  lng={data.event.location_attributes.longitude}
+                  address={data.event.location_attributes.place}
+                  apiKey={yandex_maps_api_key}
+                  disabled={processing}
+                  onChange={(lat, lng, address) =>
+                    setData('event.location_attributes', {
+                      ...data.event.location_attributes,
+                      latitude: lat,
+                      longitude: lng,
+                      place: address,
+                    })
+                  }
+                />
+              </div>
 
               <div className="flex gap-2">
                 <button

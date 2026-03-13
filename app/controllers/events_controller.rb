@@ -4,8 +4,10 @@ class EventsController < ApplicationController
   before_action :set_event, only: [:show, :edit, :update, :destroy]
 
   def index
-    @events = Event.includes(:creator, :source).order(created_at: :desc)
+    @events = Event.includes(:creator, :source, :start_date, :location)
     @events = apply_source_filters(@events)
+    @events = apply_search(@events)
+    @events = apply_sort(@events)
     @events = @events.page(params[:page]).per(25)
 
     render inertia: 'Events/Index', props: {
@@ -14,7 +16,10 @@ class EventsController < ApplicationController
       pagination: pagination_meta(@events),
       filters: {
         source_type: params[:source_type],
-        source_id: params[:source_id]
+        source_id:   params[:source_id],
+        q:           params[:q],
+        sort:        params[:sort],
+        direction:   params[:direction]
       }
     }
   end
@@ -147,8 +152,30 @@ class EventsController < ApplicationController
       person_ids: [],
       people_attributes: [:id, :first_name, :middle_name, :last_name, :gedcom_uuid, :_destroy],
       start_date_attributes: [:date_type, :year, :month, :day, :calendar_type],
-      end_date_attributes: [:date_type, :year, :month, :day, :calendar_type]
+      end_date_attributes: [:date_type, :year, :month, :day, :calendar_type],
+      location_attributes: [:id, :place, :latitude, :longitude]
     )
+  end
+
+  def apply_search(scope)
+    return scope unless params[:q].present?
+
+    scope.search_full_text(params[:q])
+  end
+
+  def apply_sort(scope)
+    case params[:sort]
+    when 'date'
+      dir = params[:direction] == 'desc' ? 'DESC' : 'ASC'
+      scope.joins("LEFT JOIN fuzzy_dates ON fuzzy_dates.id = events.start_date_id")
+           .order(Arel.sql("fuzzy_dates.sort_value #{dir} NULLS LAST"))
+    when 'place'
+      dir = params[:direction] == 'desc' ? 'DESC' : 'ASC'
+      scope.joins("LEFT JOIN locations ON locations.id = events.location_id")
+           .order(Arel.sql("locations.place #{dir} NULLS LAST"))
+    else
+      scope.order(created_at: :desc)
+    end
   end
 
   def create_fuzzy_date_from_attributes(attrs)

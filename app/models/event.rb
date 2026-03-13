@@ -1,18 +1,27 @@
 # frozen_string_literal: true
 
 class Event < ApplicationRecord
+  include PgSearch::Model
+
   enum :category, { person: 0, world: 1, country: 2, local: 3 }
 
   belongs_to :creator, class_name: 'User'
   belongs_to :source, polymorphic: true, optional: true
   belongs_to :start_date, class_name: 'FuzzyDate', optional: true
   belongs_to :end_date, class_name: 'FuzzyDate', optional: true
+  belongs_to :location, optional: true
 
   has_and_belongs_to_many :people
   accepts_nested_attributes_for :people, allow_destroy: true, reject_if: :all_blank
+  accepts_nested_attributes_for :location, reject_if: :all_blank
+
+  pg_search_scope :search_full_text,
+    against: { title: 'A', description: 'B' },
+    using: {
+      tsearch: { dictionary: 'russian', prefix: true, any_word: true }
+    }
 
   validates :title, presence: true
-  validates :description, presence: true
   validates :category, presence: true
 
   before_validation :set_default_end_date

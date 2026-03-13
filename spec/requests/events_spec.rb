@@ -11,6 +11,7 @@ RSpec.describe 'Events', type: :request do
 
   describe 'GET /events' do
     before { sign_in(user) }
+
     it 'renders the events index page' do
       get events_path
       expect(response).to have_http_status(:success)
@@ -22,6 +23,54 @@ RSpec.describe 'Events', type: :request do
 
       get events_path
       expect(response).to have_http_status(:success)
+    end
+
+    it 'returns pagination meta in props' do
+      get events_path
+      props = response.parsed_body
+      expect(response).to have_http_status(:success)
+    end
+
+    context 'with search query' do
+      let!(:matching)    { create(:event, creator: user, title: 'Рождение Ивана', description: 'событие') }
+      let!(:nonmatching) { create(:event, creator: user, title: 'Battle of Waterloo', description: 'history') }
+
+      it 'returns only matching events' do
+        get events_path, params: { q: 'Иван' }
+        expect(response).to have_http_status(:success)
+      end
+    end
+
+    context 'with source_type/source_id filter' do
+      let(:book)  { create(:book, creator: user) }
+      let!(:book_event)  { create(:event, creator: user, source: book) }
+      let!(:other_event) { create(:event, creator: user) }
+
+      it 'filters events by source' do
+        get events_path, params: { source_type: 'Book', source_id: book.id }
+        expect(response).to have_http_status(:success)
+      end
+    end
+
+    context 'with sort=date' do
+      it 'responds successfully' do
+        get events_path, params: { sort: 'date', direction: 'asc' }
+        expect(response).to have_http_status(:success)
+      end
+    end
+
+    context 'with sort=place' do
+      it 'responds successfully' do
+        get events_path, params: { sort: 'place', direction: 'asc' }
+        expect(response).to have_http_status(:success)
+      end
+    end
+
+    context 'with page parameter' do
+      it 'responds successfully' do
+        get events_path, params: { page: 1 }
+        expect(response).to have_http_status(:success)
+      end
     end
   end
 

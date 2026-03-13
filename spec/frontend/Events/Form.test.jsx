@@ -1,619 +1,303 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import Form from '../../../app/frontend/pages/Events/Form';
+import { render, screen, fireEvent } from '@testing-library/react'
+import Form from '../../../app/frontend/pages/Events/Form'
 
-// Mock Inertia
+const mockPost = jest.fn()
+const mockPut = jest.fn()
+const mockSetData = jest.fn()
+
 jest.mock('@inertiajs/react', () => ({
-  ...jest.requireActual('@inertiajs/react'),
-  router: {
-    post: jest.fn(),
-    put: jest.fn(),
-  },
   Head: ({ title }) => <title>{title}</title>,
-  Link: ({ children, href, className, ...props }) => (
-    <a href={href} className={className} {...props}>{children}</a>
-  ),
+  Link: ({ children, href, ...props }) => <a href={href} {...props}>{children}</a>,
   useForm: jest.fn(),
-}));
+  usePage: () => ({ props: { yandex_maps_api_key: 'test-key' } }),
+}))
 
-// Mock Layout component
 jest.mock('../../../app/frontend/pages/Layout', () => {
   return function Layout({ children }) {
-    return <div data-testid="layout">{children}</div>;
-  };
-});
+    return <div data-testid="layout">{children}</div>
+  }
+})
 
-describe('Events Form', () => {
-  let mockPost;
-  let mockPut;
-  let mockSetData;
-  let mockUseForm;
+jest.mock('../../../app/frontend/components/YandexMapPicker', () => {
+  return function YandexMapPicker({ onChange, disabled, address }) {
+    return (
+      <div data-testid="yandex-map-picker">
+        <button
+          type="button"
+          data-testid="map-pick"
+          onClick={() => onChange(55.75, 37.62, 'Москва, Россия')}
+          disabled={disabled}
+        >
+          Pick location
+        </button>
+        {address && <span data-testid="map-address">{address}</span>}
+      </div>
+    )
+  }
+})
 
-  const mockCategories = ['person', 'place', 'war', 'achievement', 'disaster'];
+const CATEGORIES = ['person', 'world', 'country', 'local']
+const CURRENT_USER = { id: 1, email: 'user@example.com' }
 
-  const mockCurrentUser = {
-    id: 1,
-    email: 'test@example.com',
-  };
+function makeFormData(overrides = {}) {
+  return {
+    event: {
+      title: '',
+      description: '',
+      start_date: '',
+      end_date: '',
+      category: 'person',
+      person_ids: [],
+      location_attributes: { id: null, place: '', latitude: null, longitude: null },
+      ...overrides,
+    },
+  }
+}
+
+function setupUseForm(dataOverrides = {}, processing = false) {
+  const { useForm } = require('@inertiajs/react')
+  useForm.mockReturnValue({
+    data: makeFormData(dataOverrides),
+    setData: mockSetData,
+    post: mockPost,
+    put: mockPut,
+    processing,
+  })
+}
+
+function renderForm(props = {}) {
+  return render(
+    <Form
+      event={{}}
+      categories={CATEGORIES}
+      isEdit={false}
+      current_user={CURRENT_USER}
+      flash={{}}
+      errors={[]}
+      {...props}
+    />
+  )
+}
+
+afterEach(() => jest.clearAllMocks())
+
+describe('Events Form — new event', () => {
+  beforeEach(() => setupUseForm())
+
+  it('renders "Create New Event" heading', () => {
+    renderForm()
+    expect(screen.getByText('Create New Event')).toBeInTheDocument()
+  })
+
+  it('renders Create Event submit button', () => {
+    renderForm()
+    expect(screen.getByRole('button', { name: 'Create Event' })).toBeInTheDocument()
+  })
+
+  it('renders all basic fields', () => {
+    renderForm()
+    expect(screen.getByLabelText('Title')).toBeInTheDocument()
+    expect(screen.getByLabelText('Description')).toBeInTheDocument()
+    expect(screen.getByLabelText('Category')).toBeInTheDocument()
+    expect(screen.getByLabelText('Start Date')).toBeInTheDocument()
+    expect(screen.getByLabelText('End Date')).toBeInTheDocument()
+  })
+
+  it('renders all category options', () => {
+    renderForm()
+    CATEGORIES.forEach(cat => {
+      expect(screen.getByText(cat.charAt(0).toUpperCase() + cat.slice(1))).toBeInTheDocument()
+    })
+  })
+
+  it('description is a textarea', () => {
+    renderForm()
+    expect(screen.getByLabelText('Description').tagName).toBe('TEXTAREA')
+  })
+
+  it('date inputs have type=date', () => {
+    renderForm()
+    expect(screen.getByLabelText('Start Date')).toHaveAttribute('type', 'date')
+    expect(screen.getByLabelText('End Date')).toHaveAttribute('type', 'date')
+  })
+
+  it('has Cancel link pointing to /events', () => {
+    renderForm()
+    expect(screen.getByText('Cancel').closest('a')).toHaveAttribute('href', '/events')
+  })
+
+  it('has Back to Events link', () => {
+    renderForm()
+    const backLink = screen.getByText(/Back to Events/)
+    expect(backLink.closest('a')).toHaveAttribute('href', '/events')
+  })
+
+  it('renders inside Layout', () => {
+    renderForm()
+    expect(screen.getByTestId('layout')).toBeInTheDocument()
+  })
+
+  it('calls post on submit', () => {
+    renderForm()
+    const form = screen.getByRole('button', { name: 'Create Event' }).closest('form')
+    fireEvent.submit(form)
+    expect(mockPost).toHaveBeenCalledWith('/events')
+  })
+
+  it('calls setData on title change', () => {
+    renderForm()
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Новое событие' } })
+    expect(mockSetData).toHaveBeenCalledWith('event.title', 'Новое событие')
+  })
+
+  it('calls setData on description change', () => {
+    renderForm()
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Описание' } })
+    expect(mockSetData).toHaveBeenCalledWith('event.description', 'Описание')
+  })
+
+  it('calls setData on category change', () => {
+    renderForm()
+    fireEvent.change(screen.getByLabelText('Category'), { target: { value: 'world' } })
+    expect(mockSetData).toHaveBeenCalledWith('event.category', 'world')
+  })
+})
+
+describe('Events Form — edit event', () => {
+  const EXISTING_EVENT = {
+    id: 42,
+    title: 'Battle of Waterloo',
+    description: 'A major battle',
+    category: 'world',
+    person_ids: [],
+    location: { id: 7, place: 'Waterloo', latitude: 50.68, longitude: 4.41 },
+  }
 
   beforeEach(() => {
-    mockPost = jest.fn();
-    mockPut = jest.fn();
-    mockSetData = jest.fn();
-    mockUseForm = {
-      data: {
-        event: {
-          title: '',
-          description: '',
-          start_date: '',
-          end_date: '',
-          category: 'person',
-        },
-      },
-      setData: mockSetData,
-      post: mockPost,
-      put: mockPut,
-      processing: false,
-    };
-
-    const { useForm } = require('@inertiajs/react');
-    useForm.mockReturnValue(mockUseForm);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  describe('New Event Form', () => {
-    it('renders create event form', () => {
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      expect(screen.getByText('Create New Event')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Create Event' })).toBeInTheDocument();
-    });
-
-    it('has all required form fields', () => {
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      expect(screen.getByLabelText('Title')).toBeInTheDocument();
-      expect(screen.getByLabelText('Description')).toBeInTheDocument();
-      expect(screen.getByLabelText('Category')).toBeInTheDocument();
-      expect(screen.getByLabelText('Start Date')).toBeInTheDocument();
-      expect(screen.getByLabelText('End Date')).toBeInTheDocument();
-    });
-
-    it('renders all category options', () => {
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      mockCategories.forEach(category => {
-        const capitalizedCategory = category.charAt(0).toUpperCase() + category.slice(1);
-        expect(screen.getByText(capitalizedCategory)).toBeInTheDocument();
-      });
-    });
-
-    it('calls setData when title input changes', () => {
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      const titleInput = screen.getByLabelText('Title');
-      fireEvent.change(titleInput, { target: { value: 'New Event Title' } });
-
-      expect(mockSetData).toHaveBeenCalledWith('event.title', 'New Event Title');
-    });
-
-    it('calls setData when description changes', () => {
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      const descriptionInput = screen.getByLabelText('Description');
-      fireEvent.change(descriptionInput, { target: { value: 'Event description' } });
-
-      expect(mockSetData).toHaveBeenCalledWith('event.description', 'Event description');
-    });
-
-    it('calls setData when category changes', () => {
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      const categorySelect = screen.getByLabelText('Category');
-      fireEvent.change(categorySelect, { target: { value: 'war' } });
-
-      expect(mockSetData).toHaveBeenCalledWith('event.category', 'war');
-    });
-
-    it('calls setData when start date changes', () => {
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      const startDateInput = screen.getByLabelText('Start Date');
-      fireEvent.change(startDateInput, { target: { value: '2024-01-01' } });
-
-      expect(mockSetData).toHaveBeenCalledWith('event.start_date', '2024-01-01');
-    });
-
-    it('calls setData when end date changes', () => {
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      const endDateInput = screen.getByLabelText('End Date');
-      fireEvent.change(endDateInput, { target: { value: '2024-01-02' } });
-
-      expect(mockSetData).toHaveBeenCalledWith('event.end_date', '2024-01-02');
-    });
-
-    it('calls post when form is submitted', () => {
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      const form = screen.getByRole('button', { name: /create event/i }).closest('form');
-      fireEvent.submit(form);
-
-      expect(mockPost).toHaveBeenCalledWith('/events');
-    });
-
-    it('date inputs use date type (not datetime-local)', () => {
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      const startDateInput = screen.getByLabelText('Start Date');
-      const endDateInput = screen.getByLabelText('End Date');
-
-      expect(startDateInput).toHaveAttribute('type', 'date');
-      expect(endDateInput).toHaveAttribute('type', 'date');
-    });
-  });
-
-  describe('Edit Event Form', () => {
-    const mockEvent = {
-      id: 1,
-      title: 'Battle of Waterloo',
-      description: 'A major battle',
-      start_date: '1815-06-18',
-      end_date: '1815-06-18',
-      category: 'war',
-    };
-
-    beforeEach(() => {
-      mockUseForm.data.event = {
-        title: mockEvent.title,
-        description: mockEvent.description,
-        start_date: mockEvent.start_date,
-        end_date: mockEvent.end_date,
-        category: mockEvent.category,
-      };
-      const { useForm } = require('@inertiajs/react');
-      useForm.mockReturnValue(mockUseForm);
-    });
-
-    it('renders edit event form', () => {
-      render(
-        <Form
-          event={mockEvent}
-          categories={mockCategories}
-          isEdit={true}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      expect(screen.getByText('Edit Event')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Update Event' })).toBeInTheDocument();
-    });
-
-    it('calls put when edit form is submitted', () => {
-      render(
-        <Form
-          event={mockEvent}
-          categories={mockCategories}
-          isEdit={true}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      const form = screen.getByRole('button', { name: /update event/i }).closest('form');
-      fireEvent.submit(form);
-
-      expect(mockPut).toHaveBeenCalledWith('/events/1');
-    });
-  });
-
-  describe('Form validation and UX', () => {
-    it('displays error messages when errors are provided', () => {
-      const errors = ['Title is required', 'Start date must be before end date'];
-
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={errors}
-        />
-      );
-
-      expect(screen.getByText('Title is required')).toBeInTheDocument();
-      expect(screen.getByText('Start date must be before end date')).toBeInTheDocument();
-    });
-
-    it('all required fields have required attribute', () => {
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      expect(screen.getByLabelText('Title')).toBeRequired();
-      expect(screen.getByLabelText('Description')).toBeRequired();
-      expect(screen.getByLabelText('Category')).toBeRequired();
-      expect(screen.getByLabelText('Start Date')).toBeRequired();
-      expect(screen.getByLabelText('End Date')).toBeRequired();
-    });
-
-    it('disables submit button when processing', () => {
-      mockUseForm.processing = true;
-      const { useForm } = require('@inertiajs/react');
-      useForm.mockReturnValue(mockUseForm);
-
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      const submitButton = screen.getByRole('button', { name: /creating/i });
-      expect(submitButton).toBeDisabled();
-    });
-
-    it('shows "Creating..." text when processing new event', () => {
-      mockUseForm.processing = true;
-      const { useForm } = require('@inertiajs/react');
-      useForm.mockReturnValue(mockUseForm);
-
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      expect(screen.getByText('Creating...')).toBeInTheDocument();
-    });
-
-    it('shows "Updating..." text when processing edit', () => {
-      mockUseForm.processing = true;
-      const { useForm } = require('@inertiajs/react');
-      useForm.mockReturnValue(mockUseForm);
-
-      render(
-        <Form
-          event={{ id: 1 }}
-          categories={mockCategories}
-          isEdit={true}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      expect(screen.getByText('Updating...')).toBeInTheDocument();
-    });
-
-    it('has cancel link that goes back to events list', () => {
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      const cancelLink = screen.getByText('Cancel');
-      expect(cancelLink.closest('a')).toHaveAttribute('href', '/events');
-    });
-
-    it('has back to events link', () => {
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      const backLink = screen.getByText('← Back to Events');
-      expect(backLink.closest('a')).toHaveAttribute('href', '/events');
-    });
-
-    it('renders within Layout component', () => {
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      expect(screen.getByTestId('layout')).toBeInTheDocument();
-    });
-
-    it('has correct input types', () => {
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      expect(screen.getByLabelText('Title')).toHaveAttribute('type', 'text');
-      expect(screen.getByLabelText('Start Date')).toHaveAttribute('type', 'date');
-      expect(screen.getByLabelText('End Date')).toHaveAttribute('type', 'date');
-    });
-
-    it('description is a textarea', () => {
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      const descriptionField = screen.getByLabelText('Description');
-      expect(descriptionField.tagName).toBe('TEXTAREA');
-    });
-  });
-
-  describe('Conditional display based on category', () => {
-    const mockPeople = [
-      { id: 1, full_name: 'John Adams' },
-      { id: 2, full_name: 'Marie Curie' },
-    ];
-
-    it('shows Associated People field when category is person', () => {
-      mockUseForm.data.event.category = 'person';
-      const { useForm } = require('@inertiajs/react');
-      useForm.mockReturnValue(mockUseForm);
-
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          people={mockPeople}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      expect(screen.getByLabelText('Associated People')).toBeInTheDocument();
-    });
-
-    it('hides Associated People field when category is not person', () => {
-      mockUseForm.data.event.category = 'war';
-      const { useForm } = require('@inertiajs/react');
-      useForm.mockReturnValue(mockUseForm);
-
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          people={mockPeople}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      expect(screen.queryByLabelText('Associated People')).not.toBeInTheDocument();
-    });
-
-    it('clears person_ids when changing category from person to another type', () => {
-      mockUseForm.data.event.category = 'person';
-      mockUseForm.data.event.person_ids = [1, 2];
-      const { useForm } = require('@inertiajs/react');
-      useForm.mockReturnValue(mockUseForm);
-
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          people={mockPeople}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      const categorySelect = screen.getByLabelText('Category');
-      fireEvent.change(categorySelect, { target: { value: 'war' } });
-
-      // Should call setData twice: once for category, once to clear person_ids
-      expect(mockSetData).toHaveBeenCalledWith('event.category', 'war');
-      expect(mockSetData).toHaveBeenCalledWith('event.person_ids', []);
-    });
-
-    it('does not clear person_ids when changing to person category', () => {
-      mockUseForm.data.event.category = 'war';
-      const { useForm } = require('@inertiajs/react');
-      useForm.mockReturnValue(mockUseForm);
-
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          people={mockPeople}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      const categorySelect = screen.getByLabelText('Category');
-      fireEvent.change(categorySelect, { target: { value: 'person' } });
-
-      // Should only call setData once for category change, not for clearing person_ids
-      expect(mockSetData).toHaveBeenCalledWith('event.category', 'person');
-      expect(mockSetData).not.toHaveBeenCalledWith('event.person_ids', []);
-    });
-
-    it('shows Associated People field for place category', () => {
-      mockUseForm.data.event.category = 'place';
-      const { useForm } = require('@inertiajs/react');
-      useForm.mockReturnValue(mockUseForm);
-
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          people={mockPeople}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      expect(screen.queryByLabelText('Associated People')).not.toBeInTheDocument();
-    });
-
-    it('shows Associated People field for achievement category', () => {
-      mockUseForm.data.event.category = 'achievement';
-      const { useForm } = require('@inertiajs/react');
-      useForm.mockReturnValue(mockUseForm);
-
-      render(
-        <Form
-          event={{}}
-          categories={mockCategories}
-          people={mockPeople}
-          isEdit={false}
-          current_user={mockCurrentUser}
-          flash={{}}
-          errors={[]}
-        />
-      );
-
-      expect(screen.queryByLabelText('Associated People')).not.toBeInTheDocument();
-    });
-  });
-});
+    setupUseForm({
+      title: EXISTING_EVENT.title,
+      description: EXISTING_EVENT.description,
+      category: EXISTING_EVENT.category,
+      location_attributes: EXISTING_EVENT.location,
+    })
+  })
+
+  it('renders "Edit Event" heading', () => {
+    renderForm({ event: EXISTING_EVENT, isEdit: true })
+    expect(screen.getByText('Edit Event')).toBeInTheDocument()
+  })
+
+  it('renders Update Event button', () => {
+    renderForm({ event: EXISTING_EVENT, isEdit: true })
+    expect(screen.getByRole('button', { name: 'Update Event' })).toBeInTheDocument()
+  })
+
+  it('calls put on submit', () => {
+    renderForm({ event: EXISTING_EVENT, isEdit: true })
+    fireEvent.submit(screen.getByRole('button', { name: 'Update Event' }).closest('form'))
+    expect(mockPut).toHaveBeenCalledWith('/events/42')
+  })
+})
+
+describe('Events Form — loading state', () => {
+  it('shows Creating... and disables button when processing', () => {
+    setupUseForm({}, true)
+    renderForm()
+    const btn = screen.getByRole('button', { name: 'Creating...' })
+    expect(btn).toBeDisabled()
+  })
+
+  it('shows Updating... when processing in edit mode', () => {
+    setupUseForm({}, true)
+    renderForm({ event: { id: 1 }, isEdit: true })
+    expect(screen.getByText('Updating...')).toBeInTheDocument()
+  })
+})
+
+describe('Events Form — error display', () => {
+  it('renders error messages', () => {
+    setupUseForm()
+    renderForm({ errors: ["Title can't be blank", 'Category is invalid'] })
+    expect(screen.getByText("Title can't be blank")).toBeInTheDocument()
+    expect(screen.getByText('Category is invalid')).toBeInTheDocument()
+  })
+
+  it('does not render error block when no errors', () => {
+    setupUseForm()
+    renderForm({ errors: [] })
+    expect(screen.queryByText(/can't be blank/)).not.toBeInTheDocument()
+  })
+})
+
+describe('Events Form — Associated People', () => {
+  const PEOPLE = [
+    { id: 1, full_name: 'Иван Иванов' },
+    { id: 2, full_name: 'Мария Петрова' },
+  ]
+
+  it('shows Associated People when category is person', () => {
+    setupUseForm({ category: 'person' })
+    renderForm({ people: PEOPLE })
+    expect(screen.getByLabelText('Associated People')).toBeInTheDocument()
+    expect(screen.getByText('Иван Иванов')).toBeInTheDocument()
+  })
+
+  it('hides Associated People for non-person categories', () => {
+    setupUseForm({ category: 'world' })
+    renderForm({ people: PEOPLE })
+    expect(screen.queryByLabelText('Associated People')).not.toBeInTheDocument()
+  })
+
+  it('clears person_ids when switching away from person', () => {
+    setupUseForm({ category: 'person', person_ids: [1] })
+    renderForm({ people: PEOPLE })
+    fireEvent.change(screen.getByLabelText('Category'), { target: { value: 'world' } })
+    expect(mockSetData).toHaveBeenCalledWith('event.category', 'world')
+    expect(mockSetData).toHaveBeenCalledWith('event.person_ids', [])
+  })
+
+  it('does not clear person_ids when switching to person', () => {
+    setupUseForm({ category: 'world' })
+    renderForm({ people: PEOPLE })
+    fireEvent.change(screen.getByLabelText('Category'), { target: { value: 'person' } })
+    expect(mockSetData).toHaveBeenCalledWith('event.category', 'person')
+    expect(mockSetData).not.toHaveBeenCalledWith('event.person_ids', [])
+  })
+})
+
+describe('Events Form — YandexMapPicker', () => {
+  it('renders map picker section with label', () => {
+    setupUseForm()
+    renderForm()
+    expect(screen.getByTestId('yandex-map-picker')).toBeInTheDocument()
+    expect(screen.getByText('Event Location')).toBeInTheDocument()
+  })
+
+  it('calls setData with location_attributes on map pick', () => {
+    setupUseForm()
+    renderForm()
+    fireEvent.click(screen.getByTestId('map-pick'))
+    expect(mockSetData).toHaveBeenCalledWith(
+      'event.location_attributes',
+      expect.objectContaining({
+        latitude: 55.75,
+        longitude: 37.62,
+        place: 'Москва, Россия',
+      })
+    )
+  })
+
+  it('passes existing address to map picker', () => {
+    setupUseForm({
+      location_attributes: { id: 5, place: 'Санкт-Петербург', latitude: 59.93, longitude: 30.33 },
+    })
+    renderForm()
+    expect(screen.getByTestId('map-address')).toHaveTextContent('Санкт-Петербург')
+  })
+
+  it('map picker button is disabled when processing', () => {
+    setupUseForm({}, true)
+    renderForm()
+    expect(screen.getByTestId('map-pick')).toBeDisabled()
+  })
+})

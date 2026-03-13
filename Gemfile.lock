@@ -334,6 +334,9 @@ GEM
       ast (~> 2.4.1)
       racc
     pg (1.6.2-x86_64-linux)
+    pg_search (2.3.7)
+      activerecord (>= 6.1)
+      activesupport (>= 6.1)
     pp (0.6.2)
       prettyprint
     prettier_print (1.2.1)
@@ -614,6 +617,7 @@ DEPENDENCIES
   kaminari
   lograge
   pg
+  pg_search
   prettier_print
   pry
   pry-rails

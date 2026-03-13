@@ -10,9 +10,28 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_24_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_10_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "_yoyo_log", id: { type: :string, limit: 36 }, force: :cascade do |t|
+    t.string "migration_hash", limit: 64
+    t.string "migration_id", limit: 255
+    t.string "operation", limit: 10
+    t.string "username", limit: 255
+    t.string "hostname", limit: 255
+    t.string "comment", limit: 255
+    t.datetime "created_at_utc", precision: nil
+  end
+
+  create_table "_yoyo_migration", primary_key: "migration_hash", id: { type: :string, limit: 64 }, force: :cascade do |t|
+    t.string "migration_id", limit: 255
+    t.datetime "applied_at_utc", precision: nil
+  end
+
+  create_table "_yoyo_version", primary_key: "version", id: :integer, default: nil, force: :cascade do |t|
+    t.datetime "installed_at_utc", precision: nil
+  end
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -64,8 +83,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_24_000001) do
     t.bigint "end_date_id"
     t.string "source_type"
     t.bigint "source_id"
+    t.integer "page_number"
+    t.bigint "location_id"
     t.index ["creator_id"], name: "index_events_on_creator_id"
     t.index ["end_date_id"], name: "index_events_on_end_date_id"
+    t.index ["location_id"], name: "index_events_on_location_id"
+    t.index ["source_type", "source_id", "page_number"], name: "index_events_on_source_and_page_number"
     t.index ["source_type", "source_id"], name: "index_events_on_source_type_and_source_id"
     t.index ["start_date_id"], name: "index_events_on_start_date_id"
   end
@@ -100,6 +123,29 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_24_000001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_gedcom_files_on_user_id"
+  end
+
+  create_table "locations", force: :cascade do |t|
+    t.string "place"
+    t.decimal "latitude", precision: 10, scale: 6
+    t.decimal "longitude", precision: 10, scale: 6
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "page_processing_cache", force: :cascade do |t|
+    t.text "blob_key", null: false
+    t.integer "page_number", null: false
+    t.integer "book_id", null: false
+    t.text "page_text"
+    t.jsonb "events"
+    t.text "status", default: "text_ready", null: false
+    t.timestamptz "created_at", default: -> { "now()" }, null: false
+    t.index ["blob_key"], name: "idx_page_cache_blob_key"
+    t.index ["book_id"], name: "idx_page_cache_book_id"
+    t.index ["created_at"], name: "idx_page_cache_created_at"
+    t.index ["status"], name: "idx_page_cache_status"
+    t.unique_constraint ["blob_key", "page_number"], name: "uq_page_cache_blob_page"
   end
 
   create_table "people", force: :cascade do |t|
@@ -155,11 +201,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_24_000001) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  create_table "yoyo_lock", primary_key: "locked", id: :integer, default: 1, force: :cascade do |t|
+    t.datetime "ctime", precision: nil
+    t.integer "pid", null: false
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "books", "users", column: "creator_id"
   add_foreign_key "events", "fuzzy_dates", column: "end_date_id"
   add_foreign_key "events", "fuzzy_dates", column: "start_date_id"
+  add_foreign_key "events", "locations"
   add_foreign_key "events", "users", column: "creator_id"
   add_foreign_key "gedcom_files", "users"
   add_foreign_key "people", "gedcom_files"

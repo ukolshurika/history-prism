@@ -1,245 +1,321 @@
-import { render, screen } from '@testing-library/react';
-import { router } from '@inertiajs/react';
-import Index from '../../../app/frontend/pages/Events/Index';
+import { render, screen, fireEvent } from '@testing-library/react'
+import Index from '../../../app/frontend/pages/Events/Index'
 
-// Mock Inertia
 jest.mock('@inertiajs/react', () => ({
-  ...jest.requireActual('@inertiajs/react'),
-  router: {
-    visit: jest.fn(),
-  },
   Head: ({ title }) => <title>{title}</title>,
-  Link: ({ children, href, className, ...props }) => (
-    <a href={href} className={className} {...props}>{children}</a>
-  ),
-}));
+  Link: ({ children, href, ...props }) => <a href={href} {...props}>{children}</a>,
+  router: { get: jest.fn() },
+}))
 
-// Mock Layout component
 jest.mock('../../../app/frontend/pages/Layout', () => {
   return function Layout({ children }) {
-    return <div data-testid="layout">{children}</div>;
-  };
-});
+    return <div data-testid="layout">{children}</div>
+  }
+})
 
-describe('Events Index', () => {
-  const mockCurrentUser = {
+const { router } = require('@inertiajs/react')
+
+const EVENTS = [
+  {
     id: 1,
-    email: 'test@example.com',
-  };
+    title: 'Рождение Ивана',
+    category: 'person',
+    start_date_display: '1850',
+    location: { place: 'Москва' },
+    source_name: 'Метрическая книга',
+    page_number: 12,
+  },
+  {
+    id: 2,
+    title: 'Battle of Waterloo',
+    category: 'world',
+    start_date_display: '1815-06-18',
+    location: null,
+    source_name: null,
+    page_number: null,
+  },
+]
 
-  const mockEvents = [
-    {
-      id: 1,
-      title: 'Battle of Waterloo',
-      description: 'A major battle in European history',
-      start_date: '1815-06-18',
-      end_date: '1815-06-18',
-      category: 'war',
-      creator: { email: 'test@example.com' },
-    },
-    {
-      id: 2,
-      title: 'Moon Landing',
-      description: 'First humans on the moon',
-      start_date: '1969-07-20',
-      end_date: '1969-07-20',
-      category: 'achievement',
-      creator: { email: 'another@example.com' },
-    },
-  ];
+const PAGINATION = {
+  current_page: 1,
+  total_pages: 3,
+  total_count: 62,
+  per_page: 25,
+}
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+const CURRENT_USER = { id: 1, email: 'test@example.com' }
 
-  it('renders events list page title', () => {
-    render(
-      <Index
-        events={mockEvents}
-        current_user={mockCurrentUser}
-        flash={{}}
-      />
-    );
+function renderIndex(props = {}) {
+  return render(
+    <Index
+      events={EVENTS}
+      current_user={CURRENT_USER}
+      flash={{}}
+      pagination={PAGINATION}
+      filters={{}}
+      {...props}
+    />
+  )
+}
 
-    expect(screen.getByText('Events')).toBeInTheDocument();
-  });
+afterEach(() => jest.clearAllMocks())
 
-  it('renders all events with their details', () => {
-    render(
-      <Index
-        events={mockEvents}
-        current_user={mockCurrentUser}
-        flash={{}}
-      />
-    );
+describe('Events Index — table', () => {
+  it('renders page title', () => {
+    renderIndex()
+    expect(screen.getByText('Events')).toBeInTheDocument()
+  })
 
-    expect(screen.getByText('Battle of Waterloo')).toBeInTheDocument();
-    expect(screen.getByText('A major battle in European history')).toBeInTheDocument();
-    expect(screen.getByText('Moon Landing')).toBeInTheDocument();
-    expect(screen.getByText('First humans on the moon')).toBeInTheDocument();
-  });
+  it('renders table headers', () => {
+    renderIndex()
+    expect(screen.getByText('Title')).toBeInTheDocument()
+    expect(screen.getByText(/Category/i)).toBeInTheDocument()
+    expect(screen.getByText(/Source/i)).toBeInTheDocument()
+    expect(screen.getByText(/Page/i)).toBeInTheDocument()
+  })
 
-  it('displays event categories', () => {
-    render(
-      <Index
-        events={mockEvents}
-        current_user={mockCurrentUser}
-        flash={{}}
-      />
-    );
+  it('renders event titles as links', () => {
+    renderIndex()
+    expect(screen.getByText('Рождение Ивана').closest('a')).toHaveAttribute('href', '/events/1')
+    expect(screen.getByText('Battle of Waterloo').closest('a')).toHaveAttribute('href', '/events/2')
+  })
 
-    expect(screen.getByText('war')).toBeInTheDocument();
-    expect(screen.getByText('achievement')).toBeInTheDocument();
-  });
+  it('renders category badges', () => {
+    renderIndex()
+    expect(screen.getByText('person')).toBeInTheDocument()
+    expect(screen.getByText('world')).toBeInTheDocument()
+  })
 
-  it('displays event dates in readable format', () => {
-    render(
-      <Index
-        events={mockEvents}
-        current_user={mockCurrentUser}
-        flash={{}}
-      />
-    );
+  it('renders start_date_display', () => {
+    renderIndex()
+    expect(screen.getByText('1850')).toBeInTheDocument()
+    expect(screen.getByText('1815-06-18')).toBeInTheDocument()
+  })
 
-    // Check for "Start:" and "End:" labels
-    const startLabels = screen.getAllByText(/Start:/);
-    const endLabels = screen.getAllByText(/End:/);
+  it('renders location place', () => {
+    renderIndex()
+    expect(screen.getByText('Москва')).toBeInTheDocument()
+  })
 
-    expect(startLabels.length).toBeGreaterThan(0);
-    expect(endLabels.length).toBeGreaterThan(0);
-  });
+  it('renders em-dash for missing fields', () => {
+    renderIndex()
+    const dashes = screen.getAllByText('—')
+    expect(dashes.length).toBeGreaterThan(0)
+  })
 
-  it('displays event creator email', () => {
-    render(
-      <Index
-        events={mockEvents}
-        current_user={mockCurrentUser}
-        flash={{}}
-      />
-    );
+  it('renders source_name', () => {
+    renderIndex()
+    expect(screen.getByText('Метрическая книга')).toBeInTheDocument()
+  })
 
-    expect(screen.getByText(/test@example.com/)).toBeInTheDocument();
-    expect(screen.getByText(/another@example.com/)).toBeInTheDocument();
-  });
+  it('renders page_number', () => {
+    renderIndex()
+    expect(screen.getByText('12')).toBeInTheDocument()
+  })
 
-  it('shows create event button when user is logged in', () => {
-    render(
-      <Index
-        events={mockEvents}
-        current_user={mockCurrentUser}
-        flash={{}}
-      />
-    );
+  it('renders inside Layout', () => {
+    renderIndex()
+    expect(screen.getByTestId('layout')).toBeInTheDocument()
+  })
+})
 
-    const createButtons = screen.getAllByText('Create Event');
-    expect(createButtons.length).toBeGreaterThan(0);
-  });
+describe('Events Index — empty state', () => {
+  it('shows empty state message', () => {
+    renderIndex({ events: [] })
+    expect(screen.getByText('No events found.')).toBeInTheDocument()
+  })
 
-  it('shows create event link with correct href', () => {
-    render(
-      <Index
-        events={mockEvents}
-        current_user={mockCurrentUser}
-        flash={{}}
-      />
-    );
+  it('shows create link for logged-in user', () => {
+    renderIndex({ events: [] })
+    expect(screen.getByText('Create the first event')).toBeInTheDocument()
+  })
 
-    const createLinks = screen.getAllByRole('link', { name: /Create Event|\\+/ });
-    createLinks.forEach(link => {
-      expect(link).toHaveAttribute('href', '/events/new');
-    });
-  });
+  it('hides create link for guests', () => {
+    renderIndex({ events: [], current_user: null })
+    expect(screen.queryByText('Create the first event')).not.toBeInTheDocument()
+  })
+})
 
-  it('does not show create button when user is not logged in', () => {
-    render(
-      <Index
-        events={mockEvents}
-        current_user={null}
-        flash={{}}
-      />
-    );
+describe('Events Index — new event button', () => {
+  it('shows button for logged-in user', () => {
+    renderIndex()
+    expect(screen.getByText('+ New Event')).toBeInTheDocument()
+  })
 
-    expect(screen.queryByText('Create Event')).not.toBeInTheDocument();
-  });
+  it('hides button for guests', () => {
+    renderIndex({ current_user: null })
+    expect(screen.queryByText('+ New Event')).not.toBeInTheDocument()
+  })
+})
 
-  it('shows empty state when no events exist', () => {
-    render(
-      <Index
-        events={[]}
-        current_user={mockCurrentUser}
-        flash={{}}
-      />
-    );
+describe('Events Index — source filter badge', () => {
+  it('shows filter info when source filters are active', () => {
+    renderIndex({ filters: { source_type: 'Book', source_id: '5' } })
+    expect(screen.getByText(/Filtered by source/)).toBeInTheDocument()
+  })
 
-    expect(screen.getByText('No events yet.')).toBeInTheDocument();
-  });
+  it('does not show filter badge without filters', () => {
+    renderIndex({ filters: {} })
+    expect(screen.queryByText(/Filtered by source/)).not.toBeInTheDocument()
+  })
+})
 
-  it('shows create prompt in empty state for logged in users', () => {
-    render(
-      <Index
-        events={[]}
-        current_user={mockCurrentUser}
-        flash={{}}
-      />
-    );
+describe('Events Index — search', () => {
+  it('renders search input and button', () => {
+    renderIndex()
+    expect(screen.getByPlaceholderText('Search events...')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Search' })).toBeInTheDocument()
+  })
 
-    expect(screen.getByText('Create the first event')).toBeInTheDocument();
-  });
+  it('initialises input from filters.q', () => {
+    renderIndex({ filters: { q: 'Иван' } })
+    expect(screen.getByPlaceholderText('Search events...')).toHaveValue('Иван')
+  })
 
-  it('does not show create prompt in empty state for logged out users', () => {
-    render(
-      <Index
-        events={[]}
-        current_user={null}
-        flash={{}}
-      />
-    );
+  it('shows Clear button only when filters.q is set', () => {
+    renderIndex({ filters: { q: 'Иван' } })
+    expect(screen.getByRole('button', { name: 'Clear' })).toBeInTheDocument()
+  })
 
-    expect(screen.queryByText('Create the first event')).not.toBeInTheDocument();
-  });
+  it('hides Clear button when no query', () => {
+    renderIndex({ filters: {} })
+    expect(screen.queryByRole('button', { name: 'Clear' })).not.toBeInTheDocument()
+  })
 
-  it('renders event links with correct href', () => {
-    render(
-      <Index
-        events={mockEvents}
-        current_user={mockCurrentUser}
-        flash={{}}
-      />
-    );
+  it('calls router.get with q on submit, preserving source filters', () => {
+    renderIndex({ filters: { source_type: 'Book', source_id: '5' } })
+    const input = screen.getByPlaceholderText('Search events...')
+    fireEvent.change(input, { target: { value: 'революция' } })
+    fireEvent.submit(input.closest('form'))
+    expect(router.get).toHaveBeenCalledWith(
+      '/events',
+      expect.objectContaining({ q: 'революция', source_type: 'Book', source_id: '5' }),
+      expect.any(Object)
+    )
+  })
 
-    const eventLinks = screen.getAllByRole('link').filter(link =>
-      link.getAttribute('href')?.includes('/events/')
-    );
+  it('preserves source filters on clear', () => {
+    renderIndex({ filters: { q: 'test', source_type: 'Book', source_id: '5' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }))
+    expect(router.get).toHaveBeenCalledWith(
+      '/events',
+      expect.objectContaining({ source_type: 'Book', source_id: '5' }),
+      expect.any(Object)
+    )
+  })
+})
 
-    expect(eventLinks.length).toBeGreaterThan(0);
-  });
+describe('Events Index — sortable headers', () => {
+  it('clicking Start Date calls router.get with sort=date asc', () => {
+    renderIndex({ filters: {} })
+    fireEvent.click(screen.getByText(/Start Date/))
+    expect(router.get).toHaveBeenCalledWith(
+      '/events',
+      expect.objectContaining({ sort: 'date', direction: 'asc' }),
+      expect.any(Object)
+    )
+  })
 
-  it('renders within Layout component', () => {
-    render(
-      <Index
-        events={mockEvents}
-        current_user={mockCurrentUser}
-        flash={{}}
-      />
-    );
+  it('clicking Place calls router.get with sort=place asc', () => {
+    renderIndex({ filters: {} })
+    fireEvent.click(screen.getByText(/Place/))
+    expect(router.get).toHaveBeenCalledWith(
+      '/events',
+      expect.objectContaining({ sort: 'place', direction: 'asc' }),
+      expect.any(Object)
+    )
+  })
 
-    expect(screen.getByTestId('layout')).toBeInTheDocument();
-  });
+  it('toggles to desc on second click of same column', () => {
+    renderIndex({ filters: { sort: 'date', direction: 'asc' } })
+    fireEvent.click(screen.getByText(/Start Date/))
+    expect(router.get).toHaveBeenCalledWith(
+      '/events',
+      expect.objectContaining({ sort: 'date', direction: 'desc' }),
+      expect.any(Object)
+    )
+  })
 
-  it('displays multiple create event buttons for better UX', () => {
-    render(
-      <Index
-        events={mockEvents}
-        current_user={mockCurrentUser}
-        flash={{}}
-      />
-    );
+  it('shows ↑ for active asc sort', () => {
+    renderIndex({ filters: { sort: 'date', direction: 'asc' } })
+    expect(screen.getByText('↑')).toBeInTheDocument()
+  })
 
-    // Should have at least a button and a circular plus button
-    const createLinks = screen.getAllByRole('link').filter(link =>
-      link.getAttribute('href') === '/events/new'
-    );
+  it('shows ↓ for active desc sort', () => {
+    renderIndex({ filters: { sort: 'date', direction: 'desc' } })
+    expect(screen.getByText('↓')).toBeInTheDocument()
+  })
 
-    expect(createLinks.length).toBeGreaterThan(1);
-  });
-});
+  it('shows ↕ for inactive column', () => {
+    renderIndex({ filters: { sort: 'date', direction: 'asc' } })
+    expect(screen.getByText('↕')).toBeInTheDocument()
+  })
+})
+
+describe('Events Index — pagination', () => {
+  it('renders prev/next buttons', () => {
+    renderIndex()
+    expect(screen.getByText('«')).toBeInTheDocument()
+    expect(screen.getByText('»')).toBeInTheDocument()
+  })
+
+  it('shows total count', () => {
+    renderIndex()
+    expect(screen.getByText('Total: 62')).toBeInTheDocument()
+  })
+
+  it('disables prev on first page', () => {
+    renderIndex({ pagination: { ...PAGINATION, current_page: 1 } })
+    expect(screen.getByText('«').closest('button')).toBeDisabled()
+  })
+
+  it('disables next on last page', () => {
+    renderIndex({ pagination: { ...PAGINATION, current_page: 3, total_pages: 3 } })
+    expect(screen.getByText('»').closest('button')).toBeDisabled()
+  })
+
+  it('clicking page number navigates', () => {
+    renderIndex({ pagination: { ...PAGINATION, current_page: 1, total_pages: 3 } })
+    fireEvent.click(screen.getByRole('button', { name: '2' }))
+    expect(router.get).toHaveBeenCalledWith(
+      '/events',
+      expect.objectContaining({ page: 2 }),
+      expect.any(Object)
+    )
+  })
+
+  it('clicking next advances page', () => {
+    renderIndex({ pagination: { ...PAGINATION, current_page: 1 } })
+    fireEvent.click(screen.getByText('»').closest('button'))
+    expect(router.get).toHaveBeenCalledWith(
+      '/events',
+      expect.objectContaining({ page: 2 }),
+      expect.any(Object)
+    )
+  })
+
+  it('does not render pagination when only 1 page', () => {
+    renderIndex({ pagination: { ...PAGINATION, total_pages: 1 } })
+    expect(screen.queryByText('«')).not.toBeInTheDocument()
+  })
+
+  it('preserves all filters when paginating', () => {
+    renderIndex({
+      pagination: PAGINATION,
+      filters: { q: 'test', sort: 'date', direction: 'asc', source_type: 'Book', source_id: '3' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '2' }))
+    expect(router.get).toHaveBeenCalledWith(
+      '/events',
+      expect.objectContaining({
+        q: 'test',
+        sort: 'date',
+        direction: 'asc',
+        source_type: 'Book',
+        source_id: '3',
+        page: 2,
+      }),
+      expect.any(Object)
+    )
+  })
+})

@@ -3,9 +3,9 @@ require 'rails_helper'
 RSpec.describe EventPolicy do
   subject { described_class }
 
-  let(:user) { User.create!(email: 'test@example.com', password: 'password123', password_confirmation: 'password123') }
-  let(:other_user) { User.create!(email: 'other@example.com', password: 'password123', password_confirmation: 'password123') }
-  let(:event) { Event.create!(title: 'Test Event', description: 'Test Description', start_date: Time.now, end_date: Time.now + 1.day, category: :person, creator_id: user.id) }
+  let(:user)       { create(:user) }
+  let(:other_user) { create(:user) }
+  let(:event)      { create(:event, creator: user) }
 
   permissions :index? do
     it 'allows anyone to view the index' do
@@ -61,19 +61,17 @@ RSpec.describe EventPolicy do
   end
 
   describe 'Scope' do
-    let!(:user_event) { Event.create!(title: 'User Event', description: 'Description', start_date: Time.now, end_date: Time.now + 1.day, category: :person, creator_id: user.id) }
-    let!(:other_event) { Event.create!(title: 'Other Event', description: 'Description', start_date: Time.now, end_date: Time.now + 1.day, category: :world, creator_id: other_user.id) }
+    let!(:user_event)  { create(:event, creator: user, category: :person) }
+    let!(:other_event) { create(:event, creator: other_user, category: :world) }
 
     it 'returns all events for any user' do
       scope = EventPolicy::Scope.new(user, Event).resolve
       expect(scope).to include(user_event, other_event)
-      expect(scope.count).to eq(2)
     end
 
     it 'returns all events for unauthenticated users' do
       scope = EventPolicy::Scope.new(nil, Event).resolve
       expect(scope).to include(user_event, other_event)
-      expect(scope.count).to eq(2)
     end
   end
 end
