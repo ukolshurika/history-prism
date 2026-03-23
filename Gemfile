@@ -59,6 +59,7 @@ gem 'statesman', '~> 10.0.0'
 
 group :development do
   gem 'dry-types-rails'
+  gem 'letter_opener'
 end
 
 group :development, :test do

@@ -18,11 +18,67 @@ RSpec.describe 'People', type: :request do
     end
 
     it 'displays only current user\'s people' do
-      person1 = create(:person, user: user, first_name: 'Jane', last_name: 'Smith')
-      person2 = create(:person, user: other_user, first_name: 'Bob', last_name: 'Jones')
+      create(:person, user: user, first_name: 'Jane', last_name: 'Smith')
+      create(:person, user: other_user, first_name: 'Bob', last_name: 'Jones')
 
       get people_path
       expect(response).to have_http_status(:success)
+    end
+
+    describe 'pagination' do
+      def inertia_props(response)
+        doc = Nokogiri::HTML(response.body)
+        JSON.parse(doc.at('[data-page]')['data-page'])['props']
+      end
+
+      it 'paginates results to 25 per page' do
+        create_list(:person, 30, user: user)
+        get people_path
+        expect(response).to have_http_status(:success)
+        pagination = inertia_props(response)['pagination']
+        expect(pagination['per_page']).to eq(25)
+        expect(pagination['total_count']).to eq(30)
+        expect(pagination['total_pages']).to eq(2)
+      end
+
+      it 'returns page 2 when requested' do
+        create_list(:person, 30, user: user)
+        get people_path, params: { page: 2 }
+        expect(response).to have_http_status(:success)
+        pagination = inertia_props(response)['pagination']
+        expect(pagination['current_page']).to eq(2)
+      end
+
+      it 'returns first page by default' do
+        create_list(:person, 30, user: user)
+        get people_path
+        pagination = inertia_props(response)['pagination']
+        expect(pagination['current_page']).to eq(1)
+      end
+    end
+
+    describe 'filter persistence' do
+      def inertia_props(response)
+        doc = Nokogiri::HTML(response.body)
+        JSON.parse(doc.at('[data-page]')['data-page'])['props']
+      end
+
+      it 'returns filters in response' do
+        get people_path, params: { 'q[first_name_cont]' => 'Alice' }
+        expect(response).to have_http_status(:success)
+        filters = inertia_props(response)['filters']
+        expect(filters.dig('q', 'first_name_cont')).to eq('Alice')
+      end
+
+      it 'filters and paginates together' do
+        create_list(:person, 30, user: user, first_name: 'Alice')
+        create(:person, user: user, first_name: 'Bob')
+        get people_path, params: { 'q[first_name_cont]' => 'Alice', page: 2 }
+        expect(response).to have_http_status(:success)
+        pagination = inertia_props(response)['pagination']
+        expect(pagination['total_count']).to eq(30)
+        expect(pagination['current_page']).to eq(2)
+      end
     end
   end
 

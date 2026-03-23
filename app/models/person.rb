@@ -11,7 +11,7 @@ class Person < ApplicationRecord
   validates :first_name, presence: true
   validates :middle_name, presence: false
   validates :last_name, presence: false
-  validates :gedcom_uuid, presence: true, uniqueness: true
+  validates :gedcom_uuid, presence: true, uniqueness: { scope: :gedcom_file_id }
   validate :events_must_be_person_type
 
   # Ransack configuration

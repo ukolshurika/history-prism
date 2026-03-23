@@ -5,13 +5,15 @@ class PeopleController < ApplicationController
 
   def index
     @q = Current.user.people.ransack(params[:q])
-    @people = @q.result.includes(:events, :timelines).order(first_name: :asc)
+    @people = @q.result.includes(:events, :timelines).order(first_name: :asc).page(params[:page]).per(25)
     @gedcom_files = Current.user.gedcom_files.order(created_at: :desc)
 
     render inertia: 'People/Index', props: {
       people: ActiveModelSerializers::SerializableResource.new(@people, each_serializer: PersonSerializer).as_json,
       gedcom_files: @gedcom_files.map { |gf| { id: gf.id, name: gf.file.filename.to_s } },
-      current_user: current_user
+      current_user: current_user,
+      pagination: pagination_meta(@people),
+      filters: { q: params[:q] }
     }
   end
 
@@ -99,6 +101,15 @@ class PeopleController < ApplicationController
 
   def person_params
     params.require(:person).permit(:name, :first_name, :middle_name, :last_name, :gedcom_uuid, event_ids: [], events_attributes: [:id, :title, :description, :start_date, :end_date, :category, :_destroy])
+  end
+
+  def pagination_meta(collection)
+    {
+      current_page: collection.current_page,
+      total_pages: collection.total_pages,
+      total_count: collection.total_count,
+      per_page: collection.limit_value
+    }
   end
 
   def available_person_events

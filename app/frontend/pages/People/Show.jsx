@@ -119,9 +119,11 @@ export default function Show({ person, can_edit, can_delete, current_user, flash
                           <div>
                             <h4 className="font-medium text-gray-900">{event.title}</h4>
                             <p className="text-sm text-gray-600 mt-1">{event.description}</p>
-                            <p className="text-xs text-gray-500 mt-2">
-                              {new Date(event.start_date).toLocaleDateString()} - {new Date(event.end_date).toLocaleDateString()}
-                            </p>
+                            {event.start_date_display && (
+                              <p className="text-xs text-gray-500 mt-2">
+                                {event.start_date_display}
+                              </p>
+                            )}
                           </div>
                           <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-blue-100 text-blue-800">
                             {event.category}

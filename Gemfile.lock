@@ -125,6 +125,8 @@ GEM
       xpath (~> 3.2)
     case_transform (0.2)
       activesupport
+    childprocess (5.1.0)
+      logger (~> 1.5)
     codecov (0.2.12)
       json
       simplecov
@@ -294,6 +296,12 @@ GEM
       kaminari-core (= 1.2.2)
     kaminari-core (1.2.2)
     language_server-protocol (3.17.0.5)
+    launchy (3.1.1)
+      addressable (~> 2.8)
+      childprocess (~> 5.0)
+      logger (~> 1.6)
+    letter_opener (1.10.0)
+      launchy (>= 2.2, < 4)
     lint_roller (1.1.0)
     logger (1.7.0)
     lograge (0.14.0)
@@ -615,6 +623,7 @@ DEPENDENCIES
   inertia_rails
   jbuilder (~> 2.0)
   kaminari
+  letter_opener
   lograge
   pg
   pg_search

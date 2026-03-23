@@ -8,6 +8,11 @@ class SessionsController < ApplicationController
 
   def create
     if user = User.authenticate_by(params.permit(:email, :password))
+      unless user.confirmed?
+        session[:pending_confirmation_email] = user.email
+        redirect_to new_confirmation_path, alert: 'Пожалуйста, подтвердите email перед входом.'
+        return
+      end
       start_new_session_for user
       redirect_to after_authentication_url
     else

@@ -10,8 +10,9 @@ class RegistrationController < ApplicationController
   def create
     user = User.new(user_params)
     if user.save
-      start_new_session_for user
-      redirect_to root_path, notice: 'Successfully signed up!'
+      UserMailer.confirmation_instructions(user).deliver_later
+      session[:pending_confirmation_email] = user.email
+      redirect_to new_confirmation_path, notice: 'Регистрация успешна! Проверьте почту для подтверждения.'
     else
       render inertia: 'Registration', props: {
         errors: user.errors.full_messages

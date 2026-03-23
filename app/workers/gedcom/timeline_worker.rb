@@ -29,8 +29,9 @@ module Gedcom
         end_at: end_dates.max
       )
 
-      # Schedule global events worker to run after personal events are loaded
+      # Schedule global and local events workers to run after personal events are loaded
       GlobalEventsWorker.perform_async(timeline_id)
+      LocalEventsWorker.perform_async(timeline_id)
     end
   end
 end

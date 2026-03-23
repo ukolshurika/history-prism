@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_10_000002) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_18_200339) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -159,7 +159,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_10_000002) do
     t.bigint "gedcom_file_id"
     t.string "name", null: false
     t.index ["gedcom_file_id"], name: "index_people_on_gedcom_file_id"
-    t.index ["gedcom_uuid"], name: "index_people_on_gedcom_uuid", unique: true
+    t.index ["gedcom_uuid", "gedcom_file_id"], name: "index_people_on_gedcom_uuid_and_gedcom_file_id", unique: true
     t.index ["user_id"], name: "index_people_on_user_id"
   end
 
@@ -198,7 +198,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_10_000002) do
     t.string "password_digest", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "email_confirmation_token"
+    t.datetime "confirmed_at"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["email_confirmation_token"], name: "index_users_on_email_confirmation_token", unique: true
   end
 
   create_table "yoyo_lock", primary_key: "locked", id: :integer, default: 1, force: :cascade do |t|

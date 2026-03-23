@@ -60,6 +60,12 @@ export default function Login({ current_user, flash }) {
               {processing ? 'Signing in...' : 'Sign In'}
             </button>
 
+            <div className="text-center text-sm text-gray-600 mb-3">
+              <Link href="/passwords/new" className="text-blue-600 hover:text-blue-700 font-medium">
+                Забыли пароль?
+              </Link>
+            </div>
+
             <div className="text-center text-sm text-gray-600">
               Don't have an account?{' '}
               <Link href="/registration/new" className="text-blue-600 hover:text-blue-700 font-medium">

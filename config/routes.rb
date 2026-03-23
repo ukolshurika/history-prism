@@ -3,6 +3,8 @@
 Rails.application.routes.draw do
   resource :registration, only: %i[new create], controller: :registration
   resource :session, only: %i(new create destroy)
+  resource :confirmation, only: %i[new create]
+  get '/confirm_email/:token', to: 'confirmations#update', as: :confirm_email
   resources :passwords, param: :token, only: %i(new create update edit)
   resources :events
   resources :people

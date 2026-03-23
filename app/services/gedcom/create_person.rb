@@ -17,8 +17,11 @@ module Gedcom
     private
 
     def person
-      @person ||= Person.find_or_initialize_by(user_id: user_id, gedcom_file_id: gedcom_file_id,
-                                               gedcom_uuid: normalize_id)
+      @person ||= Person.create_or_find_by(user_id: user_id, gedcom_file_id: gedcom_file_id,
+                                           gedcom_uuid: normalize_id) do |p|
+        p.name = person_attrs.name || ''
+        p.first_name = person_attrs.givn || ''
+      end
     end
 
     def normalize_id
