@@ -20,9 +20,9 @@ class ConfirmationsController < ApplicationController
     user = User.find_by_token_for(:email_confirmation, params[:token])
     if user
       user.update!(confirmed_at: Time.current)
-      redirect_to new_session_path, notice: 'Email подтверждён! Теперь вы можете войти.'
+      redirect_to new_session_path, notice: t('confirmations.update.success')
     else
-      redirect_to new_confirmation_path, alert: 'Ссылка недействительна или истекла. Запросите новое письмо.'
+      redirect_to new_confirmation_path, alert: t('confirmations.update.invalid_token')
     end
   end
 end
