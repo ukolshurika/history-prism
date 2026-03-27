@@ -10,6 +10,7 @@ export default function YandexMapPicker({ lat, lng, address, onChange, disabled,
   const listenerRef = useRef(null)
   const [displayAddress, setDisplayAddress] = useState(address || '')
   const [loading, setLoading] = useState(false)
+  const [hasMarker, setHasMarker] = useState(!!(lat && lng))
 
   useEffect(() => {
     if (!apiKey) return
