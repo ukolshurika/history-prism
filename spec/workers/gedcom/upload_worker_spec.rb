@@ -62,12 +62,21 @@ RSpec.describe Gedcom::UploadWorker, type: :worker do
         allow(GedcomApi).to receive(:people).and_raise(
           GedcomApi::Transport::ClientError.new('422 Invalid file format')
         )
+        allow(Rails.logger).to receive(:error)
       end
 
       it 'raises GedcomApi::Transport::ClientError' do
         expect { worker.perform(gedcom_file.id, user.id) }.to raise_error(
           GedcomApi::Transport::ClientError,
           '422 Invalid file format'
+        )
+      end
+
+      it 'logs the worker failure before re-raising' do
+        expect { worker.perform(gedcom_file.id, user.id) }.to raise_error(GedcomApi::Transport::ClientError)
+
+        expect(Rails.logger).to have_received(:error).with(
+          include('Gedcom::UploadWorker', '422 Invalid file format')
         )
       end
     end
