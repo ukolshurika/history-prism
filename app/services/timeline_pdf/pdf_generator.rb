@@ -1,9 +1,13 @@
 # frozen_string_literal: true
 
+require 'open3'
+require 'timeout'
+
 module TimelinePdf
   class PdfGenerator
     class ValidationError < StandardError; end
     class CompilationError < StandardError; end
+    COMPILATION_TIMEOUT = 60
 
     def initialize(timeline)
       @timeline = timeline
@@ -53,19 +57,20 @@ module TimelinePdf
     def compile_latex
       # Compile twice for proper references
       2.times do
-        success = system(
-          "cd #{work_dir} && pdflatex -interaction=nonstopmode -halt-on-error #{tex_filename} > /dev/null 2>&1"
-        )
+        stdout, stderr, status = run_pdflatex
 
-        unless success
+        unless status.success?
           log_content = File.exist?(log_path) ? File.read(log_path) : "No log file found"
-          raise CompilationError, "LaTeX compilation failed. Check log: #{log_path}\n#{log_content.lines.last(20).join}"
+          output = [stdout, stderr].reject(&:blank?).join("\n")
+          raise CompilationError, "LaTeX compilation failed. Check log: #{log_path}\n#{log_content.lines.last(20).join}\n#{output}".strip
         end
       end
 
       raise CompilationError, "PDF file was not created" unless File.exist?(pdf_path)
 
       cleanup_files(keep_for_debug: false)
+    rescue Timeout::Error
+      raise CompilationError, "LaTeX compilation timed out after #{COMPILATION_TIMEOUT} seconds"
     end
 
     def cleanup_files(keep_for_debug: false)
@@ -82,6 +87,18 @@ module TimelinePdf
 
     def work_dir
       @work_dir ||= Rails.root.join('tmp', 'pdf_exports', "timeline_#{timeline.id}")
+    end
+
+    def run_pdflatex
+      Timeout.timeout(COMPILATION_TIMEOUT) do
+        Open3.capture3(
+          'pdflatex',
+          '-interaction=nonstopmode',
+          '-halt-on-error',
+          tex_filename,
+          chdir: work_dir.to_s
+        )
+      end
     end
 
     def base_filename
