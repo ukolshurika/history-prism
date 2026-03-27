@@ -2,14 +2,12 @@
 
 module Books
   class CreateEvents
-    params = -> {
-      option :book
-      option :events_data
-      option :user_id
-      option :page_number, optional: true
-    }
+    extend Dry::Initializer
 
-    include Dry::Initializer.define params
+    option :book
+    option :events_data
+    option :user_id
+    option :page_number, optional: true
 
     def call
       events_data.each do |event_data|
