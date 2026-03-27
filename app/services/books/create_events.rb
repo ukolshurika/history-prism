@@ -20,16 +20,25 @@ module Books
     private
 
     def create_event(event_data)
-      Event.create!(
-        title: event_data['title'] || event_data[:title],
+      event = find_or_initialize_event(event_data)
+      event.update!(
         description: event_data['description'] || event_data[:description] || '',
         category: :local,
         creator_id: user_id,
-        source: book,
-        page_number: page_number,
         start_date: build_fuzzy_date(event_data['date'] || event_data[:date]),
         end_date: build_fuzzy_date(event_data['end_date'] || event_data[:end_date] || event_data['date'] || event_data[:date])
       )
+      event
+    end
+
+    def find_or_initialize_event(event_data)
+      Event.find_or_initialize_by(
+        source: book,
+        page_number: page_number,
+        title: event_data['title'] || event_data[:title]
+      ).tap do |event|
+        event.creator_id ||= user_id
+      end
     end
 
     def build_fuzzy_date(date_string)
