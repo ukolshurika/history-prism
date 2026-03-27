@@ -4,9 +4,11 @@ class PeopleController < ApplicationController
   before_action :set_person, only: [:show, :edit, :update, :destroy]
 
   def index
-    @q = Current.user.people.ransack(params[:q])
+    authorize Person
+
+    @q = policy_scope(Person).ransack(params[:q])
     @people = @q.result.includes(:events, :timelines).order(first_name: :asc).page(params[:page]).per(25)
-    @gedcom_files = Current.user.gedcom_files.order(created_at: :desc)
+    @gedcom_files = policy_scope(GedcomFile).order(created_at: :desc)
 
     render inertia: 'People/Index', props: {
       people: ActiveModelSerializers::SerializableResource.new(@people, each_serializer: PersonSerializer).as_json,

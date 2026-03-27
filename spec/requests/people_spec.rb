@@ -9,6 +9,11 @@ RSpec.describe 'People', type: :request do
     log_in_as_user user
   end
 
+  def inertia_props(response)
+    doc = Nokogiri::HTML(response.body)
+    JSON.parse(doc.at('[data-page]')['data-page'])['props']
+  end
+
   describe 'GET /people' do
     before { sign_in(user) }
 
@@ -23,14 +28,12 @@ RSpec.describe 'People', type: :request do
 
       get people_path
       expect(response).to have_http_status(:success)
+      first_names = inertia_props(response)['people'].map { |item| item['first_name'] }
+      expect(first_names).to include('Jane')
+      expect(first_names).not_to include('Bob')
     end
 
     describe 'pagination' do
-      def inertia_props(response)
-        doc = Nokogiri::HTML(response.body)
-        JSON.parse(doc.at('[data-page]')['data-page'])['props']
-      end
-
       it 'paginates results to 25 per page' do
         create_list(:person, 30, user: user)
         get people_path
@@ -58,11 +61,6 @@ RSpec.describe 'People', type: :request do
     end
 
     describe 'filter persistence' do
-      def inertia_props(response)
-        doc = Nokogiri::HTML(response.body)
-        JSON.parse(doc.at('[data-page]')['data-page'])['props']
-      end
-
       it 'returns filters in response' do
         get people_path, params: { 'q[first_name_cont]' => 'Alice' }
         expect(response).to have_http_status(:success)
