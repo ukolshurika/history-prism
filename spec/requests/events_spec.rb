@@ -76,8 +76,26 @@ RSpec.describe 'Events', type: :request do
 
   describe 'GET /events/:id' do
     before { sign_in(user) }
+
     it 'renders the event show page' do
       get event_path(event)
+      expect(response).to have_http_status(:success)
+    end
+
+    it 'redirects another user away from a personal event' do
+      sign_in(other_user)
+
+      get event_path(event)
+
+      expect(response).to redirect_to(root_path)
+    end
+
+    it 'allows another user to view a public event' do
+      public_event = create(:event, :world_event, creator: user)
+      sign_in(other_user)
+
+      get event_path(public_event)
+
       expect(response).to have_http_status(:success)
     end
   end

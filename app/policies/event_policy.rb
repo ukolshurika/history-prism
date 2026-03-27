@@ -3,7 +3,10 @@
 class EventPolicy < ApplicationPolicy
   class Scope < Scope
     def resolve
-      scope.all
+      return scope.where.not(category: Event.categories[:person]) unless user
+
+      scope.where.not(category: Event.categories[:person])
+           .or(scope.where(creator_id: user.id))
     end
   end
 
@@ -12,7 +15,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def show?
-    true
+    public_event? || owned_by_user?
   end
 
   def create?
@@ -20,10 +23,20 @@ class EventPolicy < ApplicationPolicy
   end
 
   def update?
-    user.present? && record.creator_id == user.id
+    owned_by_user?
   end
 
   def destroy?
+    owned_by_user?
+  end
+
+  private
+
+  def public_event?
+    !record.person?
+  end
+
+  def owned_by_user?
     user.present? && record.creator_id == user.id
   end
 end
