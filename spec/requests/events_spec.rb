@@ -10,93 +10,132 @@ RSpec.describe 'Events', type: :request do
   end
 
   describe 'GET /events' do
-    before { sign_in(user) }
+    context 'when user is signed in' do
+      before { sign_in(user) }
 
-    it 'renders the events index page' do
-      get events_path
-      expect(response).to have_http_status(:success)
-    end
-
-    it 'displays all events' do
-      create(:event, creator: user, title: 'Event 1', description: 'Desc 1', category: :person)
-      create(:event, creator: user, title: 'Event 2', description: 'Desc 2', category: :world)
-
-      get events_path
-      expect(response).to have_http_status(:success)
-    end
-
-    it 'returns pagination meta in props' do
-      get events_path
-      props = response.parsed_body
-      expect(response).to have_http_status(:success)
-    end
-
-    context 'with search query' do
-      let!(:matching)    { create(:event, creator: user, title: 'Рождение Ивана', description: 'событие') }
-      let!(:nonmatching) { create(:event, creator: user, title: 'Battle of Waterloo', description: 'history') }
-
-      it 'returns only matching events' do
-        get events_path, params: { q: 'Иван' }
+      it 'renders the events index page' do
+        get events_path
         expect(response).to have_http_status(:success)
+      end
+
+      it 'displays accessible events' do
+        create(:event, creator: user, title: 'Event 1', description: 'Desc 1', category: :person)
+        create(:event, creator: user, title: 'Event 2', description: 'Desc 2', category: :world)
+
+        get events_path
+        expect(response).to have_http_status(:success)
+      end
+
+      it 'returns pagination meta in props' do
+        get events_path
+        expect(response.parsed_body).to be_present
+        expect(response).to have_http_status(:success)
+      end
+
+      context 'with search query' do
+        let!(:matching)    { create(:event, creator: user, title: 'Рождение Ивана', description: 'событие') }
+        let!(:nonmatching) { create(:event, creator: user, title: 'Battle of Waterloo', description: 'history') }
+
+        it 'returns only matching events' do
+          get events_path, params: { q: 'Иван' }
+          expect(response).to have_http_status(:success)
+        end
+      end
+
+      context 'with source_type/source_id filter' do
+        let(:book)  { create(:book, creator: user) }
+        let!(:book_event)  { create(:event, creator: user, source: book) }
+        let!(:other_event) { create(:event, creator: user) }
+
+        it 'filters events by source' do
+          get events_path, params: { source_type: 'Book', source_id: book.id }
+          expect(response).to have_http_status(:success)
+        end
+      end
+
+      context 'with sort=date' do
+        it 'responds successfully' do
+          get events_path, params: { sort: 'date', direction: 'asc' }
+          expect(response).to have_http_status(:success)
+        end
+      end
+
+      context 'with sort=place' do
+        it 'responds successfully' do
+          get events_path, params: { sort: 'place', direction: 'asc' }
+          expect(response).to have_http_status(:success)
+        end
+      end
+
+      context 'with page parameter' do
+        it 'responds successfully' do
+          get events_path, params: { page: 1 }
+          expect(response).to have_http_status(:success)
+        end
       end
     end
 
-    context 'with source_type/source_id filter' do
-      let(:book)  { create(:book, creator: user) }
-      let!(:book_event)  { create(:event, creator: user, source: book) }
-      let!(:other_event) { create(:event, creator: user) }
+    context 'when user is not signed in' do
+      let!(:private_event) { create(:event, creator: user, category: :person, title: 'Private') }
+      let!(:public_event) { create(:event, :world_event, creator: other_user, title: 'Public') }
 
-      it 'filters events by source' do
-        get events_path, params: { source_type: 'Book', source_id: book.id }
+      it 'renders the events index page' do
+        get events_path
+
         expect(response).to have_http_status(:success)
       end
-    end
 
-    context 'with sort=date' do
-      it 'responds successfully' do
-        get events_path, params: { sort: 'date', direction: 'asc' }
-        expect(response).to have_http_status(:success)
+      it 'does not redirect to sign in' do
+        get events_path
+
+        expect(response).not_to redirect_to(new_session_path)
       end
-    end
 
-    context 'with sort=place' do
-      it 'responds successfully' do
-        get events_path, params: { sort: 'place', direction: 'asc' }
-        expect(response).to have_http_status(:success)
-      end
-    end
+      it 'exposes only public events in the response payload' do
+        get events_path
 
-    context 'with page parameter' do
-      it 'responds successfully' do
-        get events_path, params: { page: 1 }
-        expect(response).to have_http_status(:success)
+        titles = response.parsed_body.dig('props', 'events').map { |item| item['title'] }
+        expect(titles).to include('Public')
+        expect(titles).not_to include('Private')
       end
     end
   end
 
   describe 'GET /events/:id' do
-    before { sign_in(user) }
+    context 'when user is signed in' do
+      before { sign_in(user) }
 
-    it 'renders the event show page' do
-      get event_path(event)
-      expect(response).to have_http_status(:success)
+      it 'renders the event show page' do
+        get event_path(event)
+        expect(response).to have_http_status(:success)
+      end
+
+      it 'redirects another user away from a personal event' do
+        sign_in(other_user)
+
+        get event_path(event)
+
+        expect(response).to redirect_to(root_path)
+      end
+
+      it 'allows another user to view a public event' do
+        public_event = create(:event, :world_event, creator: user)
+        sign_in(other_user)
+
+        get event_path(public_event)
+
+        expect(response).to have_http_status(:success)
+      end
     end
 
-    it 'redirects another user away from a personal event' do
-      sign_in(other_user)
+    context 'when user is not signed in' do
+      it 'allows guests to view a public event' do
+        public_event = create(:event, :world_event, creator: user)
 
-      get event_path(event)
+        get event_path(public_event)
 
-      expect(response).to redirect_to(root_path)
-    end
-
-    it 'allows another user to view a public event' do
-      public_event = create(:event, :world_event, creator: user)
-      sign_in(other_user)
-
-      get event_path(public_event)
-
-      expect(response).to have_http_status(:success)
+        expect(response).to have_http_status(:success)
+      end
     end
   end
 

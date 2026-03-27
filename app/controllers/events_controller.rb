@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 class EventsController < ApplicationController
+  allow_unauthenticated_access only: %i[index show]
   before_action :set_event, only: [:show, :edit, :update, :destroy]
 
   def index
-    @events = Event.includes(:creator, :source, :start_date, :location)
+    authorize Event
+
+    @events = policy_scope(Event).includes(:creator, :source, :start_date, :end_date, :location, :people)
     @events = apply_source_filters(@events)
     @events = apply_search(@events)
     @events = apply_sort(@events)
