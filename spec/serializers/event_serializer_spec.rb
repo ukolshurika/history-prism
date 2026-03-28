@@ -29,6 +29,10 @@ RSpec.describe EventSerializer do
       expect(subject[:category]).to eq('person')
     end
 
+    it 'includes creator as an inline hash' do
+      expect(subject[:creator]).to eq(id: user.id, email: user.email)
+    end
+
     it 'includes start_date_display with original_text' do
       expect(subject[:start_date_display]).to eq('1850')
     end
