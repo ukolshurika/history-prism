@@ -8,6 +8,11 @@ RSpec.describe TimelineSerializer, type: :serializer do
   let(:serialization) { ActiveModelSerializers::Adapter.create(serializer) }
   let(:subject) { JSON.parse(serialization.to_json) }
 
+  it 'serializes the timeline id and title' do
+    expect(subject['id']).to eq(timeline.id)
+    expect(subject['title']).to eq(timeline.title)
+  end
+
   describe '#person_name' do
     it 'falls back to first_name and last_name when person.name is blank' do
       expect(subject['person_name']).to eq('Jane Doe')
