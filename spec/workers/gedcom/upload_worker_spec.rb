@@ -26,10 +26,23 @@ RSpec.describe Gedcom::UploadWorker, type: :worker do
       it 'enqueues CreatePersonWorker for each person' do
         worker.perform(gedcom_file.id, user.id)
 
-        expect(Gedcom::CreatePersonWorker).to have_received(:perform_async).exactly(3).times
-        expect(Gedcom::CreatePersonWorker).to have_received(:perform_async).with(gedcom_file.id, blob_key, 'person1', user.id)
-        expect(Gedcom::CreatePersonWorker).to have_received(:perform_async).with(gedcom_file.id, blob_key, 'person2', user.id)
-        expect(Gedcom::CreatePersonWorker).to have_received(:perform_async).with(gedcom_file.id, blob_key, 'person3', user.id)
+        expect(Gedcom::CreatePersonWorker).to have_received(:perform_async).once
+        expect(Gedcom::CreatePersonWorker).to have_received(:perform_async).with(
+          gedcom_file.id,
+          blob_key,
+          %w[person1 person2 person3],
+          user.id
+        )
+      end
+
+      it 'splits large person lists into batches' do
+        stub_const("#{described_class}::PERSON_BATCH_SIZE", 2)
+
+        worker.perform(gedcom_file.id, user.id)
+
+        expect(Gedcom::CreatePersonWorker).to have_received(:perform_async).twice
+        expect(Gedcom::CreatePersonWorker).to have_received(:perform_async).with(gedcom_file.id, blob_key, %w[person1 person2], user.id)
+        expect(Gedcom::CreatePersonWorker).to have_received(:perform_async).with(gedcom_file.id, blob_key, ['person3'], user.id)
       end
 
       it 'does not raise an error' do
