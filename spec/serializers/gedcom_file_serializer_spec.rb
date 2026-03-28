@@ -34,6 +34,11 @@ RSpec.describe GedcomFileSerializer, type: :serializer do
       expect(subject['file_url']).to be_present
       expect(subject['file_url']).to include('/rails/active_storage/blobs')
     end
+
+    it 'includes processing status fields' do
+      expect(subject['processing_status']).to eq('queued')
+      expect(subject).to have_key('processing_error')
+    end
   end
 
   describe 'file_name' do
@@ -55,7 +60,7 @@ RSpec.describe GedcomFileSerializer, type: :serializer do
 
   describe 'serialization structure' do
     it 'returns a hash with expected keys' do
-      expected_keys = %w[id user_id created_at updated_at file_name file_url]
+      expected_keys = %w[id user_id created_at updated_at file_name file_url processing_status processing_error]
       expect(subject.keys).to match_array(expected_keys)
     end
   end
