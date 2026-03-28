@@ -9,6 +9,11 @@ RSpec.describe 'GedcomFiles', type: :request do
     log_in_as_user user
   end
 
+  def inertia_props(response)
+    doc = Nokogiri::HTML(response.body)
+    JSON.parse(doc.at('[data-page]')['data-page'])['props']
+  end
+
   describe 'GET /gedcom_files' do
     context 'when user is signed in' do
       before { sign_in(user) }
@@ -24,6 +29,16 @@ RSpec.describe 'GedcomFiles', type: :request do
 
         get gedcom_files_path
         expect(response).to have_http_status(:success)
+      end
+
+      it 'exposes processing status in the serialized payload' do
+        gedcom_file.update!(processing_status: 'processing', processing_error: 'Still running')
+
+        get gedcom_files_path
+
+        serialized_file = inertia_props(response)['gedcom_files'].find { |item| item['id'] == gedcom_file.id }
+        expect(serialized_file['processing_status']).to eq('processing')
+        expect(serialized_file['processing_error']).to eq('Still running')
       end
     end
 
