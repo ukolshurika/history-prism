@@ -76,8 +76,26 @@ RSpec.describe 'Events', type: :request do
 
   describe 'GET /events/:id' do
     before { sign_in(user) }
+
     it 'renders the event show page' do
       get event_path(event)
+      expect(response).to have_http_status(:success)
+    end
+
+    it 'redirects another user away from a personal event' do
+      sign_in(other_user)
+
+      get event_path(event)
+
+      expect(response).to redirect_to(root_path)
+    end
+
+    it 'allows another user to view a public event' do
+      public_event = create(:event, :world_event, creator: user)
+      sign_in(other_user)
+
+      get event_path(public_event)
+
       expect(response).to have_http_status(:success)
     end
   end
@@ -155,6 +173,26 @@ RSpec.describe 'Events', type: :request do
           expect(Event.last.title).to eq('New Event')
           expect(Event.last.creator_id).to eq(user.id)
           expect(response).to redirect_to(event_path(Event.last))
+        end
+
+        it 'redirects to the timeline and updates its cached events when timeline_id is provided' do
+          timeline = create(:timeline, user: user)
+          params_with_timeline = valid_params.deep_dup
+          params_with_timeline[:event][:timeline_id] = timeline.id
+          params_with_timeline[:event][:category] = 'local'
+          params_with_timeline[:event][:start_date_attributes] = {
+            year: '1917',
+            month: '11',
+            day: '7',
+            date_type: 'exact',
+            calendar_type: 'gregorian'
+          }
+
+          post events_path, params: params_with_timeline
+
+          expect(response).to redirect_to(timeline_path(timeline))
+          expect(timeline.reload.cached_events_for_display['local']).to include(Event.last.id)
+          expect(Event.last.start_date.original_text).to eq('1917-11-07')
         end
       end
 

@@ -21,6 +21,20 @@ class Event < ApplicationRecord
       tsearch: { dictionary: 'russian', prefix: true, any_word: true }
     }
 
+  scope :sorted_by_date, ->(direction = 'asc') do
+    dir = normalize_sort_direction(direction)
+
+    joins("LEFT JOIN fuzzy_dates ON fuzzy_dates.id = events.start_date_id")
+      .order(Arel.sql("fuzzy_dates.sort_value #{dir} NULLS LAST"))
+  end
+
+  scope :sorted_by_place, ->(direction = 'asc') do
+    dir = normalize_sort_direction(direction)
+
+    joins("LEFT JOIN locations ON locations.id = events.location_id")
+      .order(Arel.sql("locations.place #{dir} NULLS LAST"))
+  end
+
   validates :title, presence: true
   validates :category, presence: true
 
@@ -28,6 +42,10 @@ class Event < ApplicationRecord
   validate :end_date_after_start_date
 
   private
+
+  def self.normalize_sort_direction(direction)
+    direction == 'desc' ? 'DESC' : 'ASC'
+  end
 
   def set_default_end_date
     self.end_date = start_date if end_date.blank? && start_date.present?

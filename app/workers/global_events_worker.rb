@@ -2,6 +2,7 @@
 
 class GlobalEventsWorker
   include Sidekiq::Worker
+  include TimelineDateRange
 
   def perform(timeline_id)
     timeline = Timeline.find(timeline_id)
@@ -32,32 +33,6 @@ class GlobalEventsWorker
   end
 
   private
-
-  def calculate_date_range(timeline, person)
-    # Use timeline start_at and end_at if available
-    start_date = timeline.start_at
-    end_date = timeline.end_at
-
-    # If no dates on timeline, try to get from person's events
-    if start_date.blank?
-      person_events = person.events.joins(:start_date).order('fuzzy_dates.earliest_gregorian ASC')
-      start_date = person_events.first&.start_date&.earliest_gregorian
-    end
-
-    return nil unless start_date
-
-    # Calculate end year (death year or birth year + 100)
-    start_year = start_date.year
-
-    if end_date.present?
-      end_year = end_date.year
-    else
-      # If no end date, assume person lived 100 years
-      end_year = start_year + 100
-    end
-
-    [start_year, end_year]
-  end
 
   def find_events_by_category(category, start_year, end_year)
     Event.where(category: category)
