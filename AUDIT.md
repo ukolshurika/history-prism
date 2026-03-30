@@ -24,9 +24,15 @@
 
 ---
 
+**Статусы:**
+- `✅` — исправлено
+- `⚠️` — исправлено частично или скорректировано под фактические правила проекта
+
+---
+
 ## 1. Критические проблемы безопасности
 
-### 1.1 EventPolicy.Scope возвращает ВСЕ записи
+### ✅ 1.1 EventPolicy.Scope возвращает ВСЕ записи
 
 **Файл:** `app/policies/event_policy.rb:5-7`
 
@@ -47,7 +53,9 @@ def resolve
 end
 ```
 
-### 1.2 EventsController#index без авторизации
++ПРИМЕЧАНИЕ ОТ АВТОРА!+ Нужно показывать ВСЕ глобальные и локальные события с меткой word/local для всех, в том числе неавторизованых пользователей. А вот события персональные из Gedcom файлов должны быть спрятаны.
+
+### ✅ 1.2 EventsController#index без авторизации
 
 **Файл:** `app/controllers/events_controller.rb:6-11`
 
@@ -61,7 +69,7 @@ def index
 end
 ```
 
-### 1.3 Сессия permanent: true без TTL
+### ✅ 1.3 Сессия permanent: true без TTL
 
 **Файл:** `app/controllers/concerns/authentication.rb:41-46`
 
@@ -69,7 +77,7 @@ end
 
 **Исправление:** Установить разумный `expires:` (7-30 дней) и добавить ротацию токенов.
 
-### 1.4 Timing attack на PasswordsController
+### ✅ 1.4 Timing attack на PasswordsController
 
 **Файл:** `app/controllers/passwords_controller.rb:10-13`
 
@@ -83,7 +91,7 @@ end
 
 Это главная архитектурная проблема проекта. Слои не изолированы.
 
-### 2.1 Контроллер -> БД (бизнес-логика в контроллере)
+### ✅ 2.1 Контроллер -> БД (бизнес-логика в контроллере)
 
 **Файл:** `app/controllers/events_controller.rb:67-118`
 
@@ -115,7 +123,7 @@ class Events::CreateService
 end
 ```
 
-### 2.2 Контроллер -> SQL (raw SQL в контроллере)
+### ✅ 2.2 Контроллер -> SQL (raw SQL в контроллере)
 
 **Файл:** `app/controllers/events_controller.rb:170-175`
 
@@ -179,7 +187,7 @@ end
 
 Воркеры получают ID записи и делают `find` без проверки, что вызывающий имел право на эту запись. Безопасно только если ID пришёл из авторизованного контекста контроллера, но нет гарантий.
 
-### 2.6 Дублирование логики между воркерами
+### ✅ 2.6 Дублирование логики между воркерами
 
 **Файл:** `app/workers/global_events_worker.rb:36-60` и `app/workers/local_events_worker.rb:34-54`
 
@@ -217,7 +225,7 @@ add_column :books, :events_count, :integer, default: 0
 
 ## 4. Схема БД и целостность данных
 
-### 4.1 Отсутствующие индексы
+### ✅ 4.1 Отсутствующие индексы
 
 | Таблица | Колонка | Влияние |
 |---------|---------|---------|
@@ -241,7 +249,7 @@ class AddMissingIndexes < ActiveRecord::Migration[8.0]
 end
 ```
 
-### 4.2 Inconsistent dependent strategy
+### ✅ 4.2 Inconsistent dependent strategy
 
 | Модель | Стратегия | Проблема |
 |--------|-----------|----------|
@@ -250,11 +258,13 @@ end
 
 **Исправление:** Привести GedcomFile к `dependent: :destroy` или добавить cleanup job.
 
-### 4.3 Отсутствующие NOT NULL constraints
+### ⚠️ 4.3 Отсутствующие NOT NULL constraints
 
 - `fuzzy_dates.year` — можно создать запись без года
 - `locations.place` — можно создать пустую локацию
 - `sessions.user_id` — можно создать сессию без пользователя
+
+Примечание: `locations.place` и `sessions.user_id` закрыты, а `fuzzy_dates.year` намеренно оставлен nullable, потому что по правилам проекта дата может быть без года.
 
 ### 4.4 Дубликаты Location
 
@@ -282,7 +292,7 @@ add_index :locations, :place, unique: true
 
 **План:** Выделить `Events::CreateService`, `Events::SearchQuery`, `Events::FilterQuery`.
 
-### 5.2 Inconsistent авторизация
+### ✅ 5.2 Inconsistent авторизация
 
 | Контроллер | policy_scope | authorize | Статус |
 |------------|-------------|-----------|--------|
@@ -291,7 +301,7 @@ add_index :locations, :place, unique: true
 | EventsController | NO | NO (index) | **BROKEN** |
 | BooksController | NO | YES (show/update/destroy) | Partial |
 
-### 5.3 Хардкод русского текста
+### ✅ 5.3 Хардкод русского текста
 
 **Файлы:** `passwords_controller.rb:21`, `confirmations_controller.rb:23`
 
@@ -309,14 +319,16 @@ GET /books/:id перенаправляет вместо показа ресур
 
 ## 6. Сервисный слой
 
-### 6.1 Inconsistent инициализация
+### ⚠️ 6.1 Inconsistent инициализация
 
 - `Gedcom::CreatePerson`, `Gedcom::CreateEvent` — `Dry::Initializer.define` с lambda
 - `Books::DateParser` — классический `initialize`
 
 Должен быть один паттерн.
 
-### 6.2 Books::CreateEvents — нет идемпотентности
+Примечание: часть сервисов уже приведена к единому стилю, но пункт закрыт не полностью.
+
+### ✅ 6.2 Books::CreateEvents — нет идемпотентности
 
 **Файл:** `app/services/book/create_events.rb:14-17`
 
@@ -324,7 +336,7 @@ GET /books/:id перенаправляет вместо показа ресур
 
 **Исправление:** Добавить `unique_by` или проверку `(source_type, source_id, page_number, title)`.
 
-### 6.3 Gedcom::CreateEvent — race condition
+### ✅ 6.3 Gedcom::CreateEvent — race condition
 
 **Файл:** `app/services/gedcom/create_event.rb:76`
 
@@ -336,7 +348,7 @@ FuzzyDate.find_or_create_by!(original_text:)
 
 **Исправление:** Добавить unique index на `fuzzy_dates.original_text` + `rescue ActiveRecord::RecordNotUnique`.
 
-### 6.4 TimelinePdf::PdfGenerator — system call без timeout
+### ✅ 6.4 TimelinePdf::PdfGenerator — system call без timeout
 
 **Файл:** `app/services/timeline_pdf/pdf_generator.rb:56-57`
 
@@ -352,7 +364,7 @@ FuzzyDate.find_or_create_by!(original_text:)
 
 ## 7. Воркеры
 
-### 7.1 Отсутствие error handling
+### ✅ 7.1 Отсутствие error handling
 
 | Воркер | rescue? | retry? | Logging? |
 |--------|---------|--------|----------|
@@ -379,13 +391,15 @@ module WorkerErrorHandling
 end
 ```
 
-### 7.2 N API calls без batching
+### ⚠️ 7.2 N API calls без batching
 
 **Файл:** `app/workers/gedcom/create_person_worker.rb:9-10`
 
 Один HTTP-запрос к GedcomApi на каждого person. 100 людей = 100 запросов. Нет rate limiting.
 
-### 7.3 Fire-and-forget без обратной связи
+Примечание: job fan-out уже сокращён batching'ом на нашей стороне, но внешний API по-прежнему остаётся per-person.
+
+### ✅ 7.3 Fire-and-forget без обратной связи
 
 Пользователь запускает GEDCOM/PDF обработку и не может узнать статус. Нужен polling endpoint или WebSocket.
 
@@ -395,7 +409,7 @@ end
 
 ### 8.1 Запросы в сериализаторах (см. раздел 2.3)
 
-### 8.2 TimelineSerializer — несуществующий атрибут
+### ✅ 8.2 TimelineSerializer — несуществующий атрибут
 
 **Файл:** `app/serializers/timeline_serializer.rb:9`
 
@@ -405,11 +419,11 @@ object.person&.given_name
 
 В модели Person нет поля `given_name` — есть `first_name`. Либо баг, либо делегация не видна.
 
-### 8.3 CreatorSerializer — избыточен
+### ✅ 8.3 CreatorSerializer — избыточен
 
 Возвращает только `id` и `email`. Можно заменить inline hash в родительском сериализаторе.
 
-### 8.4 Нет тестов для 4 из 7 сериализаторов
+### ✅ 8.4 Нет тестов для 4 из 7 сериализаторов
 
 PersonSerializer, CreatorSerializer, LocationSerializer, TimelineSerializer — без тестов.
 
