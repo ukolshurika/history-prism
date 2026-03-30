@@ -139,13 +139,9 @@ class EventsController < ApplicationController
   def apply_sort(scope)
     case params[:sort]
     when 'date'
-      dir = params[:direction] == 'desc' ? 'DESC' : 'ASC'
-      scope.joins("LEFT JOIN fuzzy_dates ON fuzzy_dates.id = events.start_date_id")
-           .order(Arel.sql("fuzzy_dates.sort_value #{dir} NULLS LAST"))
+      scope.sorted_by_date(params[:direction])
     when 'place'
-      dir = params[:direction] == 'desc' ? 'DESC' : 'ASC'
-      scope.joins("LEFT JOIN locations ON locations.id = events.location_id")
-           .order(Arel.sql("locations.place #{dir} NULLS LAST"))
+      scope.sorted_by_place(params[:direction])
     else
       scope.order(created_at: :desc)
     end

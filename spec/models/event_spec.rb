@@ -89,4 +89,23 @@ RSpec.describe Event, type: :model do
       expect(Event.categories.keys).to match_array(%w[person world country local])
     end
   end
+
+  describe 'sorting scopes' do
+    let!(:earlier_date) { create(:fuzzy_date, year: 1900, month: 1, day: 1, sort_value: Date.new(1900, 1, 1)) }
+    let!(:later_date) { create(:fuzzy_date, year: 1950, month: 1, day: 1, sort_value: Date.new(1950, 1, 1)) }
+    let!(:amsterdam) { create(:location, place: 'Amsterdam') }
+    let!(:zurich) { create(:location, place: 'Zurich') }
+    let!(:earlier_event) { create(:event, start_date: earlier_date) }
+    let!(:later_event) { create(:event, start_date: later_date) }
+    let!(:amsterdam_event) { create(:event, location: amsterdam) }
+    let!(:zurich_event) { create(:event, location: zurich) }
+
+    it 'sorts by date ascending' do
+      expect(Event.sorted_by_date('asc').where(id: [earlier_event.id, later_event.id]).first).to eq(earlier_event)
+    end
+
+    it 'sorts by place descending' do
+      expect(Event.sorted_by_place('desc').where(id: [amsterdam_event.id, zurich_event.id]).first).to eq(zurich_event)
+    end
+  end
 end
