@@ -4,6 +4,7 @@ class BooksController < ApplicationController
   before_action :set_book, only: [:show, :edit, :update, :destroy]
 
   def index
+    authorize Book
     @books = policy_scope(Book).order(created_at: :desc)
 
     render inertia: 'Books/Index', props: {
