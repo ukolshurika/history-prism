@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class EventsController < ApplicationController
+  include Paginatable
+
   before_action :set_event, only: [:show, :edit, :update, :destroy]
 
   def index
@@ -8,12 +10,12 @@ class EventsController < ApplicationController
     @events = apply_source_filters(@events)
     @events = apply_search(@events)
     @events = apply_sort(@events)
-    @events = @events.page(params[:page]).per(25)
+    @events = paginate(@events)
 
     render inertia: 'Events/Index', props: {
       events: ActiveModelSerializers::SerializableResource.new(@events, each_serializer: EventSerializer).as_json,
       current_user: current_user,
-      pagination: pagination_meta(@events),
+      meta: pagination_meta(@events),
       filters: {
         source_type: params[:source_type],
         source_id:   params[:source_id],
@@ -151,14 +153,5 @@ class EventsController < ApplicationController
     scope = scope.where(source_type: params[:source_type]) if params[:source_type].present?
     scope = scope.where(source_id: params[:source_id]) if params[:source_id].present?
     scope
-  end
-
-  def pagination_meta(collection)
-    {
-      current_page: collection.current_page,
-      total_pages: collection.total_pages,
-      total_count: collection.total_count,
-      per_page: collection.limit_value
-    }
   end
 end

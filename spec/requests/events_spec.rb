@@ -9,6 +9,11 @@ RSpec.describe 'Events', type: :request do
     log_in_as_user user
   end
 
+  def inertia_props(response)
+    doc = Nokogiri::HTML(response.body)
+    JSON.parse(doc.at('[data-page]')['data-page'])['props']
+  end
+
   describe 'GET /events' do
     before { sign_in(user) }
 
@@ -25,10 +30,16 @@ RSpec.describe 'Events', type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it 'returns pagination meta in props' do
+    it 'returns standardized meta in props' do
+      create_list(:event, 30, creator: user)
+
       get events_path
-      props = response.parsed_body
       expect(response).to have_http_status(:success)
+      meta = inertia_props(response)['meta']
+      expect(meta['per_page']).to eq(25)
+      expect(meta['total']).to eq(30)
+      expect(meta['page']).to eq(1)
+      expect(meta['total_pages']).to eq(2)
     end
 
     context 'with search query' do
