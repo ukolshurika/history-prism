@@ -6,8 +6,10 @@ module Gedcom
     include WorkerErrorHandling
 
     def perform(timeline_id, user_id)
+      timeline = Timeline.find(timeline_id)
+      timeline.update!(processing_status: 'processing', processing_error: nil)
+
       with_worker_error_handling(timeline_id: timeline_id, user_id: user_id) do
-        timeline = Timeline.find(timeline_id)
         person = timeline.person
         gedcom_file = person.gedcom_file
 
@@ -28,13 +30,18 @@ module Gedcom
         timeline.update(
           cached_events_for_display: timeline.cached_events_for_display.merge({ person: events.map(&:id) }),
           start_at: start_dates.min,
-          end_at: end_dates.max
+          end_at: end_dates.max,
+          processing_status: 'completed',
+          processing_error: nil
         )
 
         # Schedule global and local events workers to run after personal events are loaded
         GlobalEventsWorker.perform_async(timeline_id)
         LocalEventsWorker.perform_async(timeline_id)
       end
+    rescue StandardError => e
+      timeline&.update_columns(processing_status: 'failed', processing_error: e.message)
+      raise
     end
   end
 end

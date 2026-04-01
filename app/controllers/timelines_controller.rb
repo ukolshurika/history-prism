@@ -53,6 +53,7 @@ class TimelinesController < ApplicationController
     authorize @timeline
 
     if @timeline.save
+      @timeline.update!(processing_status: 'queued', processing_error: nil)
       Gedcom::TimelineWorker.perform_async(@timeline.id, current_user.id)
       redirect_to timelines_path, notice: 'Timeline was successfully created and is being processed.'
     else
@@ -90,6 +91,7 @@ class TimelinesController < ApplicationController
   def export_pdf
     authorize @timeline
 
+    @timeline.update!(pdf_status: 'queued', pdf_error: nil)
     TimelineWorkers::PdfGeneratorWorker.perform_async(@timeline.id)
 
     redirect_to timeline_path(@timeline),
