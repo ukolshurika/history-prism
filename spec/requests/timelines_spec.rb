@@ -13,6 +13,11 @@ RSpec.describe 'Timelines', type: :request do
     log_in_as_user user
   end
 
+  def inertia_props(response)
+    doc = Nokogiri::HTML(response.body)
+    JSON.parse(doc.at('[data-page]')['data-page'])['props']
+  end
+
   describe 'GET /timelines' do
     context 'when user is signed in' do
       before { sign_in(user) }
@@ -28,6 +33,16 @@ RSpec.describe 'Timelines', type: :request do
 
         get timelines_path
         expect(response).to have_http_status(:success)
+      end
+
+      it 'exposes processing and pdf statuses in the serialized payload' do
+        timeline.update!(processing_status: 'processing', pdf_status: 'queued', pdf_error: nil)
+
+        get timeline_path(timeline)
+
+        props = inertia_props(response)
+        expect(props['timeline']['processing_status']).to eq('processing')
+        expect(props['timeline']['pdf_status']).to eq('queued')
       end
     end
 

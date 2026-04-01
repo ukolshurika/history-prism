@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 class GedcomFileSerializer < ActiveModel::Serializer
-  attributes :id, :user_id, :created_at, :updated_at, :file_name, :file_url
+  attributes :id, :user_id, :created_at, :updated_at, :file_name, :file_url,
+             :processing_status, :processing_error
 
   def file_name
     object.file.filename.to_s if object.file.attached?

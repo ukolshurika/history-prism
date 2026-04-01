@@ -18,6 +18,7 @@ class GedcomFilesController < ApplicationController
     authorize @gedcom_file
 
     if @gedcom_file.save
+      @gedcom_file.update!(processing_status: 'queued', processing_error: nil)
       Gedcom::UploadWorker.perform_async(@gedcom_file.id, current_user.id)
       redirect_to gedcom_files_path, notice: 'GEDCOM file was successfully uploaded.'
     else

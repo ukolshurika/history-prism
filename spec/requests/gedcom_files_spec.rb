@@ -46,6 +46,16 @@ RSpec.describe 'GedcomFiles', type: :request do
         expect(meta['page']).to eq(2)
         expect(meta['total_pages']).to eq(2)
       end
+
+      it 'exposes processing status in the serialized payload' do
+        gedcom_file.update!(processing_status: 'processing', processing_error: 'Still running')
+
+        get gedcom_files_path
+
+        serialized_file = inertia_props(response)['gedcom_files'].find { |item| item['id'] == gedcom_file.id }
+        expect(serialized_file['processing_status']).to eq('processing')
+        expect(serialized_file['processing_error']).to eq('Still running')
+      end
     end
 
     context 'when user is not signed in' do
