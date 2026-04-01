@@ -6,7 +6,7 @@ class TimelineSerializer < ActiveModel::Serializer
              :categorized_events, :pdf_url, :pdf_generated_at
 
   def person_name
-    object.person&.name || "#{object.person&.given_name} #{object.person&.surname}".strip
+    object.person&.name || "#{object.person&.first_name} #{object.person&.last_name}".strip
   end
 
   def categorized_events
