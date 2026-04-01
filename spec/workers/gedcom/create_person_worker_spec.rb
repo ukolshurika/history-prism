@@ -57,6 +57,12 @@ RSpec.describe Gedcom::CreatePersonWorker, type: :worker do
       expect(GedcomApi).to have_received(:person).with(blob_key, person_id)
     end
 
+    it 'accepts a batch of person ids' do
+      expect {
+        worker.perform(gedcom_file.id, blob_key, [person_id, 'I002'], user.id)
+      }.to change(Person, :count).by(2)
+    end
+
     it 'creates a person record' do
       expect {
         worker.perform(gedcom_file.id, blob_key, person_id, user.id)

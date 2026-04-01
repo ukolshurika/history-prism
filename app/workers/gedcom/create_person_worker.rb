@@ -8,6 +8,14 @@ module Gedcom
     VITAL_EVENTS = %w[Birth Death].freeze
 
     def perform(file_id, key, person_id, user_id)
+      Array(person_id).each do |single_person_id|
+        process_person(file_id, key, single_person_id, user_id)
+      end
+    end
+
+    private
+
+    def process_person(file_id, key, person_id, user_id)
       with_worker_error_handling(file_id: file_id, person_id: person_id, user_id: user_id) do
         response = GedcomApi.person(key, person_id)
         person = Gedcom::CreatePerson.new(response, file_id, user_id).call
@@ -15,8 +23,6 @@ module Gedcom
         create_vital_events(key, person_id, person, user_id, file_id)
       end
     end
-
-    private
 
     def create_vital_events(key, person_id, person, user_id, file_id)
       timeline_events = GedcomApi.timeline(key, person_id)
