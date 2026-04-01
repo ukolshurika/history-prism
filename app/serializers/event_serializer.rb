@@ -3,11 +3,20 @@
 class EventSerializer < ActiveModel::Serializer
   attributes :id, :title, :description, :start_date, :end_date, :category, :person_ids,
              :created_at, :updated_at, :source_type, :source_id, :source_name,
-             :page_number, :start_date_display, :start_date_sort, :source_attachment_url
+             :page_number, :start_date_display, :start_date_sort, :source_attachment_url,
+             :creator
 
-  has_one :creator, serializer: CreatorSerializer
   has_many :people, serializer: PersonSerializer
   has_one :location, serializer: LocationSerializer
+
+  def creator
+    return nil unless object.creator
+
+    {
+      id: object.creator.id,
+      email: object.creator.email
+    }
+  end
 
   def person_ids
     object.people.pluck(:id)
