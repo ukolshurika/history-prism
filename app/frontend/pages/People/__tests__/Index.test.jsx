@@ -180,16 +180,16 @@ describe('People Index', () => {
 
   describe('Pagination', () => {
     const mockPagination = {
-      current_page: 1,
+      page: 1,
       total_pages: 3,
-      total_count: 75,
+      total: 75,
       per_page: 25,
     }
 
     it('does not show pagination when total_pages is 1', () => {
       render(
         <Index people={mockPeople} gedcom_files={[]} current_user={mockCurrentUser} flash={{}}
-          pagination={{ current_page: 1, total_pages: 1, total_count: 2, per_page: 25 }}
+          meta={{ page: 1, total_pages: 1, total: 2, per_page: 25 }}
           filters={{}}
         />
       )
@@ -199,7 +199,7 @@ describe('People Index', () => {
     it('shows pagination when total_pages > 1', () => {
       render(
         <Index people={mockPeople} gedcom_files={[]} current_user={mockCurrentUser} flash={{}}
-          pagination={mockPagination} filters={{}}
+          meta={mockPagination} filters={{}}
         />
       )
       expect(screen.getByRole('button', { name: '«' })).toBeInTheDocument()
@@ -209,7 +209,7 @@ describe('People Index', () => {
     it('shows total count', () => {
       render(
         <Index people={mockPeople} gedcom_files={[]} current_user={mockCurrentUser} flash={{}}
-          pagination={mockPagination} filters={{}}
+          meta={mockPagination} filters={{}}
         />
       )
       expect(screen.getByText('Total: 75')).toBeInTheDocument()
@@ -218,7 +218,7 @@ describe('People Index', () => {
     it('prev button is disabled on first page', () => {
       render(
         <Index people={mockPeople} gedcom_files={[]} current_user={mockCurrentUser} flash={{}}
-          pagination={mockPagination} filters={{}}
+          meta={mockPagination} filters={{}}
         />
       )
       expect(screen.getByRole('button', { name: '«' })).toBeDisabled()
@@ -227,7 +227,7 @@ describe('People Index', () => {
     it('next button is disabled on last page', () => {
       render(
         <Index people={mockPeople} gedcom_files={[]} current_user={mockCurrentUser} flash={{}}
-          pagination={{ ...mockPagination, current_page: 3 }} filters={{}}
+          meta={{ ...mockPagination, page: 3 }} filters={{}}
         />
       )
       expect(screen.getByRole('button', { name: '»' })).toBeDisabled()
@@ -236,7 +236,7 @@ describe('People Index', () => {
     it('calls router.get with next page when clicking next', () => {
       render(
         <Index people={mockPeople} gedcom_files={[]} current_user={mockCurrentUser} flash={{}}
-          pagination={mockPagination} filters={{}}
+          meta={mockPagination} filters={{}}
         />
       )
       fireEvent.click(screen.getByRole('button', { name: '»' }))
@@ -246,7 +246,7 @@ describe('People Index', () => {
     it('calls router.get with prev page when clicking prev', () => {
       render(
         <Index people={mockPeople} gedcom_files={[]} current_user={mockCurrentUser} flash={{}}
-          pagination={{ ...mockPagination, current_page: 2 }} filters={{}}
+          meta={{ ...mockPagination, page: 2 }} filters={{}}
         />
       )
       fireEvent.click(screen.getByRole('button', { name: '«' }))
@@ -256,7 +256,7 @@ describe('People Index', () => {
     it('preserves filters when paginating', () => {
       render(
         <Index people={mockPeople} gedcom_files={[]} current_user={mockCurrentUser} flash={{}}
-          pagination={mockPagination}
+          meta={mockPagination}
           filters={{ q: { first_name_cont: 'John' } }}
         />
       )

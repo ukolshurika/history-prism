@@ -2,12 +2,13 @@ import { Head, Link, useForm, router } from '@inertiajs/react'
 import Layout from '../Layout'
 import { useState } from 'react'
 
-export default function Index({ gedcom_files, current_user, flash, errors }) {
+export default function Index({ gedcom_files, current_user, flash, errors, meta }) {
   const { data, setData, post, processing, reset } = useForm({
     file: null,
   })
   const [selectedFileName, setSelectedFileName] = useState('')
   const [reprocessingId, setReprocessingId] = useState(null)
+  const pagination = meta
 
   const handleFileChange = (e) => {
     const file = e.target.files[0]
@@ -30,6 +31,10 @@ export default function Index({ gedcom_files, current_user, flash, errors }) {
     router.post(`/gedcom_files/${gedcomFileId}/reprocess`, {}, {
       onFinish: () => setReprocessingId(null),
     })
+  }
+
+  const handlePage = (page) => {
+    router.get('/gedcom_files', { page }, { preserveState: true, preserveScroll: false })
   }
 
   return (
@@ -101,46 +106,107 @@ export default function Index({ gedcom_files, current_user, flash, errors }) {
               )}
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {gedcom_files.map((gedcom_file) => (
-                <div
-                  key={gedcom_file.id}
-                  className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-gray-900 truncate mb-2">
-                        {gedcom_file.file_name}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        Uploaded: {new Date(gedcom_file.created_at).toLocaleDateString()}
-                      </p>
+            <>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {gedcom_files.map((gedcom_file) => (
+                  <div
+                    key={gedcom_file.id}
+                    className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-gray-900 truncate mb-2">
+                          {gedcom_file.file_name}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Uploaded: {new Date(gedcom_file.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 mt-4">
+                      {gedcom_file.file_url && (
+                        <a
+                          href={gedcom_file.file_url}
+                          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700"
+                          download
+                        >
+                          Download
+                        </a>
+                      )}
+                      <button
+                        onClick={() => handleReprocess(gedcom_file.id)}
+                        disabled={reprocessingId === gedcom_file.id}
+                        className="inline-flex items-center text-sm text-green-600 hover:text-green-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                      >
+                        {reprocessingId === gedcom_file.id ? 'Processing...' : 'Reprocess'}
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 mt-4">
-                    {gedcom_file.file_url && (
-                      <a
-                        href={gedcom_file.file_url}
-                        className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700"
-                        download
-                      >
-                        Download
-                      </a>
-                    )}
+                ))}
+              </div>
+
+              {pagination && pagination.total_pages > 1 && (
+                <div className="mt-4 flex items-center justify-between">
+                  <p className="text-sm text-gray-600">
+                    Total: {pagination.total}
+                  </p>
+                  <div className="flex gap-1 items-center">
                     <button
-                      onClick={() => handleReprocess(gedcom_file.id)}
-                      disabled={reprocessingId === gedcom_file.id}
-                      className="inline-flex items-center text-sm text-green-600 hover:text-green-700 disabled:text-gray-400 disabled:cursor-not-allowed"
+                      onClick={() => handlePage(pagination.page - 1)}
+                      disabled={pagination.page === 1}
+                      className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
-                      {reprocessingId === gedcom_file.id ? 'Processing...' : 'Reprocess'}
+                      &laquo;
+                    </button>
+
+                    {buildPageNumbers(pagination.page, pagination.total_pages).map((p, i) =>
+                      p === '...' ? (
+                        <span key={`ellipsis-${i}`} className="px-2 py-1 text-sm text-gray-400">…</span>
+                      ) : (
+                        <button
+                          key={p}
+                          onClick={() => handlePage(p)}
+                          className={`px-3 py-1 text-sm border rounded ${
+                            p === pagination.page
+                              ? 'bg-blue-600 text-white border-blue-600'
+                              : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      )
+                    )}
+
+                    <button
+                      onClick={() => handlePage(pagination.page + 1)}
+                      disabled={pagination.page === pagination.total_pages}
+                      className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      &raquo;
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>
     </Layout>
   )
+}
+
+function buildPageNumbers(current, total) {
+  const pages = []
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+    return pages
+  }
+  pages.push(1)
+  if (current > 3) pages.push('...')
+  for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+    pages.push(i)
+  }
+  if (current < total - 2) pages.push('...')
+  pages.push(total)
+  return pages
 }

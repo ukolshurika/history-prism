@@ -37,9 +37,9 @@ const EVENTS = [
 ]
 
 const PAGINATION = {
-  current_page: 1,
+  page: 1,
   total_pages: 3,
-  total_count: 62,
+  total: 62,
   per_page: 25,
 }
 
@@ -51,7 +51,7 @@ function renderIndex(props = {}) {
       events={EVENTS}
       current_user={CURRENT_USER}
       flash={{}}
-      pagination={PAGINATION}
+      meta={PAGINATION}
       filters={{}}
       {...props}
     />
@@ -265,17 +265,17 @@ describe('Events Index — pagination', () => {
   })
 
   it('disables prev on first page', () => {
-    renderIndex({ pagination: { ...PAGINATION, current_page: 1 } })
+    renderIndex({ meta: { ...PAGINATION, page: 1 } })
     expect(screen.getByText('«').closest('button')).toBeDisabled()
   })
 
   it('disables next on last page', () => {
-    renderIndex({ pagination: { ...PAGINATION, current_page: 3, total_pages: 3 } })
+    renderIndex({ meta: { ...PAGINATION, page: 3, total_pages: 3 } })
     expect(screen.getByText('»').closest('button')).toBeDisabled()
   })
 
   it('clicking page number navigates', () => {
-    renderIndex({ pagination: { ...PAGINATION, current_page: 1, total_pages: 3 } })
+    renderIndex({ meta: { ...PAGINATION, page: 1, total_pages: 3 } })
     fireEvent.click(screen.getByRole('button', { name: '2' }))
     expect(router.get).toHaveBeenCalledWith(
       '/events',
@@ -285,7 +285,7 @@ describe('Events Index — pagination', () => {
   })
 
   it('clicking next advances page', () => {
-    renderIndex({ pagination: { ...PAGINATION, current_page: 1 } })
+    renderIndex({ meta: { ...PAGINATION, page: 1 } })
     fireEvent.click(screen.getByText('»').closest('button'))
     expect(router.get).toHaveBeenCalledWith(
       '/events',
@@ -295,13 +295,13 @@ describe('Events Index — pagination', () => {
   })
 
   it('does not render pagination when only 1 page', () => {
-    renderIndex({ pagination: { ...PAGINATION, total_pages: 1 } })
+    renderIndex({ meta: { ...PAGINATION, total_pages: 1 } })
     expect(screen.queryByText('«')).not.toBeInTheDocument()
   })
 
   it('preserves all filters when paginating', () => {
     renderIndex({
-      pagination: PAGINATION,
+      meta: PAGINATION,
       filters: { q: 'test', sort: 'date', direction: 'asc', source_type: 'Book', source_id: '3' },
     })
     fireEvent.click(screen.getByRole('button', { name: '2' }))

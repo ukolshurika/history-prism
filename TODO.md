@@ -56,13 +56,13 @@
 
 ### T-011 | Серверная пагинация для сущностей
 **Категории:** 👨‍💻 Разработка, 👤 Пользовательский опыт, ⚠️ Технический долг
-**Статус:** Активна
+**Статус:** Выполнена
 **Обоснование:** Пагинация для People и Events уже есть. Осталось: GedcomFiles + REST API эндпоинты. Задача практически завершена — нужно дожать.
-**Текущее состояние:** Частично. `PeopleController` и `EventsController` пагинированы. `GedcomFilesController` — нет.
+**Текущее состояние:** Выполнено. `PeopleController`, `EventsController` и `GedcomFilesController` используют общий concern `Paginatable`, а формат `meta` стандартизирован.
 **Подзадачи:**
-- [ ] Добавить пагинацию в `GedcomFilesController`
-- [ ] Стандартизировать формат `meta` (total, page, per_page, total_pages) во всех контроллерах
-- [ ] Создать базовый модуль/concern `Paginatable` для повторного использования
+- [x] Добавить пагинацию в `GedcomFilesController`
+- [x] Стандартизировать формат `meta` (total, page, per_page, total_pages) во всех контроллерах
+- [x] Создать базовый модуль/concern `Paginatable` для повторного использования
 
 ---
 
