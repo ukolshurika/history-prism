@@ -27,7 +27,8 @@ RSpec.describe Books::CreateEvents do
       described_class.new(
         book: book,
         events_data: events_data,
-        user_id: user.id
+        user_id: user.id,
+        page_number: 12
       )
     end
 
@@ -149,11 +150,43 @@ RSpec.describe Books::CreateEvents do
 
     context 'when event creation fails' do
       before do
-        allow(Event).to receive(:create!).and_raise(ActiveRecord::RecordInvalid)
+        allow_any_instance_of(Event).to receive(:update!).and_raise(ActiveRecord::RecordInvalid)
       end
 
       it 'raises an error' do
         expect { service.call }.to raise_error(ActiveRecord::RecordInvalid)
+      end
+    end
+
+    context 'when called twice with the same payload' do
+      it 'does not create duplicate events for the same source page and title' do
+        expect {
+          service.call
+          service.call
+        }.to change(Event, :count).by(2)
+      end
+
+      it 'updates the existing event instead of inserting a duplicate' do
+        service.call
+
+        updated_service = described_class.new(
+          book: book,
+          user_id: user.id,
+          page_number: 12,
+          events_data: [
+            {
+              'title' => 'Event 1',
+              'description' => 'Updated Description',
+              'date' => '2020-01-15'
+            }
+          ]
+        )
+
+        expect {
+          updated_service.call
+        }.not_to change(Event, :count)
+
+        expect(Event.find_by!(source: book, page_number: 12, title: 'Event 1').description).to eq('Updated Description')
       end
     end
   end

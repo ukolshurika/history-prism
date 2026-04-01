@@ -60,12 +60,21 @@ RSpec.describe Book::UploadWorker, type: :worker do
         allow(BookApi).to receive(:process).and_raise(
           BookApi::Transport::ClientError.new('422 Invalid PDF format')
         )
+        allow(Rails.logger).to receive(:error)
       end
 
       it 'raises BookApi::Transport::ClientError' do
         expect { worker.perform(book.id) }.to raise_error(
           BookApi::Transport::ClientError,
           '422 Invalid PDF format'
+        )
+      end
+
+      it 'logs the worker failure before re-raising' do
+        expect { worker.perform(book.id) }.to raise_error(BookApi::Transport::ClientError)
+
+        expect(Rails.logger).to have_received(:error).with(
+          include('Books::UploadWorker', '422 Invalid PDF format')
         )
       end
     end

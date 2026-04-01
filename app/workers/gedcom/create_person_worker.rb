@@ -3,6 +3,7 @@
 module Gedcom
   class CreatePersonWorker
     include Sidekiq::Worker
+    include WorkerErrorHandling
 
     VITAL_EVENTS = %w[Birth Death].freeze
 
@@ -15,10 +16,12 @@ module Gedcom
     private
 
     def process_person(file_id, key, person_id, user_id)
-      response = GedcomApi.person(key, person_id)
-      person = Gedcom::CreatePerson.new(response, file_id, user_id).call
+      with_worker_error_handling(file_id: file_id, person_id: person_id, user_id: user_id) do
+        response = GedcomApi.person(key, person_id)
+        person = Gedcom::CreatePerson.new(response, file_id, user_id).call
 
-      create_vital_events(key, person_id, person, user_id, file_id)
+        create_vital_events(key, person_id, person, user_id, file_id)
+      end
     end
 
     def create_vital_events(key, person_id, person, user_id, file_id)

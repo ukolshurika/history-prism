@@ -11,6 +11,11 @@ RSpec.describe 'Books', type: :request do
     log_in_as_user user
   end
 
+  def inertia_props(response)
+    doc = Nokogiri::HTML(response.body)
+    JSON.parse(doc.at('[data-page]')['data-page'])['props']
+  end
+
   describe 'GET /books' do
     context 'when user is signed in' do
       before { sign_in(user) }
@@ -21,11 +26,14 @@ RSpec.describe 'Books', type: :request do
       end
 
       it 'displays only current user\'s books' do
-        book1 = create(:book, creator: user)
-        book2 = create(:book, creator: other_user)
+        create(:book, creator: user, name: 'Visible book')
+        create(:book, creator: other_user, name: 'Hidden book')
 
         get books_path
         expect(response).to have_http_status(:success)
+        names = inertia_props(response)['books'].map { |item| item['name'] }
+        expect(names).to include('Visible book')
+        expect(names).not_to include('Hidden book')
       end
     end
 

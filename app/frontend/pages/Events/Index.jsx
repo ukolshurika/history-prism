@@ -2,8 +2,9 @@ import { Head, Link, router } from '@inertiajs/react'
 import { useState } from 'react'
 import Layout from '../Layout'
 
-export default function Index({ events, current_user, flash, pagination, filters = {} }) {
+export default function Index({ events, current_user, flash, meta, filters = {} }) {
   const [searchQuery, setSearchQuery] = useState(filters.q || '')
+  const pagination = meta
 
   const activeFilters = {
     source_type: filters.source_type,
@@ -181,18 +182,18 @@ export default function Index({ events, current_user, flash, pagination, filters
               {pagination && pagination.total_pages > 1 && (
                 <div className="mt-4 flex items-center justify-between">
                   <p className="text-sm text-gray-600">
-                    Total: {pagination.total_count}
+                    Total: {pagination.total}
                   </p>
                   <div className="flex gap-1 items-center">
                     <button
-                      onClick={() => handlePage(pagination.current_page - 1)}
-                      disabled={pagination.current_page === 1}
+                      onClick={() => handlePage(pagination.page - 1)}
+                      disabled={pagination.page === 1}
                       className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       &laquo;
                     </button>
 
-                    {buildPageNumbers(pagination.current_page, pagination.total_pages).map((p, i) =>
+                    {buildPageNumbers(pagination.page, pagination.total_pages).map((p, i) =>
                       p === '...' ? (
                         <span key={`ellipsis-${i}`} className="px-2 py-1 text-sm text-gray-400">…</span>
                       ) : (
@@ -200,7 +201,7 @@ export default function Index({ events, current_user, flash, pagination, filters
                           key={p}
                           onClick={() => handlePage(p)}
                           className={`px-3 py-1 text-sm border rounded ${
-                            p === pagination.current_page
+                            p === pagination.page
                               ? 'bg-blue-600 text-white border-blue-600'
                               : 'hover:bg-gray-50'
                           }`}
@@ -211,8 +212,8 @@ export default function Index({ events, current_user, flash, pagination, filters
                     )}
 
                     <button
-                      onClick={() => handlePage(pagination.current_page + 1)}
-                      disabled={pagination.current_page === pagination.total_pages}
+                      onClick={() => handlePage(pagination.page + 1)}
+                      disabled={pagination.page === pagination.total_pages}
                       className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       &raquo;

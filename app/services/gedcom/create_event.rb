@@ -72,11 +72,16 @@ module Gedcom
         attrs = DateParser.new(gedcom_event.date).parse
         return nil unless attrs
 
-        # Find existing FuzzyDate by original_text to avoid duplicates
-        FuzzyDate.find_or_create_by!(original_text: attrs[:original_text]) do |fd|
-          fd.assign_attributes(attrs.except(:original_text))
-        end
+        find_or_create_fuzzy_date(attrs)
       end
+    end
+
+    def find_or_create_fuzzy_date(attrs)
+      FuzzyDate.find_or_create_by!(original_text: attrs[:original_text]) do |fd|
+        fd.assign_attributes(attrs.except(:original_text))
+      end
+    rescue ActiveRecord::RecordNotUnique
+      FuzzyDate.find_by!(original_text: attrs[:original_text])
     end
   end
 end

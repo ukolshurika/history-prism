@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_18_200339) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_27_000200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -85,6 +85,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_18_200339) do
     t.bigint "source_id"
     t.integer "page_number"
     t.bigint "location_id"
+    t.index ["category"], name: "index_events_on_category"
     t.index ["creator_id"], name: "index_events_on_creator_id"
     t.index ["end_date_id"], name: "index_events_on_end_date_id"
     t.index ["location_id"], name: "index_events_on_location_id"
@@ -116,6 +117,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_18_200339) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["sort_value"], name: "index_fuzzy_dates_on_sort_value"
+    t.index ["year"], name: "index_fuzzy_dates_on_year"
   end
 
   create_table "gedcom_files", force: :cascade do |t|
@@ -126,11 +128,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_18_200339) do
   end
 
   create_table "locations", force: :cascade do |t|
-    t.string "place"
+    t.string "place", null: false
     t.decimal "latitude", precision: 10, scale: 6
     t.decimal "longitude", precision: 10, scale: 6
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["place"], name: "index_locations_on_place"
   end
 
   create_table "page_processing_cache", force: :cascade do |t|
@@ -158,13 +161,14 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_18_200339) do
     t.datetime "updated_at", null: false
     t.bigint "gedcom_file_id"
     t.string "name", null: false
+    t.index ["first_name", "last_name"], name: "index_people_on_first_name_and_last_name"
     t.index ["gedcom_file_id"], name: "index_people_on_gedcom_file_id"
     t.index ["gedcom_uuid", "gedcom_file_id"], name: "index_people_on_gedcom_uuid_and_gedcom_file_id", unique: true
     t.index ["user_id"], name: "index_people_on_user_id"
   end
 
   create_table "sessions", force: :cascade do |t|
-    t.bigint "user_id"
+    t.bigint "user_id", null: false
     t.string "ip_address"
     t.string "user_agent"
     t.datetime "created_at", null: false
