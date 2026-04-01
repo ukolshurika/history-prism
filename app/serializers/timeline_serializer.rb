@@ -7,7 +7,7 @@ class TimelineSerializer < ActiveModel::Serializer
              :processing_error, :pdf_status, :pdf_error
 
   def person_name
-    object.person&.name || "#{object.person&.given_name} #{object.person&.surname}".strip
+    object.person&.name || "#{object.person&.first_name} #{object.person&.last_name}".strip
   end
 
   def categorized_events

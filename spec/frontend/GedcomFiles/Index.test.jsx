@@ -1,27 +1,27 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { router } from '@inertiajs/react';
 import Index from '../../../app/frontend/pages/GedcomFiles/Index';
 
 // Mock Inertia
 const mockPost = jest.fn();
-const mockUseForm = jest.fn(() => ({
-  data: { file: null },
-  setData: jest.fn(),
-  post: mockPost,
-  processing: false,
-  reset: jest.fn(),
-}));
 
 jest.mock('@inertiajs/react', () => ({
-  ...jest.requireActual('@inertiajs/react'),
   router: {
     visit: jest.fn(),
+    get: jest.fn(),
+    post: jest.fn(),
   },
   Head: ({ title }) => <title>{title}</title>,
   Link: ({ children, href, className, ...props }) => (
     <a href={href} className={className} {...props}>{children}</a>
   ),
-  useForm: mockUseForm,
+  useForm: () => ({
+    data: { file: null },
+    setData: jest.fn(),
+    post: mockPost,
+    processing: false,
+    reset: jest.fn(),
+  }),
 }));
 
 // Mock Layout component
@@ -54,6 +54,13 @@ describe('GedcomFiles Index', () => {
     },
   ];
 
+  const meta = {
+    page: 1,
+    total_pages: 3,
+    total: 62,
+    per_page: 25,
+  };
+
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -64,6 +71,7 @@ describe('GedcomFiles Index', () => {
         gedcom_files={mockGedcomFiles}
         current_user={mockCurrentUser}
         flash={{}}
+        meta={meta}
       />
     );
 
@@ -76,6 +84,7 @@ describe('GedcomFiles Index', () => {
         gedcom_files={mockGedcomFiles}
         current_user={mockCurrentUser}
         flash={{}}
+        meta={meta}
       />
     );
 
@@ -89,6 +98,7 @@ describe('GedcomFiles Index', () => {
         gedcom_files={mockGedcomFiles}
         current_user={mockCurrentUser}
         flash={{}}
+        meta={meta}
       />
     );
 
@@ -102,6 +112,7 @@ describe('GedcomFiles Index', () => {
         gedcom_files={mockGedcomFiles}
         current_user={mockCurrentUser}
         flash={{}}
+        meta={meta}
       />
     );
 
@@ -115,6 +126,7 @@ describe('GedcomFiles Index', () => {
         gedcom_files={mockGedcomFiles}
         current_user={null}
         flash={{}}
+        meta={meta}
       />
     );
 
@@ -127,6 +139,7 @@ describe('GedcomFiles Index', () => {
         gedcom_files={[]}
         current_user={mockCurrentUser}
         flash={{}}
+        meta={meta}
       />
     );
 
@@ -139,6 +152,7 @@ describe('GedcomFiles Index', () => {
         gedcom_files={[]}
         current_user={mockCurrentUser}
         flash={{}}
+        meta={meta}
       />
     );
 
@@ -151,6 +165,7 @@ describe('GedcomFiles Index', () => {
         gedcom_files={mockGedcomFiles}
         current_user={mockCurrentUser}
         flash={{}}
+        meta={meta}
       />
     );
 
@@ -166,10 +181,11 @@ describe('GedcomFiles Index', () => {
         gedcom_files={mockGedcomFiles}
         current_user={mockCurrentUser}
         flash={{}}
+        meta={meta}
       />
     );
 
-    const fileInput = screen.getByLabelText('Choose .ged file').querySelector('input');
+    const fileInput = screen.getByLabelText('Choose .ged file');
     expect(fileInput).toHaveAttribute('accept', '.ged');
   });
 
@@ -181,6 +197,7 @@ describe('GedcomFiles Index', () => {
         current_user={mockCurrentUser}
         flash={{}}
         errors={errors}
+        meta={meta}
       />
     );
 
@@ -194,6 +211,7 @@ describe('GedcomFiles Index', () => {
         gedcom_files={mockGedcomFiles}
         current_user={mockCurrentUser}
         flash={{}}
+        meta={meta}
       />
     );
 
@@ -206,6 +224,7 @@ describe('GedcomFiles Index', () => {
         gedcom_files={mockGedcomFiles}
         current_user={mockCurrentUser}
         flash={{}}
+        meta={meta}
       />
     );
 
@@ -228,6 +247,7 @@ describe('GedcomFiles Index', () => {
         gedcom_files={filesWithoutUrl}
         current_user={mockCurrentUser}
         flash={{}}
+        meta={meta}
       />
     );
 
@@ -241,6 +261,7 @@ describe('GedcomFiles Index', () => {
         gedcom_files={mockGedcomFiles}
         current_user={mockCurrentUser}
         flash={{}}
+        meta={meta}
       />
     );
 
@@ -254,11 +275,45 @@ describe('GedcomFiles Index', () => {
         gedcom_files={mockGedcomFiles}
         current_user={mockCurrentUser}
         flash={{}}
+        meta={meta}
       />
     );
 
     const grid = container.querySelector('.grid');
     expect(grid).toBeInTheDocument();
     expect(grid).toHaveClass('md:grid-cols-2', 'lg:grid-cols-3');
+  });
+
+  it('renders pagination controls when there is more than one page', () => {
+    render(
+      <Index
+        gedcom_files={mockGedcomFiles}
+        current_user={mockCurrentUser}
+        flash={{}}
+        meta={meta}
+      />
+    );
+
+    expect(screen.getByText('Total: 62')).toBeInTheDocument();
+    expect(screen.getByText('«')).toBeInTheDocument();
+    expect(screen.getByText('»')).toBeInTheDocument();
+  });
+
+  it('navigates to the selected page', () => {
+    render(
+      <Index
+        gedcom_files={mockGedcomFiles}
+        current_user={mockCurrentUser}
+        flash={{}}
+        meta={meta}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: '2' }));
+    expect(router.get).toHaveBeenCalledWith(
+      '/gedcom_files',
+      { page: 2 },
+      expect.any(Object)
+    );
   });
 });

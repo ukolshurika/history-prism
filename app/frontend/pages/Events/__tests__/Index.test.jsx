@@ -58,7 +58,7 @@ describe('Events Index', () => {
     events: [],
     current_user: null,
     flash: {},
-    pagination: { total_pages: 1, total_count: 0, current_page: 1 },
+    meta: { total_pages: 1, total: 0, page: 1 },
     filters: {},
   }
 
@@ -141,12 +141,12 @@ describe('Events Index', () => {
     expect(screen.getByText(/Place/i)).toBeInTheDocument()
   })
 
-  it('shows pagination controls when pagination.total_pages > 1', () => {
+  it('shows pagination controls when meta.total_pages > 1', () => {
     render(
       <Index
         {...defaultProps}
         events={mockEvents}
-        pagination={{ total_pages: 3, total_count: 30, current_page: 1 }}
+        meta={{ total_pages: 3, total: 30, page: 1 }}
       />
     )
     // Prev and next buttons rendered as « and »
@@ -159,7 +159,7 @@ describe('Events Index', () => {
       <Index
         {...defaultProps}
         events={mockEvents}
-        pagination={{ total_pages: 1, total_count: 2, current_page: 1 }}
+        meta={{ total_pages: 1, total: 2, page: 1 }}
       />
     )
     expect(screen.queryByText('«')).not.toBeInTheDocument()

@@ -9,6 +9,11 @@ RSpec.describe 'People', type: :request do
     log_in_as_user user
   end
 
+  def inertia_props(response)
+    doc = Nokogiri::HTML(response.body)
+    JSON.parse(doc.at('[data-page]')['data-page'])['props']
+  end
+
   describe 'GET /people' do
     before { sign_in(user) }
 
@@ -23,46 +28,39 @@ RSpec.describe 'People', type: :request do
 
       get people_path
       expect(response).to have_http_status(:success)
+      first_names = inertia_props(response)['people'].map { |item| item['first_name'] }
+      expect(first_names).to include('Jane')
+      expect(first_names).not_to include('Bob')
     end
 
     describe 'pagination' do
-      def inertia_props(response)
-        doc = Nokogiri::HTML(response.body)
-        JSON.parse(doc.at('[data-page]')['data-page'])['props']
-      end
-
       it 'paginates results to 25 per page' do
         create_list(:person, 30, user: user)
         get people_path
         expect(response).to have_http_status(:success)
-        pagination = inertia_props(response)['pagination']
-        expect(pagination['per_page']).to eq(25)
-        expect(pagination['total_count']).to eq(30)
-        expect(pagination['total_pages']).to eq(2)
+        meta = inertia_props(response)['meta']
+        expect(meta['per_page']).to eq(25)
+        expect(meta['total']).to eq(30)
+        expect(meta['total_pages']).to eq(2)
       end
 
       it 'returns page 2 when requested' do
         create_list(:person, 30, user: user)
         get people_path, params: { page: 2 }
         expect(response).to have_http_status(:success)
-        pagination = inertia_props(response)['pagination']
-        expect(pagination['current_page']).to eq(2)
+        meta = inertia_props(response)['meta']
+        expect(meta['page']).to eq(2)
       end
 
       it 'returns first page by default' do
         create_list(:person, 30, user: user)
         get people_path
-        pagination = inertia_props(response)['pagination']
-        expect(pagination['current_page']).to eq(1)
+        meta = inertia_props(response)['meta']
+        expect(meta['page']).to eq(1)
       end
     end
 
     describe 'filter persistence' do
-      def inertia_props(response)
-        doc = Nokogiri::HTML(response.body)
-        JSON.parse(doc.at('[data-page]')['data-page'])['props']
-      end
-
       it 'returns filters in response' do
         get people_path, params: { 'q[first_name_cont]' => 'Alice' }
         expect(response).to have_http_status(:success)
@@ -75,9 +73,9 @@ RSpec.describe 'People', type: :request do
         create(:person, user: user, first_name: 'Bob')
         get people_path, params: { 'q[first_name_cont]' => 'Alice', page: 2 }
         expect(response).to have_http_status(:success)
-        pagination = inertia_props(response)['pagination']
-        expect(pagination['total_count']).to eq(30)
-        expect(pagination['current_page']).to eq(2)
+        meta = inertia_props(response)['meta']
+        expect(meta['total']).to eq(30)
+        expect(meta['page']).to eq(2)
       end
     end
   end
