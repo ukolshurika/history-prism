@@ -1,21 +1,5 @@
 RSpec.configure do |config|
-  config.before(:suite) do
-    DatabaseCleaner.clean_with(:truncation)
-  end
-
-  config.before(:each) do
-    DatabaseCleaner.strategy = :transaction
-  end
-
-  config.before(:each, js: true) do
-    DatabaseCleaner.strategy = :truncation
-  end
-
-  config.before(:each) do
-    DatabaseCleaner.start
-  end
-
-  config.after(:each) do
-    DatabaseCleaner.clean
-  end
+  # The suite already uses transactional fixtures and has no JS/system specs.
+  # Keeping DatabaseCleaner enabled only duplicates transaction management and
+  # currently triggers deadlocks during before(:suite) truncation.
 end

@@ -118,10 +118,10 @@ RSpec.describe 'Books', type: :request do
         it 'enqueues upload worker with correct arguments' do
           expect {
             post books_path, params: valid_params
-          }.to have_enqueued_job(Book::UploadWorker).with(Book.last&.id || Integer)
+          }.to have_enqueued_job(Books::UploadWorker).with(Book.last&.id || Integer)
 
           # Alternative for Sidekiq
-          # expect(Book::UploadWorker.jobs.size).to change.by(1)
+          # expect(Books::UploadWorker.jobs.size).to change.by(1)
         end
       end
 

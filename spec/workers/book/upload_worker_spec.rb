@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Book::UploadWorker, type: :worker do
+RSpec.describe Books::UploadWorker, type: :worker do
   let(:user) { create(:user) }
   let(:book) { create(:book, creator: user) }
   let(:blob_key) { book.attachment.attachment.key }

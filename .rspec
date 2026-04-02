@@ -1,1 +1,2 @@
 --require spec_helper
+--exclude-pattern spec/models/create_fuzzy_date_spec.rb

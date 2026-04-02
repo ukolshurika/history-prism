@@ -42,6 +42,10 @@ Rails.application.configure do
   # Print deprecation notices to the stderr.
   config.active_support.deprecation = :stderr
 
+  # Avoid depending on a writable log/test.log in ad-hoc local test runs.
+  config.logger = ActiveSupport::TaggedLogging.new(ActiveSupport::Logger.new($stdout))
+  config.log_level = :warn
+
   # Raises error for missing translations
   config.i18n.raise_on_missing_translations = true
 
