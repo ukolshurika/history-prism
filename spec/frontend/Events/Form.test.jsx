@@ -168,6 +168,8 @@ describe('Events Form — edit event', () => {
     id: 42,
     title: 'Battle of Waterloo',
     description: 'A major battle',
+    start_date_display: '1815-06-18',
+    end_date_display: '1815-06-18',
     category: 'world',
     person_ids: [],
     location: { id: 7, place: 'Waterloo', latitude: 50.68, longitude: 4.41 },
@@ -196,6 +198,22 @@ describe('Events Form — edit event', () => {
     renderForm({ event: EXISTING_EVENT, isEdit: true })
     fireEvent.submit(screen.getByRole('button', { name: 'Update Event' }).closest('form'))
     expect(mockPut).toHaveBeenCalledWith('/events/42')
+  })
+
+  it('prefills date inputs from serialized date display values', () => {
+    setupUseForm({
+      title: EXISTING_EVENT.title,
+      description: EXISTING_EVENT.description,
+      start_date: '1815-06-18',
+      end_date: '1815-06-18',
+      category: EXISTING_EVENT.category,
+      location_attributes: EXISTING_EVENT.location,
+    })
+
+    renderForm({ event: EXISTING_EVENT, isEdit: true })
+
+    expect(screen.getByLabelText('Start Date')).toHaveValue('1815-06-18')
+    expect(screen.getByLabelText('End Date')).toHaveValue('1815-06-18')
   })
 })
 

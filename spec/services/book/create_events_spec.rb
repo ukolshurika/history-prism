@@ -102,6 +102,26 @@ RSpec.describe Books::CreateEvents do
       end
     end
 
+    context 'with ActionController::Parameters rows' do
+      let(:events_data) do
+        [
+          ActionController::Parameters.new(
+            'title' => 'Parameters Event',
+            'description' => 'Parameters Description',
+            'date' => '2022-03-10'
+          )
+        ]
+      end
+
+      it 'normalizes them and creates events' do
+        expect { service.call }.to change(Event, :count).by(1)
+
+        event = Event.last
+        expect(event.title).to eq('Parameters Event')
+        expect(event.description).to eq('Parameters Description')
+      end
+    end
+
     context 'with missing description' do
       let(:events_data) do
         [
@@ -153,8 +173,8 @@ RSpec.describe Books::CreateEvents do
         allow_any_instance_of(Event).to receive(:update!).and_raise(ActiveRecord::RecordInvalid)
       end
 
-      it 'raises an error' do
-        expect { service.call }.to raise_error(ActiveRecord::RecordInvalid)
+      it 'skips the invalid events' do
+        expect { service.call }.not_to change(Event, :count)
       end
     end
 
@@ -187,6 +207,46 @@ RSpec.describe Books::CreateEvents do
         }.not_to change(Event, :count)
 
         expect(Event.find_by!(source: book, page_number: 12, title: 'Event 1').description).to eq('Updated Description')
+      end
+    end
+
+    context 'when one payload item is malformed' do
+      let(:events_data) do
+        [
+          {
+            'title' => 'Valid Event',
+            'description' => 'Will be created',
+            'date' => '2020-01-15'
+          },
+          'unexpected string payload'
+        ]
+      end
+
+      it 'creates the valid events and skips the malformed one' do
+        expect { service.call }.to change(Event, :count).by(1)
+        expect(Event.find_by(title: 'Valid Event')).to be_present
+      end
+    end
+
+    context 'when one payload item has no title' do
+      let(:events_data) do
+        [
+          {
+            'title' => 'Valid Event',
+            'description' => 'Will be created',
+            'date' => '2020-01-15'
+          },
+          {
+            'title' => '',
+            'description' => 'Missing title',
+            'date' => '2020-01-16'
+          }
+        ]
+      end
+
+      it 'creates the valid events and skips the blank title row' do
+        expect { service.call }.to change(Event, :count).by(1)
+        expect(Event.find_by(title: 'Valid Event')).to be_present
       end
     end
   end

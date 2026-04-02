@@ -165,5 +165,42 @@ RSpec.describe 'Books::Events', type: :request do
         expect(response).to have_http_status(:created)
       end
     end
+
+    context 'when the batch contains malformed rows' do
+      let(:mixed_params) do
+        {
+          book_id: book.id,
+          events: [
+            {
+              title: 'World War II Ended',
+              description: 'Victory in Europe Day',
+              date: '1945-05-08'
+            },
+            {
+              title: '',
+              description: 'Missing title',
+              date: '1969-07-20'
+            },
+            'unexpected string payload'
+          ]
+        }
+      end
+
+      it 'creates valid events and still returns created' do
+        signature = generate_signature(mixed_params)
+
+        expect {
+          post book_events_path(book),
+               params: mixed_params.to_json,
+               headers: {
+                 'Content-Type' => 'application/json',
+                 'X-Signature' => signature
+               }
+        }.to change(Event, :count).by(1)
+
+        expect(response).to have_http_status(:created)
+        expect(book.events.reload.pluck(:title)).to eq(['World War II Ended'])
+      end
+    end
   end
 end

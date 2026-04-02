@@ -2,14 +2,45 @@ import { Head, useForm, Link, usePage } from '@inertiajs/react'
 import Layout from '../Layout'
 import YandexMapPicker from '../../components/YandexMapPicker'
 
+function padDatePart(value) {
+  return String(value).padStart(2, '0')
+}
+
+function dateValueFromAttributes(attrs = {}) {
+  if (!attrs?.year) return ''
+
+  const month = attrs.month ? padDatePart(attrs.month) : '01'
+  const day = attrs.day ? padDatePart(attrs.day) : '01'
+  return `${attrs.year}-${month}-${day}`
+}
+
+function normalizeDateValue(value, fallbackAttributes = null) {
+  if (!value && fallbackAttributes) return dateValueFromAttributes(fallbackAttributes)
+  if (!value) return ''
+
+  if (typeof value === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value
+
+    const parsed = new Date(value)
+    return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString().slice(0, 10)
+  }
+
+  if (typeof value === 'object') {
+    if (value.original_text && /^\d{4}-\d{2}-\d{2}$/.test(value.original_text)) return value.original_text
+    if (value.year) return dateValueFromAttributes(value)
+  }
+
+  return ''
+}
+
 export default function Form({ event, categories, people = [], isEdit, current_user, flash, errors = [] }) {
   const { yandex_maps_api_key } = usePage().props
   const { data, setData, post, put, processing } = useForm({
     event: {
       title: event.title || '',
       description: event.description || '',
-      start_date: event.start_date || '',
-      end_date: event.end_date || '',
+      start_date: normalizeDateValue(event.start_date || event.start_date_display, event.start_date_attributes),
+      end_date: normalizeDateValue(event.end_date || event.end_date_display, event.end_date_attributes),
       category: event.category || 'person',
       person_ids: event.person_ids || [],
       location_attributes: {
@@ -125,7 +156,7 @@ export default function Form({ event, categories, people = [], isEdit, current_u
                     type="date"
                     id="start_date"
                     name="event[start_date]"
-                    value={data.event.start_date ? new Date(data.event.start_date).toISOString().slice(0, 10) : ''}
+                    value={data.event.start_date || ''}
                     onChange={(e) => setData('event.start_date', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
@@ -140,7 +171,7 @@ export default function Form({ event, categories, people = [], isEdit, current_u
                     type="date"
                     id="end_date"
                     name="event[end_date]"
-                    value={data.event.end_date ? new Date(data.event.end_date).toISOString().slice(0, 10) : ''}
+                    value={data.event.end_date || ''}
                     onChange={(e) => setData('event.end_date', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required

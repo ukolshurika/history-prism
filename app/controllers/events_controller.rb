@@ -96,7 +96,12 @@ class EventsController < ApplicationController
   def update
     authorize @event
 
-    if @event.update(event_params)
+    attrs = event_params.to_h.deep_symbolize_keys
+    @event.assign_attributes(base_event_attributes(attrs))
+    assign_fuzzy_date(@event, :start_date, attrs[:start_date_attributes])
+    assign_fuzzy_date(@event, :end_date, attrs[:end_date_attributes])
+
+    if @event.save
       redirect_to event_path(@event), notice: 'Event was successfully updated.'
     else
       render inertia: 'Events/Form', props: {
@@ -122,7 +127,7 @@ class EventsController < ApplicationController
   end
 
   def event_params
-    params.require(:event).permit(
+    permitted = params.require(:event).permit(
       :title, :description, :start_date, :end_date, :category, :timeline_id,
       person_ids: [],
       people_attributes: [:id, :first_name, :middle_name, :last_name, :gedcom_uuid, :_destroy],
@@ -130,6 +135,66 @@ class EventsController < ApplicationController
       end_date_attributes: [:date_type, :year, :month, :day, :calendar_type],
       location_attributes: [:id, :place, :latitude, :longitude]
     )
+
+    normalize_string_date!(permitted, :start_date)
+    normalize_string_date!(permitted, :end_date)
+
+    permitted.except(:start_date, :end_date)
+  end
+
+  def base_event_attributes(attrs)
+    attrs.except(:start_date_attributes, :end_date_attributes, :timeline_id)
+  end
+
+  def assign_fuzzy_date(event, association_name, attrs)
+    return unless attrs.present?
+
+    fuzzy_date = build_fuzzy_date(attrs)
+    return if fuzzy_date.nil? && association_name == :end_date && event.start_date.present?
+
+    event.public_send("#{association_name}=", fuzzy_date)
+  end
+
+  def build_fuzzy_date(attrs)
+    return if attrs.blank?
+    return if attrs[:year].blank?
+
+    FuzzyDate.create!(
+      original_text: [
+        attrs[:year],
+        attrs[:month].presence&.to_s&.rjust(2, '0'),
+        attrs[:day].presence&.to_s&.rjust(2, '0')
+      ].compact.join('-'),
+      year: attrs[:year].presence&.to_i,
+      month: attrs[:month].presence&.to_i,
+      day: attrs[:day].presence&.to_i,
+      date_type: attrs[:date_type].presence || 'exact',
+      calendar_type: attrs[:calendar_type].presence || 'gregorian'
+    )
+  end
+
+  def normalize_string_date!(permitted, field_name)
+    value = permitted[field_name]
+    return if value.blank? || permitted["#{field_name}_attributes"].present?
+
+    date = parse_form_date(value)
+    return unless date
+
+    permitted["#{field_name}_attributes"] = {
+      year: date.year.to_s,
+      month: date.month.to_s,
+      day: date.day.to_s,
+      date_type: 'exact',
+      calendar_type: 'gregorian'
+    }
+  end
+
+  def parse_form_date(value)
+    return value.to_date if value.respond_to?(:to_date)
+
+    Date.iso8601(value.to_s)
+  rescue ArgumentError, TypeError
+    nil
   end
 
   def apply_search(scope)

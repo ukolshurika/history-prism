@@ -257,6 +257,25 @@ RSpec.describe 'Events', type: :request do
         expect(event.description).to eq('Updated Description')
         expect(response).to redirect_to(event_path(event))
       end
+
+      it 'converts string form dates into FuzzyDate associations' do
+        patch event_path(event), params: {
+          event: {
+            title: 'Updated Event',
+            description: 'Updated Description',
+            start_date: '1945-10-02',
+            end_date: '1945-10-03'
+          }
+        }
+
+        event.reload
+
+        expect(response).to redirect_to(event_path(event))
+        expect(event.start_date).to be_a(FuzzyDate)
+        expect(event.end_date).to be_a(FuzzyDate)
+        expect(event.start_date.original_text).to eq('1945-10-02')
+        expect(event.end_date.original_text).to eq('1945-10-03')
+      end
     end
 
     context 'when user does not own the event' do

@@ -29,6 +29,16 @@
 
 ru:
   hello: "Hello world"
+  activerecord:
+    attributes:
+      event:
+        title: "Название"
+    errors:
+      messages:
+        record_invalid: "Ошибка валидации: %{errors}"
+  errors:
+    messages:
+      blank: "не может быть пустым"
   passwords:
     invalid_token: "Ссылка для сброса пароля недействительна или истекла."
     update:

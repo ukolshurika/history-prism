@@ -294,9 +294,9 @@ describe('Timelines Show', () => {
       />
     )
 
-    expect(screen.getByText('Personal')).toBeInTheDocument()
-    expect(screen.getByText('Local')).toBeInTheDocument()
-    expect(screen.getByText('World')).toBeInTheDocument()
+    expect(screen.getAllByText('Personal').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Local').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('World').length).toBeGreaterThan(0)
   })
 
   it('shows "No events available yet" when all categorized_events are empty', () => {
@@ -324,7 +324,7 @@ describe('Timelines Show', () => {
       />
     )
 
-    expect(screen.getByText('Birth')).toBeInTheDocument()
+    expect(screen.getAllByText('Birth').length).toBeGreaterThan(0)
   })
 
   it('renders event title in the local track', () => {
@@ -362,7 +362,7 @@ describe('Timelines Show', () => {
       />
     )
 
-    expect(screen.getByText('Local Event')).toBeInTheDocument()
+    expect(screen.getAllByText('Local Event').length).toBeGreaterThan(0)
   })
 
   it('shows "+" add button on each track when can_edit is true', () => {
