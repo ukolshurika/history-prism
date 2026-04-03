@@ -2,29 +2,7 @@ import { Head, Link, useForm, router } from '@inertiajs/react'
 import { useMemo, useState } from 'react'
 import Layout from '../Layout'
 
-const PROTOTYPES = [
-  {
-    id: 'ribbon',
-    name: 'Ribbon',
-    eyebrow: 'Recommended',
-    title: 'A continuous horizontal canvas for a life at full scale.',
-    description: 'The entire viewport becomes a navigable timeline. Zoom reveals detail, overlap resolves into lanes, and the mini-map keeps orientation.'
-  },
-  {
-    id: 'strata',
-    name: 'Strata',
-    eyebrow: 'Editorial',
-    title: 'A vertical chronicle with three clear historical layers.',
-    description: 'Personal, place, and global events stay visually separated while dense years collapse into compact clusters.'
-  },
-  {
-    id: 'pulse',
-    name: 'Pulse',
-    eyebrow: 'Overview',
-    title: 'A decade-level pulse that opens and closes with distance.',
-    description: 'At a glance it shows intensity, then opens into individual episodes as you move closer.'
-  }
-]
+const ACTIVE_PROTOTYPE = 'strata'
 
 const TRACKS = [
   {
@@ -122,83 +100,6 @@ function computeRange(events) {
   const min = Math.floor(Math.min(...values))
   const max = Math.ceil(Math.max(...values))
   return { min, max, span: Math.max(max - min, 1) }
-}
-
-function assignLanes(events) {
-  const sorted = [...events].sort((a, b) => {
-    if (a.startValue === b.startValue) return (a.endValue || a.startValue) - (b.endValue || b.startValue)
-    return a.startValue - b.startValue
-  })
-
-  const laneEnds = []
-
-  return sorted.map((event) => {
-    let lane = laneEnds.findIndex((laneEnd) => laneEnd <= event.startValue)
-
-    if (lane === -1) {
-      lane = laneEnds.length
-      laneEnds.push(event.endValue + 0.05)
-    } else {
-      laneEnds[lane] = event.endValue + 0.05
-    }
-
-    return {
-      ...event,
-      lane
-    }
-  })
-}
-
-function clusterEvents(events, bucketSize) {
-  const grouped = new Map()
-
-  events.forEach((event) => {
-    const bucket = Math.floor((event.startValue || 0) / bucketSize) * bucketSize
-    const key = `${event.track}-${bucket}`
-
-    if (!grouped.has(key)) {
-      grouped.set(key, {
-        id: `cluster-${key}`,
-        cluster: true,
-        track: event.track,
-        trackLabel: event.trackLabel,
-        formCategory: event.formCategory,
-        accent: event.accent,
-        wash: event.wash,
-        border: event.border,
-        startValue: bucket,
-        endValue: bucket + bucketSize,
-        title: `${event.trackLabel} cluster`,
-        items: []
-      })
-    }
-
-    grouped.get(key).items.push(event)
-  })
-
-  return Array.from(grouped.values()).map((group) => ({
-    ...group,
-    title: group.items.length === 1 ? group.items[0].title : `${group.items.length} events`,
-    description: group.items.length === 1 ? group.items[0].description : `${group.trackLabel} events in the same time slice`
-  }))
-}
-
-function histogram(events, range, bucketSize = 10) {
-  const bucketCount = Math.max(Math.ceil(range.span / bucketSize), 1)
-  const buckets = Array.from({ length: bucketCount }, (_, index) => ({
-    year: range.min + index * bucketSize,
-    personal: 0,
-    local: 0,
-    world: 0
-  }))
-
-  events.forEach((event) => {
-    const rawIndex = Math.floor(((event.startValue || range.min) - range.min) / bucketSize)
-    const index = Math.max(0, Math.min(rawIndex, buckets.length - 1))
-    buckets[index][event.track] += 1
-  })
-
-  return buckets
 }
 
 function CreateEventForm({ timeline, category, onClose }) {
@@ -383,48 +284,6 @@ function DateFields({ title, path, data, setData }) {
   )
 }
 
-function PrototypePicker({ activePrototype, onSelect }) {
-  return (
-    <section className="grid gap-4 lg:grid-cols-3">
-      {PROTOTYPES.map((prototype) => {
-        const isActive = activePrototype === prototype.id
-
-        return (
-          <button
-            key={prototype.id}
-            type="button"
-            onClick={() => onSelect(prototype.id)}
-            className={`rounded-[28px] border p-6 text-left transition ${
-              isActive
-                ? 'border-stone-900 bg-stone-900 text-white shadow-xl'
-                : 'border-stone-200 bg-white/80 text-stone-900 hover:-translate-y-0.5 hover:bg-white'
-            }`}
-          >
-            <p className={`text-xs uppercase tracking-[0.28em] ${isActive ? 'text-stone-300' : 'text-stone-500'}`}>
-              {prototype.eyebrow}
-            </p>
-            <div className="mt-5 flex items-center justify-between gap-3">
-              <h3
-                className="text-2xl"
-                style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
-              >
-                {prototype.name}
-              </h3>
-              <span className={`h-3 w-3 rounded-full ${isActive ? 'bg-[#d6c5a2]' : 'bg-stone-300'}`} />
-            </div>
-            <p className={`mt-4 text-sm leading-6 ${isActive ? 'text-stone-200' : 'text-stone-600'}`}>
-              {prototype.title}
-            </p>
-            <p className={`mt-4 text-sm leading-6 ${isActive ? 'text-stone-300' : 'text-stone-500'}`}>
-              {prototype.description}
-            </p>
-          </button>
-        )
-      })}
-    </section>
-  )
-}
-
 function TrackLegend({ canEdit, onAddEvent }) {
   return (
     <div className="grid gap-3 md:grid-cols-3">
@@ -493,163 +352,6 @@ function Inspector({ selectedEvent }) {
   )
 }
 
-function RibbonPrototype({ events, range, zoom, selectedEventId, onSelect }) {
-  const condensed = zoom <= 35
-  const bucketSize = zoom <= 20 ? 10 : zoom <= 35 ? 5 : 1
-  const renderedEvents = condensed ? clusterEvents(events, bucketSize) : events
-  const byTrack = TRACKS.map((track) => {
-    const trackEvents = renderedEvents.filter((event) => event.track === track.key)
-    const laidOutEvents = assignLanes(trackEvents)
-    return {
-      ...track,
-      events: laidOutEvents,
-      laneCount: Math.max(...laidOutEvents.map((event) => event.lane || 0), 0) + 1
-    }
-  })
-  const density = histogram(events, range, 5)
-
-  return (
-    <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="rounded-[34px] border border-stone-200 bg-[linear-gradient(180deg,#fffefb_0%,#f7f1e8_100%)] p-4 sm:p-6">
-        <div className="mb-6 flex flex-col gap-4 border-b border-stone-200 pb-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-stone-500">Prototype One</p>
-            <h2
-              className="mt-2 text-3xl text-stone-900"
-              style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
-            >
-              Ribbon
-            </h2>
-          </div>
-          <p className="max-w-xl text-sm leading-6 text-stone-600">
-            Continuous horizontal reading. Events spread into sub-lanes when dates collide, and they collapse into clusters when the scale widens.
-          </p>
-        </div>
-
-        <div className="space-y-5 overflow-x-auto pb-2">
-          <div
-            className="relative min-w-[900px] rounded-[28px] border border-stone-200 bg-white/80 p-6"
-            style={{ width: `${Math.max(range.span * zoom * 10, 900)}px` }}
-          >
-            <Axis range={range} zoom={zoom} />
-            <div className="mt-10 space-y-8">
-              {byTrack.map((track) => (
-                <div key={track.key}>
-                  <div className="mb-3 flex items-center gap-3">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: track.accent }} />
-                    <span className="text-sm font-medium uppercase tracking-[0.2em] text-stone-600">{track.label}</span>
-                  </div>
-                  <div
-                    className="relative rounded-[22px] border px-4 py-4"
-                    style={{
-                      minHeight: `${Math.max(track.laneCount, 1) * 76 + 12}px`,
-                      backgroundColor: track.wash,
-                      borderColor: track.border
-                    }}
-                  >
-                    <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-stone-300" />
-                    {track.events.map((event) => {
-                      const left = `${(((event.startValue || range.min) - range.min) / range.span) * 100}%`
-                      const width = condensed
-                        ? `${Math.max(((event.endValue - event.startValue) / range.span) * 100, 8)}%`
-                        : `${Math.max((((event.endValue || event.startValue) - (event.startValue || range.min) + 0.35) / range.span) * 100, 2.2)}%`
-                      const isSelected = selectedEventId === event.id
-
-                      return (
-                        <button
-                          key={event.id}
-                          type="button"
-                          onClick={() => onSelect(event.cluster ? event.items[0] : event)}
-                          className={`absolute rounded-[18px] border px-3 py-2 text-left transition ${
-                            isSelected ? 'shadow-lg ring-2 ring-stone-900/15' : 'hover:-translate-y-0.5 hover:shadow-md'
-                          }`}
-                          style={{
-                            left,
-                            top: `${12 + (event.lane || 0) * 76}px`,
-                            width,
-                            backgroundColor: event.cluster ? event.accent : '#fffdf8',
-                            color: event.cluster ? '#ffffff' : '#1c1917',
-                            borderColor: event.cluster ? 'transparent' : event.border
-                          }}
-                        >
-                          <div className="truncate text-sm font-medium">
-                            {event.title}
-                          </div>
-                          <div className={`mt-1 text-xs ${event.cluster ? 'text-white/80' : 'text-stone-500'}`}>
-                            {event.cluster ? `${event.items.length} overlapping entries` : formatRangeLabel(event)}
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[24px] border border-stone-200 bg-white/80 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-xs uppercase tracking-[0.25em] text-stone-500">Mini Map</p>
-              <p className="text-xs text-stone-500">Decade density</p>
-            </div>
-            <div className="flex items-end gap-2 overflow-hidden">
-              {density.map((bucket) => {
-                const total = bucket.personal + bucket.local + bucket.world
-                const height = Math.max(total * 8, 8)
-                return (
-                  <button
-                    key={bucket.year}
-                    type="button"
-                    onClick={() => {
-                      const match = events.find((event) => (event.startValue || range.min) >= bucket.year && (event.startValue || range.min) < bucket.year + 5)
-                      if (match) onSelect(match)
-                    }}
-                    className="flex min-w-0 flex-1 flex-col items-center gap-2"
-                    title={`${bucket.year}s`}
-                  >
-                    <div
-                      className="w-full rounded-full bg-stone-900/75"
-                      style={{ height: `${height}px` }}
-                    />
-                    <span className="text-[10px] tracking-[0.16em] text-stone-500">{bucket.year}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <Inspector selectedEvent={selectedEventId ? events.find((event) => event.id === selectedEventId) : null} />
-    </section>
-  )
-}
-
-function Axis({ range, zoom }) {
-  const step = zoom >= 55 ? 2 : zoom >= 35 ? 5 : 10
-  const marks = []
-
-  for (let year = range.min; year <= range.max; year += step) {
-    marks.push(year)
-  }
-
-  return (
-    <div className="relative h-8 border-b border-stone-200">
-      {marks.map((year) => (
-        <div
-          key={year}
-          className="absolute top-0 h-full border-l border-stone-200"
-          style={{ left: `${((year - range.min) / range.span) * 100}%` }}
-        >
-          <span className="absolute -left-4 -top-5 text-[10px] uppercase tracking-[0.18em] text-stone-500">
-            {year}
-          </span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function StrataPrototype({ events, zoom, selectedEventId, onSelect }) {
   const bucketSize = zoom >= 55 ? 1 : zoom >= 35 ? 5 : 10
   const grouped = new Map()
@@ -687,9 +389,6 @@ function StrataPrototype({ events, zoom, selectedEventId, onSelect }) {
               Strata
             </h2>
           </div>
-          <p className="max-w-xl text-sm leading-6 text-stone-600">
-            The page behaves like a printed chronicle. Dense periods collapse into compact clusters, but each layer stays visually separate.
-          </p>
         </div>
 
         <div className="space-y-4">
@@ -858,7 +557,6 @@ function PulsePrototype({ events, range, zoom, selectedEventId, onSelect }) {
 }
 
 export default function Show({ timeline, can_edit, can_delete, current_user, flash }) {
-  const [prototype, setPrototype] = useState('ribbon')
   const [zoom, setZoom] = useState(48)
   const [selectedEventId, setSelectedEventId] = useState(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -908,22 +606,13 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
             No events available yet
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-stone-600">
-            The new timeline surface is ready. Once personal, local, or global events are attached, this page will open as an interactive historical canvas.
+            Strata is ready. Once personal, local, or global events are attached, this page will open as a clear chronological reading surface.
           </p>
         </div>
       )
     }
 
-    switch (prototype) {
-      case 'strata':
-        return (
-          <StrataPrototype
-            events={events}
-            zoom={zoom}
-            selectedEventId={selectedEvent?.id}
-            onSelect={(event) => setSelectedEventId(event.id)}
-          />
-        )
+    switch (ACTIVE_PROTOTYPE) {
       case 'pulse':
         return (
           <PulsePrototype
@@ -934,11 +623,11 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
             onSelect={(event) => setSelectedEventId(event.id)}
           />
         )
+      case 'strata':
       default:
         return (
-          <RibbonPrototype
+          <StrataPrototype
             events={events}
-            range={range}
             zoom={zoom}
             selectedEventId={selectedEvent?.id}
             onSelect={(event) => setSelectedEventId(event.id)}
@@ -972,9 +661,6 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
                     {events.length} events
                   </span>
                 </div>
-                <p className="mt-6 max-w-2xl text-base leading-7 text-stone-600">
-                  Three directions for the main timeline page. The first one should be the production candidate: it keeps the whole life visible, stays calm under density, and invites interaction.
-                </p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
@@ -1013,8 +699,6 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
             </div>
 
             <div className="mt-8 space-y-8">
-              <PrototypePicker activePrototype={prototype} onSelect={setPrototype} />
-
               <section className="grid gap-4 rounded-[30px] border border-stone-200 bg-[#f8f4ee] p-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
                 <div>
                   <p className="text-xs uppercase tracking-[0.28em] text-stone-500">Scale</p>
