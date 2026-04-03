@@ -106,12 +106,12 @@ RSpec.describe 'Timelines', type: :request do
           expect(response).to redirect_to(timelines_path)
         end
 
-        it 'enqueues TimelineWorker with correct arguments' do
+        it 'enqueues Gedcom::TimelineWorker with correct arguments' do
           expect {
             post timelines_path, params: valid_params
-          }.to change(TimelineWorker.jobs, :size).by(1)
+          }.to change(Gedcom::TimelineWorker.jobs, :size).by(1)
 
-          job = TimelineWorker.jobs.last
+          job = Gedcom::TimelineWorker.jobs.last
           expect(job['args']).to eq([Timeline.last.id, user.id])
         end
       end

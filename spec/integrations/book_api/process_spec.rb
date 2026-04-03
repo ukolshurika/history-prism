@@ -30,7 +30,8 @@ RSpec.describe BookApi, '.process' do
           body: {
             blob_key: blob_key,
             book_id: book_id,
-            callback_url: callback_url
+            callback_url: callback_url,
+            language: 'ru'
           }.to_json
         )
         .to_return(
@@ -49,7 +50,8 @@ RSpec.describe BookApi, '.process' do
             body: {
               blob_key: blob_key,
               book_id: book_id,
-              callback_url: callback_url
+              callback_url: callback_url,
+              language: 'ru'
             }.to_json
           )
       ).to have_been_made.once

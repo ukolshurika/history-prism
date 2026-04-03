@@ -47,7 +47,15 @@ RSpec.describe Gedcom::CreatePersonWorker, type: :worker do
 
   describe '#perform' do
     before do
-      allow(GedcomApi).to receive(:person).and_return(person_response)
+      allow(GedcomApi).to receive(:person) do |_key, requested_person_id|
+        GedcomApi::Person.new(
+          name: requested_person_id == 'I002' ? 'Jane Smith' : 'John Smith',
+          givn: requested_person_id == 'I002' ? 'Jane' : 'John',
+          surn: 'Smith',
+          id: "@#{requested_person_id}@",
+          gender: requested_person_id == 'I002' ? 'F' : 'M'
+        )
+      end
       allow(GedcomApi).to receive(:timeline).and_return(timeline_events)
     end
 

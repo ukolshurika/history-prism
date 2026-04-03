@@ -9,7 +9,7 @@ RSpec.describe GedcomApi, '.timeline' do
   let(:person_id) { 'I001' }
 
   let(:expected_endpoint) { "#{api_url}/timeline" }
-  let(:query_params) { "file=#{blob_key}&gedcom_id=#{person_id}" }
+  let(:query_params) { "file=#{blob_key}&gedcom_id=%40#{person_id}%40" }
   let(:expected_signature) { OpenSSL::HMAC.hexdigest('SHA256', auth_secret, "/timeline?#{query_params}") }
 
   before do
@@ -48,7 +48,7 @@ RSpec.describe GedcomApi, '.timeline' do
 
     before do
       stub_request(:get, expected_endpoint)
-        .with(query: { file: blob_key, gedcom_id: person_id })
+        .with(query: { file: blob_key, gedcom_id: "@#{person_id}@" })
         .to_return(
           status: 200,
           headers: { 'Content-Type' => 'application/json' },
@@ -61,7 +61,7 @@ RSpec.describe GedcomApi, '.timeline' do
 
       expect(
         a_request(:get, expected_endpoint)
-          .with(query: { file: blob_key, gedcom_id: person_id })
+          .with(query: { file: blob_key, gedcom_id: "@#{person_id}@" })
       ).to have_been_made.once
     end
 
@@ -93,7 +93,7 @@ RSpec.describe GedcomApi, '.timeline' do
   context 'when timeline is empty' do
     before do
       stub_request(:get, expected_endpoint)
-        .with(query: { file: blob_key, gedcom_id: person_id })
+        .with(query: { file: blob_key, gedcom_id: "@#{person_id}@" })
         .to_return(
           status: 200,
           headers: { 'Content-Type' => 'application/json' },
@@ -111,7 +111,7 @@ RSpec.describe GedcomApi, '.timeline' do
   context 'when request fails with 404 not found' do
     before do
       stub_request(:get, expected_endpoint)
-        .with(query: { file: blob_key, gedcom_id: person_id })
+        .with(query: { file: blob_key, gedcom_id: "@#{person_id}@" })
         .to_return(
           status: 404,
           headers: { 'Content-Type' => 'application/json' },
@@ -130,7 +130,7 @@ RSpec.describe GedcomApi, '.timeline' do
   context 'when request fails with 422 invalid parameters' do
     before do
       stub_request(:get, expected_endpoint)
-        .with(query: { file: blob_key, gedcom_id: person_id })
+        .with(query: { file: blob_key, gedcom_id: "@#{person_id}@" })
         .to_return(
           status: 422,
           headers: { 'Content-Type' => 'application/json' },
@@ -149,7 +149,7 @@ RSpec.describe GedcomApi, '.timeline' do
   context 'when request fails with 401 unauthorized' do
     before do
       stub_request(:get, expected_endpoint)
-        .with(query: { file: blob_key, gedcom_id: person_id })
+        .with(query: { file: blob_key, gedcom_id: "@#{person_id}@" })
         .to_return(
           status: 401,
           headers: { 'Content-Type' => 'application/json' },
@@ -168,7 +168,7 @@ RSpec.describe GedcomApi, '.timeline' do
   context 'when request fails with 5xx error' do
     before do
       stub_request(:get, expected_endpoint)
-        .with(query: { file: blob_key, gedcom_id: person_id })
+        .with(query: { file: blob_key, gedcom_id: "@#{person_id}@" })
         .to_return(
           status: 503,
           headers: { 'Content-Type' => 'application/json' },
@@ -187,7 +187,7 @@ RSpec.describe GedcomApi, '.timeline' do
   context 'when network error occurs' do
     before do
       stub_request(:get, expected_endpoint)
-        .with(query: { file: blob_key, gedcom_id: person_id })
+        .with(query: { file: blob_key, gedcom_id: "@#{person_id}@" })
         .to_raise(Faraday::ConnectionFailed.new('Connection refused'))
     end
 
@@ -202,7 +202,7 @@ RSpec.describe GedcomApi, '.timeline' do
   context 'when timeout occurs' do
     before do
       stub_request(:get, expected_endpoint)
-        .with(query: { file: blob_key, gedcom_id: person_id })
+        .with(query: { file: blob_key, gedcom_id: "@#{person_id}@" })
         .to_raise(Faraday::TimeoutError.new('Request timeout'))
     end
 
@@ -217,7 +217,7 @@ RSpec.describe GedcomApi, '.timeline' do
   context 'when response body is not JSON' do
     before do
       stub_request(:get, expected_endpoint)
-        .with(query: { file: blob_key, gedcom_id: person_id })
+        .with(query: { file: blob_key, gedcom_id: "@#{person_id}@" })
         .to_return(
           status: 500,
           headers: { 'Content-Type' => 'text/html' },
@@ -236,7 +236,7 @@ RSpec.describe GedcomApi, '.timeline' do
   context 'when response has invalid structure' do
     before do
       stub_request(:get, expected_endpoint)
-        .with(query: { file: blob_key, gedcom_id: person_id })
+        .with(query: { file: blob_key, gedcom_id: "@#{person_id}@" })
         .to_return(
           status: 200,
           headers: { 'Content-Type' => 'application/json' },

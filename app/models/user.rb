@@ -8,6 +8,7 @@ class User < ApplicationRecord
   has_many :timelines, dependent: :destroy
 
   generates_token_for :email_confirmation, expires_in: 24.hours
+  generates_token_for :password_reset, expires_in: 15.minutes
 
   DISPOSABLE_EMAIL_DOMAINS = YAML.load_file(
     Rails.root.join('config', 'disposable_email_domains.yml')
@@ -37,6 +38,10 @@ class User < ApplicationRecord
 
   def confirmed?
     confirmed_at.present?
+  end
+
+  def password_reset_token
+    generate_token_for(:password_reset)
   end
 
   private

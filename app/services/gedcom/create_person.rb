@@ -17,10 +17,13 @@ module Gedcom
     private
 
     def person
-      @person ||= Person.create_or_find_by(user_id: user_id, gedcom_file_id: gedcom_file_id,
-                                           gedcom_uuid: normalize_id) do |p|
-        p.name = person_attrs.name || ''
-        p.first_name = person_attrs.givn || ''
+      @person ||= Person.find_or_initialize_by(
+        gedcom_file_id: gedcom_file_id,
+        gedcom_uuid: normalize_id
+      ).tap do |p|
+        p.user_id ||= user_id
+        p.name ||= person_attrs.name || ''
+        p.first_name ||= person_attrs.givn || ''
       end
     end
 

@@ -11,6 +11,13 @@ module SignatureValidation
 
   def validate_signature!
     signature = request.headers['X-Signature']
+    secret = callback_secret
+
+    if secret.blank?
+      render json: { error: 'Invalid signature' }, status: :unauthorized
+      return
+    end
+
     expected_signature = compute_signature(request.raw_post)
 
     unless ActiveSupport::SecurityUtils.secure_compare(signature.to_s, expected_signature)

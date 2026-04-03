@@ -54,11 +54,10 @@ RSpec.describe 'Books', type: :request do
         expect(response).to redirect_to(events_path(source_type: 'Book', source_id: book.id))
       end
 
-      it 'denies access to other user\'s book' do
+      it "denies access to other user's book" do
         other_book = create(:book, creator: other_user)
-        expect {
-          get book_path(other_book)
-        }.to raise_error(Pundit::NotAuthorizedError)
+        get book_path(other_book)
+        expect(response).to redirect_to(root_path)
       end
     end
 
@@ -68,7 +67,6 @@ RSpec.describe 'Books', type: :request do
         expect(response).to redirect_to(new_session_path)
       end
     end
-  end
 
   describe 'GET /books/new' do
     context 'when user is signed in' do
@@ -93,11 +91,9 @@ RSpec.describe 'Books', type: :request do
     let(:invalid_file) { fixture_file_upload('test.txt', 'text/plain') }
     let(:valid_params) do
       {
-        book: {
-          name: 'My History Book',
-          location: 'New York, USA',
-          attachment: valid_file
-        }
+        name: 'My History Book',
+        location: 'New York, USA',
+        attachment: valid_file
       }
     end
 
@@ -118,20 +114,18 @@ RSpec.describe 'Books', type: :request do
         it 'enqueues upload worker with correct arguments' do
           expect {
             post books_path, params: valid_params
-          }.to have_enqueued_job(Books::UploadWorker).with(Book.last&.id || Integer)
+          }.to change(Books::UploadWorker.jobs, :size).by(1)
 
-          # Alternative for Sidekiq
-          # expect(Books::UploadWorker.jobs.size).to change.by(1)
+          job = Books::UploadWorker.jobs.last
+          expect(job['args']).to eq([Book.last.id])
         end
       end
 
       context 'with invalid file extension' do
         let(:invalid_params) do
           {
-            book: {
-              name: 'My Book',
-              attachment: invalid_file
-            }
+            name: 'My Book',
+            attachment: invalid_file
           }
         end
 
@@ -177,9 +171,8 @@ RSpec.describe 'Books', type: :request do
 
       it 'denies access to other user\'s book' do
         other_book = create(:book, creator: other_user)
-        expect {
-          get edit_book_path(other_book)
-        }.to raise_error(Pundit::NotAuthorizedError)
+        get edit_book_path(other_book)
+        expect(response).to redirect_to(root_path)
       end
     end
 
@@ -194,10 +187,8 @@ RSpec.describe 'Books', type: :request do
   describe 'PATCH /books/:id' do
     let(:update_params) do
       {
-        book: {
-          name: 'Updated Name',
-          location: 'Updated Location'
-        }
+        name: 'Updated Name',
+        location: 'Updated Location'
       }
     end
 
@@ -214,9 +205,8 @@ RSpec.describe 'Books', type: :request do
 
       it 'denies update to other user\'s book' do
         other_book = create(:book, creator: other_user)
-        expect {
-          patch book_path(other_book), params: update_params
-        }.to raise_error(Pundit::NotAuthorizedError)
+        patch book_path(other_book), params: update_params
+        expect(response).to redirect_to(root_path)
       end
     end
 
@@ -247,7 +237,9 @@ RSpec.describe 'Books', type: :request do
         other_book = create(:book, creator: other_user)
         expect {
           delete book_path(other_book)
-        }.to raise_error(Pundit::NotAuthorizedError)
+        }.not_to change(Book, :count)
+
+        expect(response).to redirect_to(root_path)
       end
     end
 
@@ -255,6 +247,7 @@ RSpec.describe 'Books', type: :request do
       it 'redirects to sign in page' do
         delete book_path(book)
         expect(response).to redirect_to(new_session_path)
+      end
       end
     end
   end

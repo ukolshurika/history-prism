@@ -41,7 +41,13 @@ module Books
       )
       event
     rescue ActiveRecord::RecordInvalid => e
-      log_skipped_event(index, event_data, e.record.errors.full_messages.to_sentence)
+      reason =
+        if e.record&.errors.present?
+          e.record.errors.full_messages.to_sentence
+        else
+          e.message
+        end
+      log_skipped_event(index, event_data, reason)
       nil
     end
 

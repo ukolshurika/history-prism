@@ -13,8 +13,8 @@ RSpec.describe 'Registration', type: :request do
       {
         user: {
           email: 'test@example.com',
-          password: 'password123',
-          password_confirmation: 'password123'
+          password: 'Password123',
+        password_confirmation: 'Password123'
         }
       }
     end
@@ -24,7 +24,7 @@ RSpec.describe 'Registration', type: :request do
         expect {
           post registration_path, params: valid_params
         }.to change(User, :count).by(1)
-        expect(response).to redirect_to(root_path)
+        expect(response).to redirect_to(new_confirmation_path)
         expect(User.last.email).to eq('test@example.com')
       end
     end
@@ -71,8 +71,8 @@ RSpec.describe 'Registration', type: :request do
       before do
         User.create!(
           email: 'test@example.com',
-          password: 'password123',
-          password_confirmation: 'password123'
+          password: 'Password123',
+        password_confirmation: 'Password123'
         )
       end
 

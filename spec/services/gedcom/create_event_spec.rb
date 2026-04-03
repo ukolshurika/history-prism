@@ -6,12 +6,11 @@ RSpec.describe Gedcom::CreateEvent do
     let(:gedcom_file) { create(:gedcom_file, user: user) }
     let(:person) { create(:person, user: user, gedcom_file: gedcom_file) }
     let(:gedcom_event) do
-      instance_double(
-        GedcomApi::Event,
+      GedcomApi::Event.new(
         name: 'Birth',
         description: 'Born',
         place: 'Moscow',
-        notes: [],
+        notes: '',
         date: '1900-01-01'
       )
     end

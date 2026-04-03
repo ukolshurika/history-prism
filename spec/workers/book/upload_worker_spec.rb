@@ -27,7 +27,7 @@ RSpec.describe Books::UploadWorker, type: :worker do
         worker.perform(book.id)
 
         expect(Rails.application.routes.url_helpers).to have_received(:book_events_url)
-          .with(book, host: BookClient.url)
+          .with(book, host: BookClient.callback_host)
       end
 
       it 'does not raise an error' do
