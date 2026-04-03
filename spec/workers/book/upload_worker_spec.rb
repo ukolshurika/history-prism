@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe Book::UploadWorker, type: :worker do
+RSpec.describe Books::UploadWorker, type: :worker do
   let(:user) { create(:user) }
   let(:book) { create(:book, creator: user) }
   let(:blob_key) { book.attachment.attachment.key }
@@ -27,7 +27,7 @@ RSpec.describe Book::UploadWorker, type: :worker do
         worker.perform(book.id)
 
         expect(Rails.application.routes.url_helpers).to have_received(:book_events_url)
-          .with(book, host: BookClient.url)
+          .with(book, host: BookClient.callback_host)
       end
 
       it 'does not raise an error' do

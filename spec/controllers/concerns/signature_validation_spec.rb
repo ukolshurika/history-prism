@@ -16,7 +16,7 @@ RSpec.describe SignatureValidation, type: :controller do
 
   before do
     routes.draw { post 'create' => 'anonymous#create' }
-    allow(ENV).to receive(:[]).with('BOOK_CALLBACK_SECRET').and_return(callback_secret)
+    allow(BookClient).to receive(:callback_secret).and_return(callback_secret)
   end
 
   def generate_signature(body)
@@ -79,7 +79,7 @@ RSpec.describe SignatureValidation, type: :controller do
 
     context 'when ENV variable is not set' do
       before do
-        allow(ENV).to receive(:[]).with('BOOK_CALLBACK_SECRET').and_return(nil)
+        allow(BookClient).to receive(:callback_secret).and_return(nil)
       end
 
       it 'returns unauthorized' do

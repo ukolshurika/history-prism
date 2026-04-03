@@ -18,7 +18,9 @@ RSpec.describe TimelinePdf::PdfGenerator do
 
       expect {
         generator.send(:compile_latex)
-      }.to raise_error(TimelinePdf::PdfGenerator::CompilationError, /timed out/)
+      }.to raise_error(TimelinePdf::PdfGenerator::CompilationError) { |error|
+        expect(error.message).to include('timed out')
+      }
     end
 
     it 'succeeds when pdflatex exits successfully and the PDF exists' do

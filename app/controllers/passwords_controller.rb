@@ -27,7 +27,8 @@ class PasswordsController < ApplicationController
   private
 
   def set_user_by_token
-    @user = User.find_by_password_reset_token!(params[:token])
+    @user = User.find_by_token_for(:password_reset, params[:token])
+    raise ActiveSupport::MessageVerifier::InvalidSignature if @user.blank?
   rescue ActiveSupport::MessageVerifier::InvalidSignature
     redirect_to new_password_path, alert: t('passwords.invalid_token')
   end

@@ -7,7 +7,7 @@ class UserMailer < ApplicationMailer
 
   def password_reset_instructions(user)
     @user = user
-    @token = user.generate_password_reset_token
+    @token = user.generate_token_for(:password_reset)
     mail(to: user.email, subject: 'Сброс пароля — History Prism')
   end
 end

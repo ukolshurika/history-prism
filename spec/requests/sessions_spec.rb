@@ -32,16 +32,18 @@ RSpec.describe 'Sessions', type: :request do
         session.update_column(:created_at, Session::SESSION_TTL.ago - 1.minute)
       end
     end
+    let(:signed_cookie_jar) { ActionDispatch::Cookies::CookieJar.build(ActionDispatch::TestRequest.create, {}) }
 
     it 'rejects expired sessions and removes them' do
-      cookies.signed[:session_id] = expired_session.id
+      signed_cookie_jar.signed[:session_id] = expired_session.id
+      cookies[:session_id] = signed_cookie_jar[:session_id]
 
       expect {
         get timelines_path
       }.to change(Session, :count).by(-1)
 
       expect(response).to redirect_to(new_session_path)
-      expect(cookies[:session_id]).to be_nil
+      expect(cookies[:session_id]).to be_blank
     end
   end
 end

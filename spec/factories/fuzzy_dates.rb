@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :fuzzy_date do
-    original_text { '1 JAN 1900' }
+    sequence(:original_text) { |n| "1 JAN #{1899 + n}" }
     date_type { :exact }
     calendar_type { :gregorian }
     year { 1900 }

@@ -19,13 +19,13 @@ RSpec.describe Book, type: :model do
     it 'is invalid without a creator' do
       book = build(:book, creator: nil)
       expect(book).not_to be_valid
-      expect(book.errors[:creator]).to include("can't be blank")
+      expect(book.errors[:creator]).to include("не может быть пустым")
     end
 
     it 'is invalid without an attachment' do
       book = build(:book, :without_attachment)
       expect(book).not_to be_valid
-      expect(book.errors[:attachment]).to include("can't be blank")
+      expect(book.errors[:attachment]).to include("не может быть пустым")
     end
 
     it 'is invalid with a non-PDF attachment' do

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_27_000200) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_27_000400) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -116,6 +116,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_27_000200) do
     t.date "sort_value"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["original_text"], name: "index_fuzzy_dates_on_original_text", unique: true
     t.index ["sort_value"], name: "index_fuzzy_dates_on_sort_value"
     t.index ["year"], name: "index_fuzzy_dates_on_year"
   end
@@ -124,6 +125,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_27_000200) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "processing_status", default: "queued", null: false
+    t.text "processing_error"
     t.index ["user_id"], name: "index_gedcom_files_on_user_id"
   end
 
@@ -189,6 +192,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_27_000200) do
     t.datetime "updated_at", null: false
     t.string "pdf_url"
     t.datetime "pdf_generated_at"
+    t.string "processing_status", default: "queued", null: false
+    t.text "processing_error"
+    t.string "pdf_status", default: "idle", null: false
+    t.text "pdf_error"
     t.index ["end_at"], name: "index_timelines_on_end_at"
     t.index ["pdf_generated_at"], name: "index_timelines_on_pdf_generated_at"
     t.index ["person_id"], name: "index_timelines_on_person_id"

@@ -23,7 +23,7 @@ RSpec.describe Event, type: :model do
     it 'is invalid without a title' do
       event = build(:event, title: nil)
       expect(event).not_to be_valid
-      expect(event.errors[:title]).to include("can't be blank")
+      expect(event.errors[:title]).to include("не может быть пустым")
     end
 
     it 'is valid without a description' do
@@ -34,7 +34,7 @@ RSpec.describe Event, type: :model do
     it 'is invalid without a category' do
       event = build(:event, category: nil)
       expect(event).not_to be_valid
-      expect(event.errors[:category]).to include("can't be blank")
+      expect(event.errors[:category]).to include("не может быть пустым")
     end
 
     it 'is valid without a location' do
@@ -95,8 +95,8 @@ RSpec.describe Event, type: :model do
     let!(:later_date) { create(:fuzzy_date, year: 1950, month: 1, day: 1, sort_value: Date.new(1950, 1, 1)) }
     let!(:amsterdam) { create(:location, place: 'Amsterdam') }
     let!(:zurich) { create(:location, place: 'Zurich') }
-    let!(:earlier_event) { create(:event, start_date: earlier_date) }
-    let!(:later_event) { create(:event, start_date: later_date) }
+    let!(:earlier_event) { create(:event, start_date: earlier_date, end_date: earlier_date) }
+    let!(:later_event) { create(:event, start_date: later_date, end_date: later_date) }
     let!(:amsterdam_event) { create(:event, location: amsterdam) }
     let!(:zurich_event) { create(:event, location: zurich) }
 

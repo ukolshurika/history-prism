@@ -43,6 +43,7 @@ RSpec.describe Events::CreateService do
     end
 
     it 'updates the timeline cache under a lock' do
+      allow(Timeline).to receive(:find).with(timeline.id).and_return(timeline)
       allow(timeline).to receive(:with_lock).and_call_original
 
       result = described_class.new(user: user, params: params).call
