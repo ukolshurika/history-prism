@@ -299,6 +299,22 @@ describe('Timelines Show', () => {
     expect(screen.getAllByText('World').length).toBeGreaterThan(0)
   })
 
+  it('shows Strata as the only visible timeline direction', () => {
+    render(
+      <Show
+        timeline={mockTimelineWithAllTracks}
+        can_edit={false}
+        can_delete={false}
+        current_user={mockCurrentUser}
+        flash={{}}
+      />
+    )
+
+    expect(screen.getByRole('heading', { name: 'Strata' })).toBeInTheDocument()
+    expect(screen.queryByText('Ribbon')).not.toBeInTheDocument()
+    expect(screen.queryByText('Pulse')).not.toBeInTheDocument()
+  })
+
   it('shows "No events available yet" when all categorized_events are empty', () => {
     render(
       <Show
