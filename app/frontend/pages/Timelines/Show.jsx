@@ -724,7 +724,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
       <Head title={timeline.title} />
 
       <div className="min-h-screen bg-[radial-gradient(circle_at_top,#494136_0%,#221d18_24%,#12100f_58%,#0b0a09_100%)]">
-        <div className="relative overflow-hidden">
+        <div className="relative">
           <div className="absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_top,rgba(214,197,162,0.18),transparent_58%)]" />
 
           <div className="mx-auto max-w-[1440px] px-4 pb-16 pt-8 sm:px-6 lg:px-8">
