@@ -337,11 +337,11 @@ function HeroMeta({ timeline, range, eventsCount }) {
 
 function EventControlRail({ activeScale, onScaleChange }) {
   return (
-    <section className="rounded-[30px] border border-stone-300/70 bg-[#f3ede3]/92 px-5 py-5 shadow-[0_18px_50px_rgba(28,25,23,0.08)] backdrop-blur sm:px-6">
-      <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-        <div>
+    <section className="border-b border-stone-300/70 pb-5">
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+        <div className="flex flex-col gap-3">
           <p className="text-[11px] uppercase tracking-[0.28em] text-stone-600">Reading Scale</p>
-          <div className="mt-3 inline-flex rounded-full border border-stone-300 bg-white/75 p-1">
+          <div className="inline-flex rounded-full border border-stone-300/80 bg-transparent p-1">
             {SCALE_MODES.map((mode) => {
               const isActive = mode.id === activeScale.id
 
@@ -351,7 +351,7 @@ function EventControlRail({ activeScale, onScaleChange }) {
                   type="button"
                   onClick={() => onScaleChange(mode.id)}
                   className={`rounded-full px-4 py-2 text-sm transition ${
-                    isActive ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-100'
+                    isActive ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-200/60'
                   }`}
                   aria-pressed={isActive}
                 >
@@ -362,7 +362,7 @@ function EventControlRail({ activeScale, onScaleChange }) {
           </div>
         </div>
 
-        <div className="xl:text-right">
+        <div className="border-t border-stone-300/70 pt-4 xl:border-t-0 xl:border-l xl:border-stone-300/70 xl:pl-6 xl:pt-0 xl:text-right">
           <p className="text-[11px] uppercase tracking-[0.28em] text-stone-600">Narrative Lanes</p>
           <div className="mt-3 xl:flex xl:justify-end">
             <TrackLegend />
