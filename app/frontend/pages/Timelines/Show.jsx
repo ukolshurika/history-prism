@@ -398,6 +398,31 @@ function StrataPrototype({ events, bucketSize, selectedEventId, onSelect, canEdi
 
   return (
     <section className="border-t border-stone-300/70">
+      <div className="sticky top-16 z-20 border-b border-stone-300/70 bg-[rgba(238,231,219,0.92)] py-4 backdrop-blur">
+        <div className="grid gap-6 lg:grid-cols-[140px_repeat(3,minmax(0,1fr))]">
+          <div aria-hidden="true" />
+          {TRACKS.map((track) => (
+            <div key={track.key} className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: track.accent }} />
+                <span className="truncate text-[11px] uppercase tracking-[0.22em] text-stone-600">{track.label}</span>
+              </div>
+              {canEdit && (
+                <IconButton
+                  title={`Add ${track.label} event`}
+                  onClick={() => onAddEvent(track.formCategory)}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-stone-300/80 text-stone-600 transition hover:border-stone-500 hover:text-stone-900"
+                >
+                  <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+                    <path d="M10 4.5V15.5M4.5 10H15.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                  </svg>
+                </IconButton>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="divide-y divide-stone-300/70">
         {sections.map((section) => {
           const selectedInSection = TRACKS.flatMap((track) => section[track.key]).find((event) => event.id === selectedEventId)
@@ -406,9 +431,8 @@ function StrataPrototype({ events, bucketSize, selectedEventId, onSelect, canEdi
             <div key={section.label} className="py-8 first:pt-5">
               <div className="grid gap-6 lg:grid-cols-[140px_repeat(3,minmax(0,1fr))]">
                 <div className="pt-1">
-                  <div className="text-[11px] uppercase tracking-[0.28em] text-stone-600">Period</div>
                   <div
-                    className="mt-3 text-2xl text-stone-900"
+                    className="text-2xl text-stone-900"
                     style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
                   >
                     {section.label}
@@ -416,25 +440,8 @@ function StrataPrototype({ events, bucketSize, selectedEventId, onSelect, canEdi
                 </div>
                 {TRACKS.map((track) => (
                   <div key={track.key} className="space-y-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: track.accent }} />
-                        <span className="truncate text-[11px] uppercase tracking-[0.22em] text-stone-600">{track.label}</span>
-                      </div>
-                      {canEdit && (
-                        <IconButton
-                          title={`Add ${track.label} event`}
-                          onClick={() => onAddEvent(track.formCategory)}
-                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-stone-300/80 text-stone-600 transition hover:border-stone-500 hover:text-stone-900"
-                        >
-                          <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
-                            <path d="M10 4.5V15.5M4.5 10H15.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                          </svg>
-                        </IconButton>
-                      )}
-                    </div>
                     {section[track.key].length === 0 ? (
-                      <div className="h-[56px] rounded-[20px] border border-dashed border-stone-300/70 bg-transparent" aria-hidden="true" />
+                      <div className="h-2" aria-hidden="true" />
                     ) : (
                       section[track.key].map((event) => (
                         <button
