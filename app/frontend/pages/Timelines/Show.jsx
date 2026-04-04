@@ -3,6 +3,11 @@ import { useMemo, useState } from 'react'
 import Layout from '../Layout'
 
 const ACTIVE_PROTOTYPE = 'strata'
+const SCALE_MODES = [
+  { id: 'decade', label: '10 Years', bucketSize: 10 },
+  { id: 'mid', label: '5 Years', bucketSize: 5 },
+  { id: 'year', label: '1 Year', bucketSize: 1 }
+]
 
 const TRACKS = [
   {
@@ -284,76 +289,91 @@ function DateFields({ title, path, data, setData }) {
   )
 }
 
-function TrackLegend({ canEdit, onAddEvent }) {
+function IconButton({ title, onClick, children, className = '' }) {
   return (
-    <div className="grid gap-3 md:grid-cols-3">
+    <button
+      type="button"
+      title={title}
+      aria-label={title}
+      onClick={onClick}
+      className={className}
+    >
+      {children}
+    </button>
+  )
+}
+
+function TrackLegend() {
+  return (
+    <div className="flex flex-wrap items-center gap-4 sm:gap-6">
       {TRACKS.map((track) => (
-        <div
-          key={track.key}
-          className="flex items-center justify-between rounded-full border border-stone-200 bg-white/75 px-4 py-3"
-        >
-          <div className="flex items-center gap-3">
-            <span
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: track.accent }}
-            />
-            <span className="text-sm font-medium text-stone-800">{track.label}</span>
-          </div>
-          {canEdit && (
-            <button
-              type="button"
-              title={`Add ${track.label} event`}
-              onClick={() => onAddEvent(track.formCategory)}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-stone-300 text-lg text-stone-700 transition hover:bg-stone-100"
-            >
-              +
-            </button>
-          )}
+        <div key={track.key} className="flex items-center gap-2.5">
+          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: track.accent }} />
+          <span className="text-[11px] uppercase tracking-[0.24em] text-stone-500">{track.label}</span>
         </div>
       ))}
     </div>
   )
 }
 
-function Inspector({ selectedEvent }) {
-  if (!selectedEvent) {
-    return (
-      <aside className="rounded-[32px] border border-stone-200 bg-white/80 p-6">
-        <p className="text-xs uppercase tracking-[0.3em] text-stone-500">Inspector</p>
-        <h3
-          className="mt-4 text-2xl text-stone-900"
-          style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
-        >
-          Select an event
-        </h3>
-        <p className="mt-3 text-sm leading-6 text-stone-600">
-          The chosen event opens here with its date range and description. This keeps the canvas clean while making exploration feel deliberate.
-        </p>
-      </aside>
-    )
-  }
-
+function HeroMeta({ timeline, range, eventsCount }) {
   return (
-    <aside className="rounded-[32px] border border-stone-200 bg-white/80 p-6">
-      <p className="text-xs uppercase tracking-[0.3em] text-stone-500">{selectedEvent.trackLabel}</p>
-      <h3
-        className="mt-4 text-2xl text-stone-900"
-        style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
-      >
-        {selectedEvent.title}
-      </h3>
-      <p className="mt-3 text-sm text-stone-500">{formatRangeLabel(selectedEvent)}</p>
-      {selectedEvent.description ? (
-        <p className="mt-5 text-sm leading-7 text-stone-700">{selectedEvent.description}</p>
-      ) : (
-        <p className="mt-5 text-sm leading-7 text-stone-500">No description was provided for this event.</p>
-      )}
-    </aside>
+    <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-start lg:gap-0">
+      <div className="border-l border-white/20 pl-4 lg:pr-8">
+        <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">Subject</p>
+        <p className="mt-2 text-lg leading-tight text-stone-100">{timeline.person_name}</p>
+      </div>
+      <div className="border-l border-white/20 pl-4 lg:px-8">
+        <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">Range</p>
+        <p className="mt-2 text-lg text-stone-100">{range.min}-{range.max}</p>
+      </div>
+      <div className="border-l border-white/20 pl-4 lg:px-8">
+        <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">Density</p>
+        <p className="mt-2 text-lg text-stone-100">{eventsCount} events</p>
+      </div>
+    </div>
   )
 }
 
-function StrataPrototype({ events, zoom, selectedEventId, onSelect }) {
-  const bucketSize = zoom >= 55 ? 1 : zoom >= 35 ? 5 : 10
+function EventControlRail({ activeScale, onScaleChange }) {
+  return (
+    <section className="border-b border-stone-300/70 pb-5">
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+        <div className="flex flex-col gap-3">
+          <p className="text-[11px] uppercase tracking-[0.28em] text-stone-600">Reading Scale</p>
+          <div className="inline-flex rounded-full border border-stone-300/80 bg-transparent p-1">
+            {SCALE_MODES.map((mode) => {
+              const isActive = mode.id === activeScale.id
+
+              return (
+                <button
+                  key={mode.id}
+                  type="button"
+                  onClick={() => onScaleChange(mode.id)}
+                  className={`rounded-full px-4 py-2 text-sm transition ${
+                    isActive ? 'bg-stone-900 text-white' : 'text-stone-700 hover:bg-stone-200/60'
+                  }`}
+                  aria-pressed={isActive}
+                >
+                  {mode.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="border-t border-stone-300/70 pt-4 xl:border-t-0 xl:border-l xl:border-stone-300/70 xl:pl-6 xl:pt-0 xl:text-right">
+          <p className="text-[11px] uppercase tracking-[0.28em] text-stone-600">Narrative Lanes</p>
+          <div className="mt-3 xl:flex xl:justify-end">
+            <TrackLegend />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function StrataPrototype({ events, bucketSize, selectedEventId, onSelect, canEdit, onRemove, onAddEvent }) {
   const grouped = new Map()
 
   events.forEach((event) => {
@@ -377,76 +397,132 @@ function StrataPrototype({ events, zoom, selectedEventId, onSelect }) {
     .map(([, section]) => section)
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="rounded-[34px] border border-stone-200 bg-white/80 p-4 sm:p-6">
-        <div className="mb-6 flex flex-col gap-4 border-b border-stone-200 pb-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-stone-500">Prototype Two</p>
-            <h2
-              className="mt-2 text-3xl text-stone-900"
-              style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
-            >
-              Strata
-            </h2>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          {sections.map((section) => (
-            <div key={section.label} className="grid gap-4 rounded-[28px] border border-stone-200 bg-[#faf7f1] p-5 lg:grid-cols-[120px_repeat(3,minmax(0,1fr))]">
-              <div className="pt-1">
-                <div className="text-xs uppercase tracking-[0.28em] text-stone-500">Slice</div>
-                <div
-                  className="mt-2 text-2xl text-stone-900"
-                  style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
-                >
-                  {section.label}
-                </div>
+    <section className="border-t border-stone-300/70">
+      <div className="sticky top-16 z-20 border-b border-stone-300/70 bg-[rgba(238,231,219,0.92)] py-4 backdrop-blur">
+        <div className="grid gap-6 lg:grid-cols-[140px_repeat(3,minmax(0,1fr))]">
+          <div aria-hidden="true" />
+          {TRACKS.map((track) => (
+            <div key={track.key} className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: track.accent }} />
+                <span className="truncate text-[11px] uppercase tracking-[0.22em] text-stone-600">{track.label}</span>
               </div>
-              {TRACKS.map((track) => (
-                <div key={track.key} className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: track.accent }} />
-                    <span className="text-xs uppercase tracking-[0.18em] text-stone-500">{track.label}</span>
-                  </div>
-                  {section[track.key].length === 0 ? (
-                    <div className="rounded-[18px] border border-dashed border-stone-200 px-4 py-5 text-sm text-stone-400">
-                      Quiet period
-                    </div>
-                  ) : (
-                    section[track.key].map((event) => (
-                      <button
-                        key={event.id}
-                        type="button"
-                        onClick={() => onSelect(event)}
-                        className={`block w-full rounded-[20px] border px-4 py-4 text-left transition ${
-                          selectedEventId === event.id ? 'bg-stone-900 text-white shadow-lg' : 'bg-white hover:-translate-y-0.5 hover:shadow-md'
-                        }`}
-                        style={{
-                          borderColor: selectedEventId === event.id ? 'transparent' : event.border
-                        }}
-                      >
-                        <div className="text-sm font-medium">{event.title}</div>
-                        <div className={`mt-2 text-xs ${selectedEventId === event.id ? 'text-stone-300' : 'text-stone-500'}`}>
-                          {formatRangeLabel(event)}
-                        </div>
-                      </button>
-                    ))
-                  )}
-                </div>
-              ))}
+              {canEdit && (
+                <IconButton
+                  title={`Add ${track.label} event`}
+                  onClick={() => onAddEvent(track.formCategory)}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-stone-300/80 text-stone-600 transition hover:border-stone-500 hover:text-stone-900"
+                >
+                  <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5" aria-hidden="true">
+                    <path d="M10 4.5V15.5M4.5 10H15.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                  </svg>
+                </IconButton>
+              )}
             </div>
           ))}
         </div>
       </div>
 
-      <Inspector selectedEvent={selectedEventId ? events.find((event) => event.id === selectedEventId) : null} />
+      <div className="divide-y divide-stone-300/70">
+        {sections.map((section) => {
+          const selectedInSection = TRACKS.flatMap((track) => section[track.key]).find((event) => event.id === selectedEventId)
+
+          return (
+            <div key={section.label} className="py-8 first:pt-5">
+              <div className="grid gap-6 lg:grid-cols-[140px_repeat(3,minmax(0,1fr))]">
+                <div className="pt-1">
+                  <div
+                    className="text-2xl text-stone-900"
+                    style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
+                  >
+                    {section.label}
+                  </div>
+                </div>
+                {TRACKS.map((track) => (
+                  <div key={track.key} className="space-y-3">
+                    {section[track.key].length === 0 ? (
+                      <div className="h-2" aria-hidden="true" />
+                    ) : (
+                      section[track.key].map((event) => (
+                        <button
+                          key={event.id}
+                          type="button"
+                          onClick={() => onSelect(event)}
+                          className={`block w-full rounded-[22px] border px-4 py-4 text-left transition ${
+                            selectedEventId === event.id
+                              ? 'bg-stone-900 text-white shadow-[0_18px_40px_rgba(28,25,23,0.18)]'
+                              : 'bg-stone-50/80 text-stone-900 hover:bg-white'
+                          }`}
+                          style={{
+                            borderColor: selectedEventId === event.id ? 'transparent' : event.border
+                          }}
+                        >
+                          <div>
+                            <div className="text-sm font-medium">{event.title}</div>
+                            <div className={`mt-2 text-xs ${selectedEventId === event.id ? 'text-stone-300' : 'text-stone-600'}`}>
+                              {formatRangeLabel(event)}
+                            </div>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {selectedInSection && (
+                <div className="mt-7 lg:pl-[140px]">
+                  <div className="grid gap-4 border-l border-stone-400/70 pl-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+                    <div className="max-w-3xl">
+                      <p className="text-[11px] uppercase tracking-[0.24em] text-stone-600">{selectedInSection.trackLabel}</p>
+                      <h3
+                        className="mt-3 text-2xl text-stone-900"
+                        style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
+                      >
+                        {selectedInSection.title}
+                      </h3>
+                      <p className="mt-2 text-sm text-stone-600">{formatRangeLabel(selectedInSection)}</p>
+                      {selectedInSection.description ? (
+                        <p className="mt-5 max-w-2xl text-sm leading-7 text-stone-700">{selectedInSection.description}</p>
+                      ) : (
+                        <p className="mt-5 max-w-2xl text-sm leading-7 text-stone-600">No description was provided for this event.</p>
+                      )}
+                    </div>
+
+                    {canEdit && (
+                      <div className="flex items-center gap-1.5 lg:justify-end">
+                        <IconButton
+                          title="Close event details"
+                          onClick={() => onSelect({ id: null })}
+                          className="flex h-10 w-10 items-center justify-center rounded-full border border-stone-300/80 text-stone-600 transition hover:border-stone-500 hover:text-stone-800"
+                        >
+                          <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
+                            <path d="M5 5L15 15M15 5L5 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                          </svg>
+                        </IconButton>
+                        <IconButton
+                          title="Remove from timeline"
+                          onClick={() => onRemove(selectedInSection.id, selectedInSection.formCategory)}
+                          className="flex h-10 w-10 items-center justify-center rounded-full border border-[#a64b2a]/30 text-[#8f4328] transition hover:bg-[#a64b2a]/8 hover:text-[#7a3922]"
+                        >
+                          <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
+                            <path d="M7.5 4.75h5M4.75 6.5h10.5M8.25 8.75v5.5M11.75 8.75v5.5M6.75 6.5l.5 8.25a1 1 0 0 0 1 .94h3.5a1 1 0 0 0 1-.94l.5-8.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </IconButton>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </section>
   )
 }
 
-function PulsePrototype({ events, range, zoom, selectedEventId, onSelect }) {
-  const bucketSize = zoom >= 55 ? 2 : zoom >= 35 ? 5 : 10
+function PulsePrototype({ events, range, bucketSize, selectedEventId, onSelect }) {
   const grouped = new Map()
 
   events.forEach((event) => {
@@ -457,7 +533,7 @@ function PulsePrototype({ events, range, zoom, selectedEventId, onSelect }) {
 
   const buckets = Array.from(grouped.entries()).sort((a, b) => a[0] - b[0])
   const activeBucket = selectedEventId
-    ? Math.floor(((events.find((event) => event.id === selectedEventId)?.startValue || range.min) / bucketSize)) * bucketSize
+    ? Math.floor((events.find((event) => event.id === selectedEventId)?.startValue || range.min) / bucketSize) * bucketSize
     : buckets[0]?.[0]
 
   return (
@@ -557,15 +633,19 @@ function PulsePrototype({ events, range, zoom, selectedEventId, onSelect }) {
 }
 
 export default function Show({ timeline, can_edit, can_delete, current_user, flash }) {
-  const [zoom, setZoom] = useState(48)
+  const [scaleMode, setScaleMode] = useState('mid')
   const [selectedEventId, setSelectedEventId] = useState(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [newEventCategory, setNewEventCategory] = useState(null)
 
   const events = useMemo(() => normalizeTimelineEvents(timeline.categorized_events), [timeline.categorized_events])
   const range = useMemo(() => computeRange(events), [events])
+  const activeScale = useMemo(
+    () => SCALE_MODES.find((mode) => mode.id === scaleMode) || SCALE_MODES[1],
+    [scaleMode]
+  )
   const selectedEvent = useMemo(
-    () => events.find((event) => event.id === selectedEventId) || events[0] || null,
+    () => (selectedEventId ? events.find((event) => event.id === selectedEventId) || null : null),
     [events, selectedEventId]
   )
 
@@ -597,7 +677,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
   const renderPrototype = () => {
     if (events.length === 0) {
       return (
-        <div className="rounded-[34px] border border-dashed border-stone-300 bg-white/70 px-8 py-16 text-center">
+        <div className="rounded-[34px] border border-dashed border-stone-300 bg-white/55 px-8 py-16 text-center">
           <p className="text-xs uppercase tracking-[0.32em] text-stone-500">Empty Timeline</p>
           <h2
             className="mt-4 text-3xl text-stone-900"
@@ -618,7 +698,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
           <PulsePrototype
             events={events}
             range={range}
-            zoom={zoom}
+            bucketSize={activeScale.bucketSize === 1 ? 2 : activeScale.bucketSize}
             selectedEventId={selectedEvent?.id}
             onSelect={(event) => setSelectedEventId(event.id)}
           />
@@ -628,122 +708,85 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
         return (
           <StrataPrototype
             events={events}
-            zoom={zoom}
+            bucketSize={activeScale.bucketSize}
             selectedEventId={selectedEvent?.id}
-            onSelect={(event) => setSelectedEventId(event.id)}
+            onSelect={(event) => setSelectedEventId(event?.id || null)}
+            canEdit={can_edit}
+            onRemove={handleDeleteEvent}
+            onAddEvent={openCreateForm}
           />
         )
     }
   }
 
   return (
-    <Layout current_user={current_user} flash={flash}>
+    <Layout current_user={current_user} flash={flash} immersive>
       <Head title={timeline.title} />
 
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,#f1ebe1_0%,#f7f3ec_30%,#f5f1ea_100%)]">
-        <div className="mx-auto max-w-[1500px] px-4 py-8 sm:px-6 lg:px-8">
-          <section className="rounded-[40px] border border-stone-200 bg-white/70 p-6 shadow-[0_20px_80px_rgba(28,25,23,0.08)] backdrop-blur sm:p-8">
-            <div className="flex flex-col gap-8 border-b border-stone-200 pb-8 xl:flex-row xl:items-end xl:justify-between">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,#494136_0%,#221d18_24%,#12100f_58%,#0b0a09_100%)]">
+        <div className="relative">
+          <div className="absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_top,rgba(214,197,162,0.18),transparent_58%)]" />
+
+          <div className="mx-auto max-w-[1440px] px-4 pb-16 pt-8 sm:px-6 lg:px-8">
+            <section className="pb-12">
               <div className="max-w-4xl">
-                <p className="text-xs uppercase tracking-[0.36em] text-stone-500">Timeline Show</p>
+                <p className="text-[11px] uppercase tracking-[0.4em] text-stone-400">Timeline</p>
                 <h1
-                  className="mt-4 text-5xl leading-none text-stone-900 sm:text-6xl"
+                  className="mt-5 max-w-4xl text-5xl leading-none text-stone-50 sm:text-6xl lg:text-[5.5rem]"
                   style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
                 >
                   {timeline.title}
                 </h1>
-                <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-stone-600">
-                  <span className="rounded-full border border-stone-200 bg-white/80 px-4 py-2">{timeline.person_name}</span>
-                  <span className="rounded-full border border-stone-200 bg-white/80 px-4 py-2">
-                    {range.min}-{range.max}
-                  </span>
-                  <span className="rounded-full border border-stone-200 bg-white/80 px-4 py-2">
-                    {events.length} events
-                  </span>
-                </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <Link
-                  href="/timelines"
-                  className="rounded-full border border-stone-300 px-5 py-3 text-sm font-medium text-stone-700 transition hover:bg-white"
-                >
-                  Back to Timelines
-                </Link>
-                {can_edit && (
-                  <Link
-                    href={`/timelines/${timeline.id}/edit`}
-                    className="rounded-full border border-stone-300 px-5 py-3 text-sm font-medium text-stone-700 transition hover:bg-white"
-                  >
-                    Edit
-                  </Link>
-                )}
-                {can_edit && (
-                  <button
-                    type="button"
-                    onClick={() => router.post(`/timelines/${timeline.id}/export_pdf`)}
-                    className="rounded-full bg-stone-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-stone-800"
-                  >
-                    Generate PDF
-                  </button>
-                )}
-                {timeline.pdf_url && (
-                  <Link
-                    href={`/timelines/${timeline.id}/download_pdf`}
-                    className="rounded-full border border-stone-300 px-5 py-3 text-sm font-medium text-stone-700 transition hover:bg-white"
-                  >
-                    Download PDF
-                  </Link>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-8 space-y-8">
-              <section className="grid gap-4 rounded-[30px] border border-stone-200 bg-[#f8f4ee] p-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.28em] text-stone-500">Scale</p>
-                  <div className="mt-3 flex items-center gap-4">
-                    <input
-                      type="range"
-                      min="12"
-                      max="72"
-                      value={zoom}
-                      onChange={(event) => setZoom(Number(event.target.value))}
-                      className="w-full accent-stone-900"
-                    />
-                    <span className="w-12 text-right text-sm text-stone-600">{zoom}</span>
-                  </div>
+              <div className="mt-12 flex flex-col gap-6 border-t border-white/10 pt-6 xl:flex-row xl:items-end xl:justify-between">
+                <div className="max-w-5xl flex-1">
+                  <HeroMeta timeline={timeline} range={range} eventsCount={events.length} />
                 </div>
-                <TrackLegend canEdit={can_edit} onAddEvent={openCreateForm} />
-              </section>
 
-              {renderPrototype()}
-
-              {selectedEvent && can_edit && (
-                <section className="rounded-[30px] border border-stone-200 bg-white/80 p-5">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.28em] text-stone-500">Selected Event</p>
-                      <h3
-                        className="mt-2 text-2xl text-stone-900"
-                        style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
-                      >
-                        {selectedEvent.title}
-                      </h3>
-                    </div>
+                <div className="flex flex-wrap items-center gap-3 xl:justify-end">
+                  <Link
+                    href="/timelines"
+                    className="rounded-full border border-white/15 px-5 py-3 text-sm font-medium text-stone-100 transition hover:bg-white/8"
+                  >
+                    Back to Timelines
+                  </Link>
+                  {can_edit && (
+                    <Link
+                      href={`/timelines/${timeline.id}/edit`}
+                      className="rounded-full border border-white/15 px-5 py-3 text-sm font-medium text-stone-100 transition hover:bg-white/8"
+                    >
+                      Edit
+                    </Link>
+                  )}
+                  {can_edit && (
                     <button
                       type="button"
-                      title="Remove from timeline"
-                      onClick={() => handleDeleteEvent(selectedEvent.id, selectedEvent.formCategory)}
-                      className="rounded-full border border-red-200 bg-red-50 px-5 py-3 text-sm font-medium text-red-700 transition hover:bg-red-100"
+                      onClick={() => router.post(`/timelines/${timeline.id}/export_pdf`)}
+                      className="rounded-full bg-[#e8dcc7] px-5 py-3 text-sm font-medium text-stone-950 transition hover:bg-[#f0e6d4]"
                     >
-                      Remove from timeline
+                      Generate PDF
                     </button>
-                  </div>
-                </section>
-              )}
-            </div>
-          </section>
+                  )}
+                  {timeline.pdf_url && (
+                    <Link
+                      href={`/timelines/${timeline.id}/download_pdf`}
+                      className="rounded-full border border-white/15 px-5 py-3 text-sm font-medium text-stone-100 transition hover:bg-white/8"
+                    >
+                      Download PDF
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            <section className="relative rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(246,241,232,0.98)_0%,rgba(238,231,219,0.96)_100%)] px-5 py-6 shadow-[0_40px_140px_rgba(0,0,0,0.35)] sm:px-7 sm:py-7 lg:px-8">
+              <EventControlRail activeScale={activeScale} onScaleChange={setScaleMode} />
+              <div className="mt-8">
+                {renderPrototype()}
+              </div>
+            </section>
+          </div>
         </div>
       </div>
 

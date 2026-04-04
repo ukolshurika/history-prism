@@ -299,7 +299,7 @@ describe('Timelines Show', () => {
     expect(screen.getAllByText('World').length).toBeGreaterThan(0)
   })
 
-  it('shows Strata as the only visible timeline direction', () => {
+  it('does not show prototype labels in the main timeline surface', () => {
     render(
       <Show
         timeline={mockTimelineWithAllTracks}
@@ -310,9 +310,41 @@ describe('Timelines Show', () => {
       />
     )
 
-    expect(screen.getByRole('heading', { name: 'Strata' })).toBeInTheDocument()
+    expect(screen.queryByText('Strata')).not.toBeInTheDocument()
     expect(screen.queryByText('Ribbon')).not.toBeInTheDocument()
     expect(screen.queryByText('Pulse')).not.toBeInTheDocument()
+  })
+
+  it('shows discrete scale modes instead of a continuous slider value', () => {
+    render(
+      <Show
+        timeline={mockTimelineWithAllTracks}
+        can_edit={false}
+        can_delete={false}
+        current_user={mockCurrentUser}
+        flash={{}}
+      />
+    )
+
+    expect(screen.getByRole('button', { name: '10 Years' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '5 Years' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '1 Year' })).toBeInTheDocument()
+    expect(screen.queryByRole('slider')).not.toBeInTheDocument()
+  })
+
+  it('keeps the inline event details closed on initial load', () => {
+    render(
+      <Show
+        timeline={mockTimelineWithAllTracks}
+        can_edit={true}
+        can_delete={false}
+        current_user={mockCurrentUser}
+        flash={{}}
+      />
+    )
+
+    expect(screen.queryByText('The Great War')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Close event details/i })).not.toBeInTheDocument()
   })
 
   it('shows "No events available yet" when all categorized_events are empty', () => {
@@ -381,7 +413,44 @@ describe('Timelines Show', () => {
     expect(screen.getAllByText('Local Event').length).toBeGreaterThan(0)
   })
 
-  it('shows "+" add button on each track when can_edit is true', () => {
+  it('opens selected event details inline within the timeline section', () => {
+    render(
+      <Show
+        timeline={mockTimelineWithAllTracks}
+        can_edit={true}
+        can_delete={false}
+        current_user={mockCurrentUser}
+        flash={{}}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /World War I/i }))
+
+    expect(screen.getAllByText('World War I').length).toBeGreaterThan(1)
+    expect(screen.getByText('The Great War')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Remove from timeline/i })).toBeInTheDocument()
+    expect(screen.queryByText(/^Selected Event$/i)).not.toBeInTheDocument()
+  })
+
+  it('allows closing the inline event details block', () => {
+    render(
+      <Show
+        timeline={mockTimelineWithAllTracks}
+        can_edit={true}
+        can_delete={false}
+        current_user={mockCurrentUser}
+        flash={{}}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /World War I/i }))
+    expect(screen.getByText('The Great War')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Close event details/i }))
+    expect(screen.queryByText('The Great War')).not.toBeInTheDocument()
+  })
+
+  it('shows add controls on each track when can_edit is true', () => {
     const { container } = render(
       <Show
         timeline={mockTimelineWithAllTracks}
@@ -392,13 +461,12 @@ describe('Timelines Show', () => {
       />
     )
 
-    // There should be 3 "+" add buttons: one for each track (personal, local, world)
     expect(container.querySelector('[title="Add Personal event"]')).toBeInTheDocument()
     expect(container.querySelector('[title="Add Local event"]')).toBeInTheDocument()
     expect(container.querySelector('[title="Add World event"]')).toBeInTheDocument()
   })
 
-  it('does not show "+" add button when can_edit is false', () => {
+  it('does not show add controls when can_edit is false', () => {
     const { container } = render(
       <Show
         timeline={mockTimelineWithAllTracks}
@@ -414,7 +482,7 @@ describe('Timelines Show', () => {
     expect(container.querySelector('[title="Add World event"]')).not.toBeInTheDocument()
   })
 
-  it('clicking "+" on Local track opens CreateEventForm modal with category "local"', () => {
+  it('clicking Local add control opens CreateEventForm modal with category "local"', () => {
     const { container } = render(
       <Show
         timeline={mockTimelineWithAllTracks}
