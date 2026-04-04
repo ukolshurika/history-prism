@@ -318,16 +318,16 @@ function TrackLegend() {
 
 function HeroMeta({ timeline, range, eventsCount }) {
   return (
-    <div className="grid gap-4 md:grid-cols-3">
-      <div className="border-l border-white/20 pl-4">
+    <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-start lg:gap-0">
+      <div className="border-l border-white/20 pl-4 lg:pr-8">
         <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">Subject</p>
-        <p className="mt-2 text-lg text-stone-100">{timeline.person_name}</p>
+        <p className="mt-2 text-lg leading-tight text-stone-100">{timeline.person_name}</p>
       </div>
-      <div className="border-l border-white/20 pl-4">
+      <div className="border-l border-white/20 pl-4 lg:px-8">
         <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">Range</p>
         <p className="mt-2 text-lg text-stone-100">{range.min}-{range.max}</p>
       </div>
-      <div className="border-l border-white/20 pl-4">
+      <div className="border-l border-white/20 pl-4 lg:px-8">
         <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">Density</p>
         <p className="mt-2 text-lg text-stone-100">{eventsCount} events</p>
       </div>
@@ -720,20 +720,20 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
         <div className="relative overflow-hidden">
           <div className="absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_top,rgba(214,197,162,0.18),transparent_58%)]" />
 
-          <div className="mx-auto max-w-[1600px] px-4 pb-16 pt-8 sm:px-6 lg:px-10">
+          <div className="mx-auto max-w-[1440px] px-4 pb-16 pt-8 sm:px-6 lg:px-8">
             <section className="pb-12">
-              <div className="max-w-5xl">
+              <div className="max-w-4xl">
                 <p className="text-[11px] uppercase tracking-[0.4em] text-stone-400">Timeline</p>
                 <h1
-                  className="mt-5 max-w-5xl text-5xl leading-none text-stone-50 sm:text-6xl lg:text-7xl"
+                  className="mt-5 max-w-4xl text-5xl leading-none text-stone-50 sm:text-6xl lg:text-[5.5rem]"
                   style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
                 >
                   {timeline.title}
                 </h1>
               </div>
 
-              <div className="mt-10 flex flex-col gap-6 border-t border-white/10 pt-6 xl:flex-row xl:items-end xl:justify-between">
-                <div className="max-w-4xl flex-1">
+              <div className="mt-12 flex flex-col gap-6 border-t border-white/10 pt-6 xl:flex-row xl:items-end xl:justify-between">
+                <div className="max-w-5xl flex-1">
                   <HeroMeta timeline={timeline} range={range} eventsCount={events.length} />
                 </div>
 
