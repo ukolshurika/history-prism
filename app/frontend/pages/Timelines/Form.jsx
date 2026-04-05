@@ -1,7 +1,9 @@
 import { Head, useForm } from '@inertiajs/react'
 import Layout from '../Layout'
+import { useTranslations } from '../../lib/useTranslations'
 
 export default function Form({ timeline, people, current_user, flash, errors, isEdit }) {
+  const t = useTranslations()
   const { data, setData, post, patch, processing } = useForm({
     title: timeline.title || '',
     person_id: timeline.person_id || '',
@@ -20,12 +22,12 @@ export default function Form({ timeline, people, current_user, flash, errors, is
 
   return (
     <Layout current_user={current_user} flash={flash}>
-      <Head title={isEdit ? 'Edit Timeline' : 'Create Timeline'} />
+      <Head title={isEdit ? t('timelines.form.edit_title') : t('timelines.form.new_title')} />
 
       <div className="py-8">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">
-            {isEdit ? 'Edit Timeline' : 'Create New Timeline'}
+            {isEdit ? t('timelines.form.edit_title') : t('timelines.form.new_title')}
           </h1>
 
           <div className="bg-white rounded-lg shadow p-6">
@@ -35,7 +37,7 @@ export default function Form({ timeline, people, current_user, flash, errors, is
                   htmlFor="title"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Title *
+                  {t('timelines.form.title')} *
                 </label>
                 <input
                   type="text"
@@ -53,7 +55,7 @@ export default function Form({ timeline, people, current_user, flash, errors, is
                   htmlFor="person_id"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Person *
+                  {t('timelines.form.person')} *
                 </label>
                 <select
                   id="person_id"
@@ -63,7 +65,7 @@ export default function Form({ timeline, people, current_user, flash, errors, is
                   required
                   disabled={processing || isEdit}
                 >
-                  <option value="">Select a person</option>
+                  <option value="">{t('timelines.form.select_person')}</option>
                   {people.map((person) => (
                     <option key={person.id} value={person.id}>
                       {person.name}
@@ -72,7 +74,7 @@ export default function Form({ timeline, people, current_user, flash, errors, is
                 </select>
                 {isEdit && (
                   <p className="mt-1 text-sm text-gray-500">
-                    Person cannot be changed after creation
+                    {t('timelines.form.person_locked')}
                   </p>
                 )}
               </div>
@@ -87,7 +89,7 @@ export default function Form({ timeline, people, current_user, flash, errors, is
                     disabled={processing}
                   />
                   <span className="ml-2 text-sm text-gray-700">
-                    Make this timeline public
+                    {t('timelines.form.make_public')}
                   </span>
                 </label>
               </div>
@@ -108,13 +110,13 @@ export default function Form({ timeline, people, current_user, flash, errors, is
                   disabled={processing}
                   className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                 >
-                  {processing ? 'Saving...' : isEdit ? 'Update Timeline' : 'Create Timeline'}
+                  {processing ? t('timelines.form.saving') : isEdit ? t('timelines.form.update') : t('timelines.form.create')}
                 </button>
                 <a
                   href="/timelines"
                   className="text-gray-600 hover:text-gray-800"
                 >
-                  Cancel
+                  {t('timelines.form.cancel')}
                 </a>
               </div>
             </form>

@@ -1,7 +1,9 @@
 import { Head, useForm, Link } from '@inertiajs/react'
 import Layout from '../Layout'
+import { useTranslations } from '../../lib/useTranslations'
 
 export default function Form({ person, events = [], isEdit, current_user, flash, errors = [] }) {
+  const t = useTranslations()
   const { data, setData, post, put, processing } = useForm({
     person: {
       name: person.name || '',
@@ -24,7 +26,7 @@ export default function Form({ person, events = [], isEdit, current_user, flash,
 
   return (
     <Layout current_user={current_user} flash={flash}>
-      <Head title={isEdit ? 'Edit Person' : 'New Person'} />
+      <Head title={isEdit ? t('people.form.edit_title') : t('people.form.new_title')} />
 
       <div className="py-8">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -33,13 +35,13 @@ export default function Form({ person, events = [], isEdit, current_user, flash,
               href="/people"
               className="text-blue-600 hover:text-blue-700"
             >
-              &larr; Back to People
+              &larr; {t('people.form.back')}
             </Link>
           </div>
 
           <div className="bg-white rounded-lg shadow-lg p-8">
             <h1 className="text-2xl font-bold mb-6">
-              {isEdit ? 'Edit Person' : 'Add New Person'}
+              {isEdit ? t('people.form.edit_title') : t('people.form.new_title')}
             </h1>
 
             {errors.length > 0 && (
@@ -53,7 +55,7 @@ export default function Form({ person, events = [], isEdit, current_user, flash,
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Name *
+                  {t('people.form.name')} *
                 </label>
                 <input
                   type="text"
@@ -68,7 +70,7 @@ export default function Form({ person, events = [], isEdit, current_user, flash,
 
               <div className="mb-4">
                 <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
-                  First Name *
+                  {t('people.form.first_name')} *
                 </label>
                 <input
                   type="text"
@@ -83,7 +85,7 @@ export default function Form({ person, events = [], isEdit, current_user, flash,
 
               <div className="mb-4">
                 <label htmlFor="middle_name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Middle Name
+                  {t('people.form.middle_name')}
                 </label>
                 <input
                   type="text"
@@ -97,7 +99,7 @@ export default function Form({ person, events = [], isEdit, current_user, flash,
 
               <div className="mb-4">
                 <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Last Name
+                  {t('people.form.last_name')}
                 </label>
                 <input
                   type="text"
@@ -111,7 +113,7 @@ export default function Form({ person, events = [], isEdit, current_user, flash,
 
               <div className="mb-4">
                 <label htmlFor="gedcom_uuid" className="block text-sm font-medium text-gray-700 mb-1">
-                  GEDCOM UUID *
+                  {t('people.form.gedcom_uuid')} *
                 </label>
                 <input
                   type="text"
@@ -123,13 +125,13 @@ export default function Form({ person, events = [], isEdit, current_user, flash,
                   required
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  Unique identifier for GEDCOM format
+                  {t('people.form.gedcom_uuid_hint')}
                 </p>
               </div>
 
               <div className="mb-4">
                 <label htmlFor="events" className="block text-sm font-medium text-gray-700 mb-1">
-                  Associated Events (Person Type Only)
+                  {t('people.form.associated_events')}
                 </label>
                 <select
                   id="events"
@@ -143,7 +145,7 @@ export default function Form({ person, events = [], isEdit, current_user, flash,
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
                 >
                   {events.length === 0 ? (
-                    <option disabled>No person-type events available</option>
+                    <option disabled>{t('people.form.no_person_events')}</option>
                   ) : (
                     events.map((event) => (
                       <option key={event.id} value={event.id}>
@@ -153,7 +155,7 @@ export default function Form({ person, events = [], isEdit, current_user, flash,
                   )}
                 </select>
                 <p className="mt-1 text-xs text-gray-500">
-                  Hold Ctrl (Windows) or Cmd (Mac) to select multiple events. Only person-type events are shown.
+                  {t('people.form.associated_events_hint')}
                 </p>
               </div>
 
@@ -163,13 +165,15 @@ export default function Form({ person, events = [], isEdit, current_user, flash,
                   disabled={processing}
                   className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {processing ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update Person' : 'Add Person')}
+                  {processing
+                    ? (isEdit ? t('people.form.updating') : t('people.form.creating'))
+                    : (isEdit ? t('people.form.update') : t('people.form.create'))}
                 </button>
                 <Link
                   href="/people"
                   className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 text-center"
                 >
-                  Cancel
+                  {t('people.form.cancel')}
                 </Link>
               </div>
             </form>

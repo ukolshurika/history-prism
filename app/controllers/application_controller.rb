@@ -8,15 +8,16 @@ class ApplicationController < ActionController::Base
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
   inertia_share do
-        {
-          flash: {
-            notice: flash.notice,
-            alert: flash.alert
-          },
-          current_user: Current.user&.slice(:id, :email),
-          yandex_maps_api_key: ENV['YANDEX_MAPS_API_KEY']
-        }
-      end
+    {
+      flash: {
+        notice: flash.notice,
+        alert: flash.alert
+      },
+      current_user: Current.user&.slice(:id, :email),
+      yandex_maps_api_key: ENV['YANDEX_MAPS_API_KEY'],
+      translations: I18n.t('frontend', default: {})
+    }
+  end
 
   before_action :set_layout
 
@@ -33,7 +34,7 @@ class ApplicationController < ActionController::Base
   end
 
   def user_not_authorized
-    flash[:alert] = 'You are not authorized to perform this action.'
+    flash[:alert] = t('errors.unauthorized')
     redirect_back(fallback_location: root_path)
   end
 

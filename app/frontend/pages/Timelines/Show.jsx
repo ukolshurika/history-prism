@@ -1,19 +1,19 @@
 import { Head, Link, useForm, router } from '@inertiajs/react'
 import { useMemo, useState } from 'react'
 import Layout from '../Layout'
+import { useTranslations } from '../../lib/useTranslations'
 
 const ACTIVE_PROTOTYPE = 'strata'
 const SCALE_MODES = [
-  { id: 'decade', label: '10 Years', bucketSize: 10 },
-  { id: 'mid', label: '5 Years', bucketSize: 5 },
-  { id: 'year', label: '1 Year', bucketSize: 1 }
+  { id: 'decade', bucketSize: 10 },
+  { id: 'mid', bucketSize: 5 },
+  { id: 'year', bucketSize: 1 }
 ]
 
 const TRACKS = [
   {
     key: 'personal',
     formCategory: 'person',
-    label: 'Personal',
     accent: '#a64b2a',
     wash: 'rgba(166, 75, 42, 0.08)',
     border: 'rgba(166, 75, 42, 0.24)'
@@ -21,7 +21,6 @@ const TRACKS = [
   {
     key: 'local',
     formCategory: 'local',
-    label: 'Local',
     accent: '#2e5e4e',
     wash: 'rgba(46, 94, 78, 0.08)',
     border: 'rgba(46, 94, 78, 0.24)'
@@ -29,7 +28,6 @@ const TRACKS = [
   {
     key: 'world',
     formCategory: 'world',
-    label: 'World',
     accent: '#355c9d',
     wash: 'rgba(53, 92, 157, 0.08)',
     border: 'rgba(53, 92, 157, 0.24)'
@@ -37,14 +35,14 @@ const TRACKS = [
 ]
 
 const DATE_TYPES = [
-  { value: 'exact', label: 'Exact' },
-  { value: 'about', label: 'About' },
-  { value: 'before', label: 'Before' },
-  { value: 'after', label: 'After' },
-  { value: 'estimated', label: 'Estimated' },
-  { value: 'calculated', label: 'Calculated' },
-  { value: 'year', label: 'Year Only' },
-  { value: 'month_year', label: 'Month/Year' }
+  { value: 'exact' },
+  { value: 'about' },
+  { value: 'before' },
+  { value: 'after' },
+  { value: 'estimated' },
+  { value: 'calculated' },
+  { value: 'year' },
+  { value: 'month_year' }
 ]
 
 function getFractionalYear(year, month, day) {
@@ -55,19 +53,19 @@ function getFractionalYear(year, month, day) {
   return Number(year) + (safeMonth - 1) / 12 + (safeDay - 1) / 365
 }
 
-function formatEventDate(year, month, day, dateText) {
+function formatEventDate(year, month, day, dateText, unknownLabel) {
   if (dateText) return dateText
-  if (!year) return 'Unknown'
+  if (!year) return unknownLabel
   if (!month) return `${year}`
   if (!day) return `${year}-${String(month).padStart(2, '0')}`
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
-function formatRangeLabel(event) {
-  const start = formatEventDate(event.start_year, event.start_month, event.start_day, event.start_date_text)
+function formatRangeLabel(event, unknownLabel) {
+  const start = formatEventDate(event.start_year, event.start_month, event.start_day, event.start_date_text, unknownLabel)
   if (!event.end_year || event.end_year === event.start_year) return start
 
-  const end = formatEventDate(event.end_year, event.end_month, event.end_day, event.end_date_text)
+  const end = formatEventDate(event.end_year, event.end_month, event.end_day, event.end_date_text, unknownLabel)
   return `${start} -> ${end}`
 }
 
@@ -80,7 +78,7 @@ function normalizeTimelineEvents(categorizedEvents) {
       return {
         ...event,
         track: track.key,
-        trackLabel: track.label,
+        trackLabelKey: track.key,
         formCategory: track.formCategory,
         accent: track.accent,
         wash: track.wash,
@@ -107,7 +105,7 @@ function computeRange(events) {
   return { min, max, span: Math.max(max - min, 1) }
 }
 
-function CreateEventForm({ timeline, category, onClose }) {
+function CreateEventForm({ timeline, category, onClose, t }) {
   const { data, setData, post, processing, errors } = useForm({
     event: {
       title: '',
@@ -149,12 +147,12 @@ function CreateEventForm({ timeline, category, onClose }) {
         <form onSubmit={handleSubmit} className="p-6 sm:p-8">
           <div className="mb-8 flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-stone-500">Add Event</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-stone-500">{t('timelines.show.add_event')}</p>
               <h2
                 className="mt-2 text-3xl text-stone-900"
                 style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
               >
-                {`Create New Event (${category})`}
+                {t('timelines.show.create_new_event', { category: t(`events.categories.${category}`) })}
               </h2>
             </div>
             <button
@@ -162,13 +160,13 @@ function CreateEventForm({ timeline, category, onClose }) {
               onClick={onClose}
               className="rounded-full border border-stone-300 px-3 py-1.5 text-sm text-stone-600 transition hover:bg-white"
             >
-              Close
+              {t('timelines.show.close')}
             </button>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-stone-700">Title</span>
+              <span className="mb-2 block text-sm font-medium text-stone-700">{t('events.form.title')}</span>
               <input
                 type="text"
                 value={data.event.title}
@@ -180,7 +178,7 @@ function CreateEventForm({ timeline, category, onClose }) {
             </label>
 
             <label className="block sm:row-span-2">
-              <span className="mb-2 block text-sm font-medium text-stone-700">Description</span>
+              <span className="mb-2 block text-sm font-medium text-stone-700">{t('events.form.description')}</span>
               <textarea
                 value={data.event.description}
                 onChange={(event) => setData('event.description', event.target.value)}
@@ -190,17 +188,19 @@ function CreateEventForm({ timeline, category, onClose }) {
             </label>
 
             <DateFields
-              title="Start Date *"
+              title={t('events.form.start_date_required')}
               path="event.start_date_attributes"
               data={data.event.start_date_attributes}
               setData={setData}
+              t={t}
             />
 
             <DateFields
-              title="End Date"
+              title={t('events.form.end_date')}
               path="event.end_date_attributes"
               data={data.event.end_date_attributes}
               setData={setData}
+              t={t}
             />
           </div>
 
@@ -210,14 +210,14 @@ function CreateEventForm({ timeline, category, onClose }) {
               disabled={processing}
               className="rounded-full bg-stone-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {processing ? 'Creating...' : 'Create Event'}
+              {processing ? t('events.form.creating') : t('events.form.create')}
             </button>
             <button
               type="button"
               onClick={onClose}
               className="rounded-full border border-stone-300 px-6 py-3 text-sm font-medium text-stone-700 transition hover:bg-white"
             >
-              Cancel
+              {t('events.form.cancel')}
             </button>
           </div>
         </form>
@@ -226,13 +226,13 @@ function CreateEventForm({ timeline, category, onClose }) {
   )
 }
 
-function DateFields({ title, path, data, setData }) {
+function DateFields({ title, path, data, setData, t }) {
   return (
     <fieldset className="rounded-[24px] border border-stone-200 bg-white/70 p-5">
       <legend className="px-2 text-sm font-medium text-stone-700">{title}</legend>
       <div className="grid gap-4">
         <label className="block">
-          <span className="mb-2 block text-sm text-stone-600">Date Type</span>
+          <span className="mb-2 block text-sm text-stone-600">{t('timelines.show.date_type')}</span>
           <select
             value={data.date_type}
             onChange={(event) => setData(`${path}.date_type`, event.target.value)}
@@ -240,7 +240,7 @@ function DateFields({ title, path, data, setData }) {
           >
             {DATE_TYPES.map((type) => (
               <option key={type.value} value={type.value}>
-                {type.label}
+                {t(`timelines.show.date_types.${type.value}`)}
               </option>
             ))}
           </select>
@@ -248,36 +248,36 @@ function DateFields({ title, path, data, setData }) {
 
         <div className="grid grid-cols-3 gap-3">
           <label className="block">
-            <span className="mb-2 block text-sm text-stone-600">Year</span>
+            <span className="mb-2 block text-sm text-stone-600">{t('timelines.show.year')}</span>
             <input
               type="number"
               value={data.year}
               onChange={(event) => setData(`${path}.year`, event.target.value)}
-              placeholder="YYYY"
+              placeholder={t('timelines.show.placeholders.year')}
               min="1"
               max="9999"
               className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-900 focus:border-stone-500 focus:ring-0"
             />
           </label>
           <label className="block">
-            <span className="mb-2 block text-sm text-stone-600">Month</span>
+            <span className="mb-2 block text-sm text-stone-600">{t('timelines.show.month')}</span>
             <input
               type="number"
               value={data.month}
               onChange={(event) => setData(`${path}.month`, event.target.value)}
-              placeholder="MM"
+              placeholder={t('timelines.show.placeholders.month')}
               min="1"
               max="12"
               className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-900 focus:border-stone-500 focus:ring-0"
             />
           </label>
           <label className="block">
-            <span className="mb-2 block text-sm text-stone-600">Day</span>
+            <span className="mb-2 block text-sm text-stone-600">{t('timelines.show.day')}</span>
             <input
               type="number"
               value={data.day}
               onChange={(event) => setData(`${path}.day`, event.target.value)}
-              placeholder="DD"
+              placeholder={t('timelines.show.placeholders.day')}
               min="1"
               max="31"
               className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-900 focus:border-stone-500 focus:ring-0"
@@ -303,44 +303,44 @@ function IconButton({ title, onClick, children, className = '' }) {
   )
 }
 
-function TrackLegend() {
+function TrackLegend({ t }) {
   return (
     <div className="flex flex-wrap items-center gap-4 sm:gap-6">
       {TRACKS.map((track) => (
         <div key={track.key} className="flex items-center gap-2.5">
           <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: track.accent }} />
-          <span className="text-[11px] uppercase tracking-[0.24em] text-stone-500">{track.label}</span>
+          <span className="text-[11px] uppercase tracking-[0.24em] text-stone-500">{t(`timelines.show.tracks.${track.key}`)}</span>
         </div>
       ))}
     </div>
   )
 }
 
-function HeroMeta({ timeline, range, eventsCount }) {
+function HeroMeta({ timeline, range, eventsCount, t }) {
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-start lg:gap-0">
       <div className="border-l border-white/20 pl-4 lg:pr-8">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">Subject</p>
+        <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">{t('timelines.show.subject')}</p>
         <p className="mt-2 text-lg leading-tight text-stone-100">{timeline.person_name}</p>
       </div>
       <div className="border-l border-white/20 pl-4 lg:px-8">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">Range</p>
+        <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">{t('timelines.show.range')}</p>
         <p className="mt-2 text-lg text-stone-100">{range.min}-{range.max}</p>
       </div>
       <div className="border-l border-white/20 pl-4 lg:px-8">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">Density</p>
-        <p className="mt-2 text-lg text-stone-100">{eventsCount} events</p>
+        <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">{t('timelines.show.density')}</p>
+        <p className="mt-2 text-lg text-stone-100">{t('timelines.show.events_count', { count: eventsCount })}</p>
       </div>
     </div>
   )
 }
 
-function EventControlRail({ activeScale, onScaleChange }) {
+function EventControlRail({ activeScale, onScaleChange, t }) {
   return (
     <section className="border-b border-stone-300/70 pb-5">
       <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
         <div className="flex flex-col gap-3">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-stone-600">Reading Scale</p>
+          <p className="text-[11px] uppercase tracking-[0.28em] text-stone-600">{t('timelines.show.reading_scale')}</p>
           <div className="inline-flex rounded-full border border-stone-300/80 bg-transparent p-1">
             {SCALE_MODES.map((mode) => {
               const isActive = mode.id === activeScale.id
@@ -355,7 +355,7 @@ function EventControlRail({ activeScale, onScaleChange }) {
                   }`}
                   aria-pressed={isActive}
                 >
-                  {mode.label}
+                  {t(`timelines.show.scale_modes.${mode.id}`)}
                 </button>
               )
             })}
@@ -363,9 +363,9 @@ function EventControlRail({ activeScale, onScaleChange }) {
         </div>
 
         <div className="border-t border-stone-300/70 pt-4 xl:border-t-0 xl:border-l xl:border-stone-300/70 xl:pl-6 xl:pt-0 xl:text-right">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-stone-600">Narrative Lanes</p>
+          <p className="text-[11px] uppercase tracking-[0.28em] text-stone-600">{t('timelines.show.narrative_lanes')}</p>
           <div className="mt-3 xl:flex xl:justify-end">
-            <TrackLegend />
+            <TrackLegend t={t} />
           </div>
         </div>
       </div>
@@ -373,7 +373,7 @@ function EventControlRail({ activeScale, onScaleChange }) {
   )
 }
 
-function StrataPrototype({ events, bucketSize, selectedEventId, onSelect, canEdit, onRemove, onAddEvent }) {
+function StrataPrototype({ events, bucketSize, selectedEventId, onSelect, canEdit, onRemove, onAddEvent, t }) {
   const grouped = new Map()
 
   events.forEach((event) => {
@@ -405,11 +405,11 @@ function StrataPrototype({ events, bucketSize, selectedEventId, onSelect, canEdi
             <div key={track.key} className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
                 <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: track.accent }} />
-                <span className="truncate text-[11px] uppercase tracking-[0.22em] text-stone-600">{track.label}</span>
+                <span className="truncate text-[11px] uppercase tracking-[0.22em] text-stone-600">{t(`timelines.show.tracks.${track.key}`)}</span>
               </div>
               {canEdit && (
                 <IconButton
-                  title={`Add ${track.label} event`}
+                  title={t('timelines.show.add_track_event', { track: t(`timelines.show.tracks.${track.key}`) })}
                   onClick={() => onAddEvent(track.formCategory)}
                   className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-stone-300/80 text-stone-600 transition hover:border-stone-500 hover:text-stone-900"
                 >
@@ -460,7 +460,7 @@ function StrataPrototype({ events, bucketSize, selectedEventId, onSelect, canEdi
                           <div>
                             <div className="text-sm font-medium">{event.title}</div>
                             <div className={`mt-2 text-xs ${selectedEventId === event.id ? 'text-stone-300' : 'text-stone-600'}`}>
-                              {formatRangeLabel(event)}
+                              {formatRangeLabel(event, t('timelines.show.unknown'))}
                             </div>
                           </div>
                         </button>
@@ -474,25 +474,25 @@ function StrataPrototype({ events, bucketSize, selectedEventId, onSelect, canEdi
                 <div className="mt-7 lg:pl-[140px]">
                   <div className="grid gap-4 border-l border-stone-400/70 pl-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
                     <div className="max-w-3xl">
-                      <p className="text-[11px] uppercase tracking-[0.24em] text-stone-600">{selectedInSection.trackLabel}</p>
+                      <p className="text-[11px] uppercase tracking-[0.24em] text-stone-600">{t(`timelines.show.tracks.${selectedInSection.trackLabelKey}`)}</p>
                       <h3
                         className="mt-3 text-2xl text-stone-900"
                         style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
                       >
                         {selectedInSection.title}
                       </h3>
-                      <p className="mt-2 text-sm text-stone-600">{formatRangeLabel(selectedInSection)}</p>
+                      <p className="mt-2 text-sm text-stone-600">{formatRangeLabel(selectedInSection, t('timelines.show.unknown'))}</p>
                       {selectedInSection.description ? (
                         <p className="mt-5 max-w-2xl text-sm leading-7 text-stone-700">{selectedInSection.description}</p>
                       ) : (
-                        <p className="mt-5 max-w-2xl text-sm leading-7 text-stone-600">No description was provided for this event.</p>
+                        <p className="mt-5 max-w-2xl text-sm leading-7 text-stone-600">{t('timelines.show.no_description')}</p>
                       )}
                     </div>
 
                     {canEdit && (
                       <div className="flex items-center gap-1.5 lg:justify-end">
                         <IconButton
-                          title="Close event details"
+                          title={t('timelines.show.close_event_details')}
                           onClick={() => onSelect({ id: null })}
                           className="flex h-10 w-10 items-center justify-center rounded-full border border-stone-300/80 text-stone-600 transition hover:border-stone-500 hover:text-stone-800"
                         >
@@ -501,7 +501,7 @@ function StrataPrototype({ events, bucketSize, selectedEventId, onSelect, canEdi
                           </svg>
                         </IconButton>
                         <IconButton
-                          title="Remove from timeline"
+                          title={t('timelines.show.remove_from_timeline')}
                           onClick={() => onRemove(selectedInSection.id, selectedInSection.formCategory)}
                           className="flex h-10 w-10 items-center justify-center rounded-full border border-[#a64b2a]/30 text-[#8f4328] transition hover:bg-[#a64b2a]/8 hover:text-[#7a3922]"
                         >
@@ -522,7 +522,7 @@ function StrataPrototype({ events, bucketSize, selectedEventId, onSelect, canEdi
   )
 }
 
-function PulsePrototype({ events, range, bucketSize, selectedEventId, onSelect }) {
+function PulsePrototype({ events, range, bucketSize, selectedEventId, onSelect, t }) {
   const grouped = new Map()
 
   events.forEach((event) => {
@@ -540,16 +540,16 @@ function PulsePrototype({ events, range, bucketSize, selectedEventId, onSelect }
     <section className="space-y-6 rounded-[34px] border border-stone-200 bg-[linear-gradient(180deg,#1d1a17_0%,#2a251f_100%)] p-5 text-white sm:p-7">
       <div className="flex flex-col gap-4 border-b border-white/10 pb-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-stone-400">Prototype Three</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-stone-400">{t('timelines.show.prototype_three')}</p>
           <h2
             className="mt-2 text-3xl"
             style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
           >
-            Pulse
+            {t('timelines.show.pulse')}
           </h2>
         </div>
         <p className="max-w-xl text-sm leading-6 text-stone-300">
-          A compressed overview for long lifespans. Each segment acts like a pulse of activity and opens the selected time band beneath it.
+          {t('timelines.show.pulse_description')}
         </p>
       </div>
 
@@ -569,7 +569,7 @@ function PulsePrototype({ events, range, bucketSize, selectedEventId, onSelect }
                 {bucketSize === 2 ? `${bucket}-${bucket + 1}` : `${bucket}-${bucket + bucketSize - 1}`}
               </div>
               <div className="mt-8 text-3xl">{bucketEvents.length}</div>
-              <div className={`mt-1 text-xs ${isActive ? 'text-stone-700' : 'text-stone-400'}`}>events</div>
+              <div className={`mt-1 text-xs ${isActive ? 'text-stone-700' : 'text-stone-400'}`}>{t('timelines.show.events_label')}</div>
             </button>
           )
         })}
@@ -578,7 +578,7 @@ function PulsePrototype({ events, range, bucketSize, selectedEventId, onSelect }
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="rounded-[30px] border border-white/10 bg-white/5 p-5">
           <div className="mb-4 flex items-center justify-between">
-            <p className="text-xs uppercase tracking-[0.28em] text-stone-400">Expanded Slice</p>
+            <p className="text-xs uppercase tracking-[0.28em] text-stone-400">{t('timelines.show.expanded_slice')}</p>
             <p className="text-xs text-stone-400">
               {bucketSize === 2 ? `${activeBucket}-${activeBucket + 1}` : `${activeBucket}-${activeBucket + bucketSize - 1}`}
             </p>
@@ -596,12 +596,12 @@ function PulsePrototype({ events, range, bucketSize, selectedEventId, onSelect }
                 <div className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: event.accent }} />
                   <span className={`text-xs uppercase tracking-[0.18em] ${selectedEventId === event.id ? 'text-stone-500' : 'text-stone-400'}`}>
-                    {event.trackLabel}
+                    {t(`timelines.show.tracks.${event.trackLabelKey}`)}
                   </span>
                 </div>
                 <div className="mt-4 text-sm font-medium">{event.title}</div>
                 <div className={`mt-2 text-xs ${selectedEventId === event.id ? 'text-stone-500' : 'text-stone-400'}`}>
-                  {formatRangeLabel(event)}
+                  {formatRangeLabel(event, t('timelines.show.unknown'))}
                 </div>
               </button>
             ))}
@@ -609,21 +609,21 @@ function PulsePrototype({ events, range, bucketSize, selectedEventId, onSelect }
         </div>
 
         <div className="rounded-[30px] border border-white/10 bg-white/5 p-6">
-          <p className="text-xs uppercase tracking-[0.3em] text-stone-400">Direction</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-stone-400">{t('timelines.show.direction')}</p>
           <h3
             className="mt-4 text-2xl"
             style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
           >
-            Best for very long lives or crowded archives
+            {t('timelines.show.direction_heading')}
           </h3>
           <p className="mt-4 text-sm leading-7 text-stone-300">
-            This version gives the strongest overview, but it abstracts individual chronology more aggressively. It is useful as a secondary navigation mode, not as the primary storytelling surface.
+            {t('timelines.show.direction_description')}
           </p>
           {selectedEventId && (
             <div className="mt-6 rounded-[24px] bg-white px-5 py-4 text-stone-900">
-              <p className="text-xs uppercase tracking-[0.22em] text-stone-500">Selected Event</p>
+              <p className="text-xs uppercase tracking-[0.22em] text-stone-500">{t('timelines.show.selected_event')}</p>
               <p className="mt-3 text-lg">{events.find((event) => event.id === selectedEventId)?.title}</p>
-              <p className="mt-2 text-sm text-stone-500">{formatRangeLabel(events.find((event) => event.id === selectedEventId))}</p>
+              <p className="mt-2 text-sm text-stone-500">{formatRangeLabel(events.find((event) => event.id === selectedEventId), t('timelines.show.unknown'))}</p>
             </div>
           )}
         </div>
@@ -633,6 +633,7 @@ function PulsePrototype({ events, range, bucketSize, selectedEventId, onSelect }
 }
 
 export default function Show({ timeline, can_edit, can_delete, current_user, flash }) {
+  const t = useTranslations()
   const [scaleMode, setScaleMode] = useState('mid')
   const [selectedEventId, setSelectedEventId] = useState(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -655,7 +656,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
   }
 
   const handleDeleteEvent = (eventId, category) => {
-    if (!window.confirm('Remove this event from the timeline?')) return
+    if (!window.confirm(t('timelines.show.remove_event_confirm'))) return
 
     const currentCache = timeline.cached_events_for_display || {}
     const updatedEventIds = (currentCache[category] || []).filter((id) => id !== eventId)
@@ -678,15 +679,15 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
     if (events.length === 0) {
       return (
         <div className="rounded-[34px] border border-dashed border-stone-300 bg-white/55 px-8 py-16 text-center">
-          <p className="text-xs uppercase tracking-[0.32em] text-stone-500">Empty Timeline</p>
+          <p className="text-xs uppercase tracking-[0.32em] text-stone-500">{t('timelines.show.empty_timeline')}</p>
           <h2
             className="mt-4 text-3xl text-stone-900"
             style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
           >
-            No events available yet
+            {t('timelines.show.no_events')}
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-stone-600">
-            Strata is ready. Once personal, local, or global events are attached, this page will open as a clear chronological reading surface.
+            {t('timelines.show.empty_description')}
           </p>
         </div>
       )
@@ -701,6 +702,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
             bucketSize={activeScale.bucketSize === 1 ? 2 : activeScale.bucketSize}
             selectedEventId={selectedEvent?.id}
             onSelect={(event) => setSelectedEventId(event.id)}
+            t={t}
           />
         )
       case 'strata':
@@ -714,6 +716,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
             canEdit={can_edit}
             onRemove={handleDeleteEvent}
             onAddEvent={openCreateForm}
+            t={t}
           />
         )
     }
@@ -730,7 +733,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
           <div className="mx-auto max-w-[1440px] px-4 pb-16 pt-8 sm:px-6 lg:px-8">
             <section className="pb-12">
               <div className="max-w-4xl">
-                <p className="text-[11px] uppercase tracking-[0.4em] text-stone-400">Timeline</p>
+                <p className="text-[11px] uppercase tracking-[0.4em] text-stone-400">{t('timelines.show.timeline')}</p>
                 <h1
                   className="mt-5 max-w-4xl text-5xl leading-none text-stone-50 sm:text-6xl lg:text-[5.5rem]"
                   style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
@@ -741,7 +744,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
 
               <div className="mt-12 flex flex-col gap-6 border-t border-white/10 pt-6 xl:flex-row xl:items-end xl:justify-between">
                 <div className="max-w-5xl flex-1">
-                  <HeroMeta timeline={timeline} range={range} eventsCount={events.length} />
+                  <HeroMeta timeline={timeline} range={range} eventsCount={events.length} t={t} />
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 xl:justify-end">
@@ -749,14 +752,14 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
                     href="/timelines"
                     className="rounded-full border border-white/15 px-5 py-3 text-sm font-medium text-stone-100 transition hover:bg-white/8"
                   >
-                    Back to Timelines
+                    {t('timelines.show.back')}
                   </Link>
                   {can_edit && (
                     <Link
                       href={`/timelines/${timeline.id}/edit`}
                       className="rounded-full border border-white/15 px-5 py-3 text-sm font-medium text-stone-100 transition hover:bg-white/8"
                     >
-                      Edit
+                      {t('timelines.show.edit')}
                     </Link>
                   )}
                   {can_edit && (
@@ -765,7 +768,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
                       onClick={() => router.post(`/timelines/${timeline.id}/export_pdf`)}
                       className="rounded-full bg-[#e8dcc7] px-5 py-3 text-sm font-medium text-stone-950 transition hover:bg-[#f0e6d4]"
                     >
-                      Generate PDF
+                      {t('timelines.show.generate_pdf')}
                     </button>
                   )}
                   {timeline.pdf_url && (
@@ -773,7 +776,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
                       href={`/timelines/${timeline.id}/download_pdf`}
                       className="rounded-full border border-white/15 px-5 py-3 text-sm font-medium text-stone-100 transition hover:bg-white/8"
                     >
-                      Download PDF
+                      {t('timelines.show.download_pdf')}
                     </Link>
                   )}
                 </div>
@@ -781,7 +784,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
             </section>
 
             <section className="relative rounded-[36px] border border-white/10 bg-[linear-gradient(180deg,rgba(246,241,232,0.98)_0%,rgba(238,231,219,0.96)_100%)] px-5 py-6 shadow-[0_40px_140px_rgba(0,0,0,0.35)] sm:px-7 sm:py-7 lg:px-8">
-              <EventControlRail activeScale={activeScale} onScaleChange={setScaleMode} />
+              <EventControlRail activeScale={activeScale} onScaleChange={setScaleMode} t={t} />
               <div className="mt-8">
                 {renderPrototype()}
               </div>
@@ -795,6 +798,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
           timeline={timeline}
           category={newEventCategory}
           onClose={() => setShowCreateForm(false)}
+          t={t}
         />
       )}
     </Layout>

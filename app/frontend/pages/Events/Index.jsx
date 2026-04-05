@@ -1,8 +1,10 @@
 import { Head, Link, router } from '@inertiajs/react'
 import { useState } from 'react'
 import Layout from '../Layout'
+import { useTranslations } from '../../lib/useTranslations'
 
 export default function Index({ events, current_user, flash, meta, filters = {} }) {
+  const t = useTranslations()
   const [searchQuery, setSearchQuery] = useState(filters.q || '')
   const pagination = meta
 
@@ -43,18 +45,18 @@ export default function Index({ events, current_user, flash, meta, filters = {} 
 
   return (
     <Layout current_user={current_user} flash={flash}>
-      <Head title="Events" />
+      <Head title={t('events.index.page_title')} />
 
       <div className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Events</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t('events.index.heading')}</h1>
             {current_user && (
               <Link
                 href="/events/new"
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
               >
-                + New Event
+                {t('events.index.new_event')}
               </Link>
             )}
           </div>
@@ -65,14 +67,14 @@ export default function Index({ events, current_user, flash, meta, filters = {} 
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search events..."
+              placeholder={t('events.index.search_placeholder')}
               className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <button
               type="submit"
               className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
             >
-              Search
+              {t('events.index.search')}
             </button>
             {filters.q && (
               <button
@@ -80,7 +82,7 @@ export default function Index({ events, current_user, flash, meta, filters = {} 
                 onClick={() => { setSearchQuery(''); navigate({ q: '', page: 1 }) }}
                 className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
               >
-                Clear
+                {t('events.index.clear')}
               </button>
             )}
           </form>
@@ -88,16 +90,16 @@ export default function Index({ events, current_user, flash, meta, filters = {} 
           {/* Active filters badge */}
           {(filters.source_type || filters.source_id) && (
             <div className="mb-3 text-sm text-gray-600">
-              Filtered by source: {filters.source_type} #{filters.source_id}
+              {t('events.index.filtered_by_source', { source_type: filters.source_type, source_id: filters.source_id })}
             </div>
           )}
 
           {events.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-8 text-center">
-              <p className="text-gray-500 mb-4">No events found.</p>
+              <p className="text-gray-500 mb-4">{t('events.index.empty_title')}</p>
               {current_user && (
                 <Link href="/events/new" className="text-blue-600 hover:text-blue-700">
-                  Create the first event
+                  {t('events.index.empty_link')}
                 </Link>
               )}
             </div>
@@ -108,28 +110,28 @@ export default function Index({ events, current_user, flash, meta, filters = {} 
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Title
+                        {t('events.index.table.title')}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Category
+                        {t('events.index.table.category')}
                       </th>
                       <th
                         className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('date')}
                       >
-                        Start Date <SortIcon col="date" />
+                        {t('events.index.table.start_date')} <SortIcon col="date" />
                       </th>
                       <th
                         className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                         onClick={() => handleSort('place')}
                       >
-                        Place <SortIcon col="place" />
+                        {t('events.index.table.place')} <SortIcon col="place" />
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Source
+                        {t('events.index.table.source')}
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Page
+                        {t('events.index.table.page')}
                       </th>
                     </tr>
                   </thead>
@@ -182,7 +184,7 @@ export default function Index({ events, current_user, flash, meta, filters = {} 
               {pagination && pagination.total_pages > 1 && (
                 <div className="mt-4 flex items-center justify-between">
                   <p className="text-sm text-gray-600">
-                    Total: {pagination.total}
+                    {t('events.index.total', { count: pagination.total })}
                   </p>
                   <div className="flex gap-1 items-center">
                     <button

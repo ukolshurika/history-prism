@@ -1,8 +1,10 @@
 import { Head, Link, useForm, router } from '@inertiajs/react'
 import Layout from '../Layout'
 import { useState } from 'react'
+import { useTranslations } from '../../lib/useTranslations'
 
 export default function Index({ gedcom_files, current_user, flash, errors, meta }) {
+  const t = useTranslations()
   const { data, setData, post, processing, reset } = useForm({
     file: null,
   })
@@ -39,24 +41,24 @@ export default function Index({ gedcom_files, current_user, flash, errors, meta 
 
   return (
     <Layout current_user={current_user} flash={flash}>
-      <Head title="GEDCOM Files" />
+      <Head title={t('gedcom_files.index.page_title')} />
 
       <div className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">GEDCOM Files</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">{t('gedcom_files.index.heading')}</h1>
 
             {/* Upload Form */}
             {current_user && (
               <div className="bg-white rounded-lg shadow p-6 mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Upload GEDCOM File</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('gedcom_files.index.upload_heading')}</h2>
                 <form onSubmit={handleSubmit}>
                   <div className="mb-4">
                     <label
                       htmlFor="file-upload"
                       className="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                     >
-                      <span>Choose .ged file</span>
+                      <span>{t('gedcom_files.index.choose_file')}</span>
                       <input
                         id="file-upload"
                         type="file"
@@ -68,7 +70,7 @@ export default function Index({ gedcom_files, current_user, flash, errors, meta 
                     </label>
                     {selectedFileName && (
                       <span className="ml-3 text-sm text-gray-600">
-                        Selected: {selectedFileName}
+                        {t('gedcom_files.index.selected', { file: selectedFileName })}
                       </span>
                     )}
                   </div>
@@ -88,7 +90,7 @@ export default function Index({ gedcom_files, current_user, flash, errors, meta 
                     disabled={!data.file || processing}
                     className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                   >
-                    {processing ? 'Uploading...' : 'Upload'}
+                    {processing ? t('gedcom_files.index.uploading') : t('gedcom_files.index.upload')}
                   </button>
                 </form>
               </div>
@@ -98,10 +100,10 @@ export default function Index({ gedcom_files, current_user, flash, errors, meta 
           {/* Files List */}
           {gedcom_files.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-8 text-center">
-              <p className="text-gray-500 mb-4">No GEDCOM files uploaded yet.</p>
+              <p className="text-gray-500 mb-4">{t('gedcom_files.index.empty_title')}</p>
               {current_user && (
                 <p className="text-sm text-gray-400">
-                  Upload your first GEDCOM file above to get started.
+                  {t('gedcom_files.index.empty_description')}
                 </p>
               )}
             </div>
@@ -119,7 +121,7 @@ export default function Index({ gedcom_files, current_user, flash, errors, meta 
                           {gedcom_file.file_name}
                         </h3>
                         <p className="text-sm text-gray-500">
-                          Uploaded: {new Date(gedcom_file.created_at).toLocaleDateString()}
+                          {t('gedcom_files.index.uploaded_on', { date: new Date(gedcom_file.created_at).toLocaleDateString() })}
                         </p>
                       </div>
                     </div>
@@ -130,7 +132,7 @@ export default function Index({ gedcom_files, current_user, flash, errors, meta 
                           className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700"
                           download
                         >
-                          Download
+                          {t('gedcom_files.index.download')}
                         </a>
                       )}
                       <button
@@ -138,7 +140,7 @@ export default function Index({ gedcom_files, current_user, flash, errors, meta 
                         disabled={reprocessingId === gedcom_file.id}
                         className="inline-flex items-center text-sm text-green-600 hover:text-green-700 disabled:text-gray-400 disabled:cursor-not-allowed"
                       >
-                        {reprocessingId === gedcom_file.id ? 'Processing...' : 'Reprocess'}
+                        {reprocessingId === gedcom_file.id ? t('gedcom_files.index.processing') : t('gedcom_files.index.reprocess')}
                       </button>
                     </div>
                   </div>
@@ -148,7 +150,7 @@ export default function Index({ gedcom_files, current_user, flash, errors, meta 
               {pagination && pagination.total_pages > 1 && (
                 <div className="mt-4 flex items-center justify-between">
                   <p className="text-sm text-gray-600">
-                    Total: {pagination.total}
+                    {t('gedcom_files.index.total', { count: pagination.total })}
                   </p>
                   <div className="flex gap-1 items-center">
                     <button
