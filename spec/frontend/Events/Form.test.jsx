@@ -39,15 +39,27 @@ jest.mock('../../../app/frontend/components/YandexMapPicker', () => {
 const CATEGORIES = ['person', 'world', 'country', 'local']
 const CURRENT_USER = { id: 1, email: 'user@example.com' }
 
+function makeDateAttributes(overrides = {}) {
+  return {
+    original_text: '',
+    date_type: 'exact',
+    year: '',
+    month: '',
+    day: '',
+    calendar_type: 'gregorian',
+    ...overrides,
+  }
+}
+
 function makeFormData(overrides = {}) {
   return {
     event: {
       title: '',
       description: '',
-      start_date: '',
-      end_date: '',
       category: 'person',
       person_ids: [],
+      start_date_attributes: makeDateAttributes(),
+      end_date_attributes: makeDateAttributes(),
       location_attributes: { id: null, place: '', latitude: null, longitude: null },
       ...overrides,
     },
@@ -99,8 +111,9 @@ describe('Events Form — new event', () => {
     expect(screen.getByLabelText('Title')).toBeInTheDocument()
     expect(screen.getByLabelText('Description')).toBeInTheDocument()
     expect(screen.getByLabelText('Category')).toBeInTheDocument()
-    expect(screen.getByLabelText('Start Date')).toBeInTheDocument()
-    expect(screen.getByLabelText('End Date')).toBeInTheDocument()
+    expect(screen.getByLabelText('Date Entry')).toBeInTheDocument()
+    expect(screen.getByLabelText('Date Type')).toBeInTheDocument()
+    expect(screen.getByLabelText('Year')).toBeInTheDocument()
   })
 
   it('renders all category options', () => {
@@ -115,10 +128,10 @@ describe('Events Form — new event', () => {
     expect(screen.getByLabelText('Description').tagName).toBe('TEXTAREA')
   })
 
-  it('date inputs have type=date', () => {
+  it('shows single-date mode by default', () => {
     renderForm()
-    expect(screen.getByLabelText('Start Date')).toHaveAttribute('type', 'date')
-    expect(screen.getByLabelText('End Date')).toHaveAttribute('type', 'date')
+    expect(screen.getByLabelText('Date Entry')).toHaveValue('single')
+    expect(screen.queryByText('End Date')).not.toBeInTheDocument()
   })
 
   it('has Cancel link pointing to /events', () => {
@@ -138,6 +151,7 @@ describe('Events Form — new event', () => {
   })
 
   it('calls post on submit', () => {
+    setupUseForm({ start_date_attributes: makeDateAttributes({ year: '1945', month: '05', day: '08' }) })
     renderForm()
     const form = screen.getByRole('button', { name: 'Create Event' }).closest('form')
     fireEvent.submit(form)
@@ -161,6 +175,49 @@ describe('Events Form — new event', () => {
     fireEvent.change(screen.getByLabelText('Category'), { target: { value: 'world' } })
     expect(mockSetData).toHaveBeenCalledWith('event.category', 'world')
   })
+
+  it('shows end date fields when switching to range mode', () => {
+    renderForm()
+
+    fireEvent.change(screen.getByLabelText('Date Entry'), { target: { value: 'range' } })
+
+    expect(screen.getByText('End Date')).toBeInTheDocument()
+    expect(mockSetData).not.toHaveBeenCalledWith('event.end_date_attributes', expect.anything())
+  })
+
+  it('clears hidden end date attributes when switching back to single mode', () => {
+    renderForm()
+
+    fireEvent.change(screen.getByLabelText('Date Entry'), { target: { value: 'range' } })
+    fireEvent.change(screen.getByLabelText('Date Entry'), { target: { value: 'single' } })
+
+    expect(mockSetData).toHaveBeenCalledWith('event.end_date_attributes', expect.objectContaining({
+      date_type: 'exact',
+      year: '',
+    }))
+  })
+
+  it('changes start date type and clears incompatible parts for year-only dates', () => {
+    setupUseForm({
+      start_date_attributes: makeDateAttributes({ year: '1900', month: '04', day: '11' }),
+    })
+
+    renderForm()
+    fireEvent.change(screen.getByLabelText('Date Type'), { target: { value: 'year' } })
+
+    expect(mockSetData).toHaveBeenCalledWith('event.start_date_attributes.date_type', 'year')
+    expect(mockSetData).toHaveBeenCalledWith('event.start_date_attributes.month', '')
+    expect(mockSetData).toHaveBeenCalledWith('event.start_date_attributes.day', '')
+  })
+
+  it('shows client validation errors and blocks submit when start year is missing', () => {
+    renderForm()
+
+    fireEvent.submit(screen.getByRole('button', { name: 'Create Event' }).closest('form'))
+
+    expect(screen.getByText('Start Date: year is required.')).toBeInTheDocument()
+    expect(mockPost).not.toHaveBeenCalled()
+  })
 })
 
 describe('Events Form — edit event', () => {
@@ -168,8 +225,22 @@ describe('Events Form — edit event', () => {
     id: 42,
     title: 'Battle of Waterloo',
     description: 'A major battle',
-    start_date_display: '1815-06-18',
-    end_date_display: '1815-06-18',
+    start_date_attributes: {
+      original_text: '1815-06-18',
+      date_type: 'exact',
+      year: 1815,
+      month: 6,
+      day: 18,
+      calendar_type: 'gregorian',
+    },
+    end_date_attributes: {
+      original_text: '1815-06-18',
+      date_type: 'exact',
+      year: 1815,
+      month: 6,
+      day: 18,
+      calendar_type: 'gregorian',
+    },
     category: 'world',
     person_ids: [],
     location: { id: 7, place: 'Waterloo', latitude: 50.68, longitude: 4.41 },
@@ -179,6 +250,7 @@ describe('Events Form — edit event', () => {
     setupUseForm({
       title: EXISTING_EVENT.title,
       description: EXISTING_EVENT.description,
+      start_date_attributes: makeDateAttributes({ year: '1815', month: '06', day: '18' }),
       category: EXISTING_EVENT.category,
       location_attributes: EXISTING_EVENT.location,
     })
@@ -200,20 +272,23 @@ describe('Events Form — edit event', () => {
     expect(mockPut).toHaveBeenCalledWith('/events/42')
   })
 
-  it('prefills date inputs from serialized date display values', () => {
-    setupUseForm({
-      title: EXISTING_EVENT.title,
-      description: EXISTING_EVENT.description,
-      start_date: '1815-06-18',
-      end_date: '1815-06-18',
-      category: EXISTING_EVENT.category,
-      location_attributes: EXISTING_EVENT.location,
-    })
-
+  it('initializes useForm with serialized fuzzy date attributes', () => {
     renderForm({ event: EXISTING_EVENT, isEdit: true })
 
-    expect(screen.getByLabelText('Start Date')).toHaveValue('1815-06-18')
-    expect(screen.getByLabelText('End Date')).toHaveValue('1815-06-18')
+    const { useForm } = require('@inertiajs/react')
+    expect(useForm).toHaveBeenCalledWith(expect.objectContaining({
+      event: expect.objectContaining({
+        start_date_attributes: expect.objectContaining({
+          date_type: 'exact',
+          year: '1815',
+          month: '06',
+          day: '18',
+        }),
+        end_date_attributes: expect.objectContaining({
+          year: '',
+        }),
+      }),
+    }))
   })
 })
 

@@ -1,61 +1,292 @@
 import { Head, useForm, Link, usePage } from '@inertiajs/react'
+import { useState } from 'react'
 import Layout from '../Layout'
 import YandexMapPicker from '../../components/YandexMapPicker'
 import { useTranslations } from '../../lib/useTranslations'
 
-function padDatePart(value) {
-  return String(value).padStart(2, '0')
+const DATE_MODE_OPTIONS = ['single', 'range']
+const DATE_TYPE_OPTIONS = ['exact', 'about', 'before', 'after', 'estimated', 'calculated', 'year', 'month_year']
+
+function blankDateAttributes() {
+  return {
+    original_text: '',
+    date_type: 'exact',
+    year: '',
+    month: '',
+    day: '',
+    calendar_type: 'gregorian',
+  }
 }
 
-function dateValueFromAttributes(attrs = {}) {
-  if (!attrs?.year) return ''
-
-  const month = attrs.month ? padDatePart(attrs.month) : '01'
-  const day = attrs.day ? padDatePart(attrs.day) : '01'
-  return `${attrs.year}-${month}-${day}`
+function hasDateValue(attrs = {}) {
+  return Boolean(attrs?.year)
 }
 
-function normalizeDateValue(value, fallbackAttributes = null) {
-  if (!value && fallbackAttributes) return dateValueFromAttributes(fallbackAttributes)
-  if (!value) return ''
+function inferDateTypeFromParts(month, day) {
+  if (month && day) return 'exact'
+  if (month) return 'month_year'
+  return 'year'
+}
 
-  if (typeof value === 'string') {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value
+function parseLegacyDateString(value) {
+  if (!value || typeof value !== 'string') return blankDateAttributes()
 
-    const parsed = new Date(value)
-    return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString().slice(0, 10)
+  const exactMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (exactMatch) {
+    return {
+      ...blankDateAttributes(),
+      date_type: 'exact',
+      year: exactMatch[1],
+      month: exactMatch[2],
+      day: exactMatch[3],
+    }
   }
 
-  if (typeof value === 'object') {
-    if (value.original_text && /^\d{4}-\d{2}-\d{2}$/.test(value.original_text)) return value.original_text
-    if (value.year) return dateValueFromAttributes(value)
+  const monthYearMatch = value.match(/^(\d{4})-(\d{2})$/)
+  if (monthYearMatch) {
+    return {
+      ...blankDateAttributes(),
+      date_type: 'month_year',
+      year: monthYearMatch[1],
+      month: monthYearMatch[2],
+    }
   }
 
-  return ''
+  const yearMatch = value.match(/^(\d{4})$/)
+  if (yearMatch) {
+    return {
+      ...blankDateAttributes(),
+      date_type: 'year',
+      year: yearMatch[1],
+    }
+  }
+
+  return blankDateAttributes()
 }
 
-export default function Form({ event, categories, people = [], isEdit, current_user, flash, errors = [] }) {
-  const { yandex_maps_api_key } = usePage().props
-  const t = useTranslations()
-  const { data, setData, post, put, processing } = useForm({
+function normalizeDateAttributes(value) {
+  if (!value) return blankDateAttributes()
+  if (typeof value === 'string') return parseLegacyDateString(value)
+
+  return {
+    ...blankDateAttributes(),
+    original_text: value.original_text || '',
+    date_type: value.date_type || inferDateTypeFromParts(value.month, value.day),
+    year: value.year ? String(value.year) : '',
+    month: value.month ? String(value.month).padStart(2, '0') : '',
+    day: value.day ? String(value.day).padStart(2, '0') : '',
+    calendar_type: value.calendar_type || 'gregorian',
+  }
+}
+
+function datesMatch(left, right) {
+  return ['date_type', 'year', 'month', 'day', 'calendar_type'].every((key) => (left?.[key] || '') === (right?.[key] || ''))
+}
+
+function inferDateMode(startDate, endDate) {
+  if (hasDateValue(endDate) && !datesMatch(startDate, endDate)) return 'range'
+  return 'single'
+}
+
+function buildInitialEventState(event = {}) {
+  const startDate = normalizeDateAttributes(event.start_date_attributes || event.start_date || event.start_date_display)
+  const endSource = normalizeDateAttributes(event.end_date_attributes || event.end_date || event.end_date_display)
+  const dateMode = inferDateMode(startDate, endSource)
+
+  return {
+    dateMode,
     event: {
       title: event.title || '',
       description: event.description || '',
-      start_date: normalizeDateValue(event.start_date || event.start_date_display, event.start_date_attributes),
-      end_date: normalizeDateValue(event.end_date || event.end_date_display, event.end_date_attributes),
       category: event.category || 'person',
       person_ids: event.person_ids || [],
+      start_date_attributes: startDate,
+      end_date_attributes: dateMode === 'range' ? endSource : blankDateAttributes(),
       location_attributes: {
         id: event.location?.id || null,
         place: event.location?.place || '',
         latitude: event.location?.latitude || null,
         longitude: event.location?.longitude || null,
       },
+    },
+  }
+}
+
+function compareDateParts(left, right) {
+  const leftValues = [Number(left.year), Number(left.month || 1), Number(left.day || 1)]
+  const rightValues = [Number(right.year), Number(right.month || 1), Number(right.day || 1)]
+
+  for (let index = 0; index < leftValues.length; index += 1) {
+    if (leftValues[index] < rightValues[index]) return -1
+    if (leftValues[index] > rightValues[index]) return 1
+  }
+
+  return 0
+}
+
+function validateDateAttributes(attrs, { required, label, t }) {
+  const errors = []
+  const dateType = attrs.date_type || 'exact'
+
+  if (!attrs.year) {
+    if (required) errors.push(t('events.form.validation.year_required', { field: label }))
+    return errors
+  }
+
+  if (attrs.day && !attrs.month) {
+    errors.push(t('events.form.validation.day_requires_month', { field: label }))
+  }
+
+  if (dateType === 'month_year' && !attrs.month) {
+    errors.push(t('events.form.validation.month_required', { field: label }))
+  }
+
+  return errors
+}
+
+function validateEventDates(eventData, dateMode, t) {
+  const errors = [
+    ...validateDateAttributes(eventData.start_date_attributes, {
+      required: true,
+      label: t('events.form.start_date'),
+      t,
+    }),
+  ]
+
+  if (dateMode !== 'range') return errors
+
+  errors.push(
+    ...validateDateAttributes(eventData.end_date_attributes, {
+      required: true,
+      label: t('events.form.end_date'),
+      t,
+    })
+  )
+
+  if (
+    hasDateValue(eventData.start_date_attributes) &&
+    hasDateValue(eventData.end_date_attributes) &&
+    compareDateParts(eventData.end_date_attributes, eventData.start_date_attributes) < 0
+  ) {
+    errors.push(t('events.form.validation.end_before_start'))
+  }
+
+  return errors
+}
+
+function DateFields({ title, path, data, setData, t }) {
+  const showsMonth = data.date_type !== 'year'
+  const showsDay = !['year', 'month_year'].includes(data.date_type)
+
+  const handleDateTypeChange = (nextType) => {
+    setData(`${path}.date_type`, nextType)
+
+    if (nextType === 'year') {
+      setData(`${path}.month`, '')
+      setData(`${path}.day`, '')
+    } else if (nextType === 'month_year') {
+      setData(`${path}.day`, '')
     }
-  })
+  }
+
+  return (
+    <fieldset className="rounded-md border border-gray-200 p-4">
+      <legend className="px-2 text-sm font-medium text-gray-700">{title}</legend>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <label htmlFor={`${path}-date-type`} className="block text-sm font-medium text-gray-700 mb-1">
+            {t('events.form.date_type')}
+          </label>
+          <select
+            id={`${path}-date-type`}
+            value={data.date_type}
+            onChange={(e) => handleDateTypeChange(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {DATE_TYPE_OPTIONS.map((dateType) => (
+              <option key={dateType} value={dateType}>
+                {t(`events.form.date_types.${dateType}`)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor={`${path}-year`} className="block text-sm font-medium text-gray-700 mb-1">
+            {t('events.form.year')}
+          </label>
+          <input
+            type="number"
+            id={`${path}-year`}
+            value={data.year}
+            onChange={(e) => setData(`${path}.year`, e.target.value)}
+            min="1"
+            max="9999"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+
+        {showsMonth && (
+          <div>
+            <label htmlFor={`${path}-month`} className="block text-sm font-medium text-gray-700 mb-1">
+              {t('events.form.month')}
+            </label>
+            <input
+              type="number"
+              id={`${path}-month`}
+              value={data.month}
+              onChange={(e) => setData(`${path}.month`, e.target.value)}
+              min="1"
+              max="12"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        )}
+
+        {showsDay && (
+          <div>
+            <label htmlFor={`${path}-day`} className="block text-sm font-medium text-gray-700 mb-1">
+              {t('events.form.day')}
+            </label>
+            <input
+              type="number"
+              id={`${path}-day`}
+              value={data.day}
+              onChange={(e) => setData(`${path}.day`, e.target.value)}
+              min="1"
+              max="31"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        )}
+      </div>
+    </fieldset>
+  )
+}
+
+export default function Form({ event, categories, people = [], isEdit, current_user, flash, errors = [] }) {
+  const { yandex_maps_api_key } = usePage().props
+  const t = useTranslations()
+  const initialState = buildInitialEventState(event)
+  const [dateMode, setDateMode] = useState(initialState.dateMode)
+  const [clientErrors, setClientErrors] = useState([])
+  const { data, setData, post, put, processing } = useForm({ event: initialState.event })
+
+  const visibleErrors = [...new Set([...clientErrors, ...errors])]
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    const validationErrors = validateEventDates(data.event, dateMode, t)
+
+    if (validationErrors.length > 0) {
+      setClientErrors(validationErrors)
+      return
+    }
+
+    setClientErrors([])
+
     if (isEdit) {
       put(`/events/${event.id}`)
     } else {
@@ -83,9 +314,9 @@ export default function Form({ event, categories, people = [], isEdit, current_u
               {isEdit ? t('events.form.edit_title') : t('events.form.new_title')}
             </h1>
 
-            {errors.length > 0 && (
+            {visibleErrors.length > 0 && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
-                {errors.map((error, index) => (
+                {visibleErrors.map((error, index) => (
                   <p key={index} className="text-red-600 text-sm">{error}</p>
                 ))}
               </div>
@@ -149,36 +380,50 @@ export default function Form({ event, categories, people = [], isEdit, current_u
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('events.form.start_date')}
-                  </label>
-                  <input
-                    type="date"
-                    id="start_date"
-                    name="event[start_date]"
-                    value={data.event.start_date || ''}
-                    onChange={(e) => setData('event.start_date', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
+              <div className="mb-4">
+                <label htmlFor="date_mode" className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('events.form.date_mode')}
+                </label>
+                <select
+                  id="date_mode"
+                  value={dateMode}
+                  onChange={(e) => {
+                    const nextMode = e.target.value
+                    setDateMode(nextMode)
+                    setClientErrors([])
 
-                <div>
-                  <label htmlFor="end_date" className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('events.form.end_date')}
-                  </label>
-                  <input
-                    type="date"
-                    id="end_date"
-                    name="event[end_date]"
-                    value={data.event.end_date || ''}
-                    onChange={(e) => setData('event.end_date', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
+                    if (nextMode !== 'range') {
+                      setData('event.end_date_attributes', blankDateAttributes())
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {DATE_MODE_OPTIONS.map((mode) => (
+                    <option key={mode} value={mode}>
+                      {t(`events.form.date_modes.${mode}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={`grid gap-4 mb-4 ${dateMode === 'range' ? 'lg:grid-cols-2' : ''}`}>
+                <DateFields
+                  title={dateMode === 'range' ? t('events.form.start_date') : t('events.form.start_date_required')}
+                  path="event.start_date_attributes"
+                  data={data.event.start_date_attributes}
+                  setData={setData}
+                  t={t}
+                />
+
+                {dateMode === 'range' && (
+                  <DateFields
+                    title={t('events.form.end_date')}
+                    path="event.end_date_attributes"
+                    data={data.event.end_date_attributes}
+                    setData={setData}
+                    t={t}
                   />
-                </div>
+                )}
               </div>
 
               {data.event.category === 'person' && (
