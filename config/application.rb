@@ -30,6 +30,7 @@ module GeoHistViz
     config.i18n.available_locales = [:ru]
 
     config.generators do |g|
+      g.job false
       g.test_framework :rspec,
                        fixtures: true,
                        view_specs: false,

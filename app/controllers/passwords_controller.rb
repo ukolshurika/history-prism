@@ -7,7 +7,7 @@ class PasswordsController < ApplicationController
   end
 
   def create
-    Passwords::SendResetInstructionsJob.perform_later(normalized_email)
+    Passwords::SendResetInstructionsWorker.perform_async(normalized_email)
     render inertia: 'ForgotPassword', props: { sent: true }
   end
 
