@@ -1,6 +1,9 @@
 import { Link, router } from '@inertiajs/react'
+import { useTranslations } from '../lib/useTranslations'
 
 export default function Layout({ children, current_user, flash = {}, immersive = false }) {
+  const t = useTranslations()
+
   const handleLogout = (e) => {
     e.preventDefault()
     router.delete('/session')
@@ -26,7 +29,7 @@ export default function Layout({ children, current_user, flash = {}, immersive =
                   : 'text-xl font-bold text-gray-900 hover:text-gray-700'
               }
             >
-              History Prism
+              {t('layout.brand')}
             </Link>
 
             <div className="flex items-center gap-6">
@@ -38,7 +41,7 @@ export default function Layout({ children, current_user, flash = {}, immersive =
                     : 'text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors'
                 }
               >
-                Events
+                {t('layout.nav.events')}
               </Link>
               <Link
                 href="/people"
@@ -48,7 +51,7 @@ export default function Layout({ children, current_user, flash = {}, immersive =
                     : 'text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors'
                 }
               >
-                People
+                {t('layout.nav.people')}
               </Link>
               <Link
                 href="/timelines"
@@ -58,7 +61,7 @@ export default function Layout({ children, current_user, flash = {}, immersive =
                     : 'text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors'
                 }
               >
-                Timelines
+                {t('layout.nav.timelines')}
               </Link>
               <Link
                 href="/books"
@@ -68,7 +71,7 @@ export default function Layout({ children, current_user, flash = {}, immersive =
                     : 'text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors'
                 }
               >
-                Books
+                {t('layout.nav.books')}
               </Link>
               <Link
                 href="/gedcom_files"
@@ -78,7 +81,7 @@ export default function Layout({ children, current_user, flash = {}, immersive =
                     : 'text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors'
                 }
               >
-                GEDCOM Files
+                {t('layout.nav.gedcom_files')}
               </Link>
             </div>
 
@@ -96,7 +99,7 @@ export default function Layout({ children, current_user, flash = {}, immersive =
                         : 'px-4 py-2 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors'
                     }
                   >
-                    Sign Out
+                    {t('layout.auth.sign_out')}
                   </button>
                 </>
               ) : (
@@ -109,7 +112,7 @@ export default function Layout({ children, current_user, flash = {}, immersive =
                         : 'px-4 py-2 text-sm text-gray-700 hover:text-gray-900 transition-colors'
                     }
                   >
-                    Sign In
+                    {t('layout.auth.sign_in')}
                   </Link>
                   <Link
                     href="/registration/new"
@@ -119,7 +122,7 @@ export default function Layout({ children, current_user, flash = {}, immersive =
                         : 'px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'
                     }
                   >
-                    Sign Up
+                    {t('layout.auth.sign_up')}
                   </Link>
                 </>
               )}

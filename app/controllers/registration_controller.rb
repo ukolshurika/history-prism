@@ -12,7 +12,7 @@ class RegistrationController < ApplicationController
     if user.save
       UserMailer.confirmation_instructions(user).deliver_later
       session[:pending_confirmation_email] = user.email
-      redirect_to new_confirmation_path, notice: 'Регистрация успешна! Проверьте почту для подтверждения.'
+      redirect_to new_confirmation_path, notice: t('registration.create.success')
     else
       render inertia: 'Registration', props: {
         errors: user.errors.full_messages

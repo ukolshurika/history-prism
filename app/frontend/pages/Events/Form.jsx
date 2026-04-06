@@ -1,6 +1,7 @@
 import { Head, useForm, Link, usePage } from '@inertiajs/react'
 import Layout from '../Layout'
 import YandexMapPicker from '../../components/YandexMapPicker'
+import { useTranslations } from '../../lib/useTranslations'
 
 function padDatePart(value) {
   return String(value).padStart(2, '0')
@@ -35,6 +36,7 @@ function normalizeDateValue(value, fallbackAttributes = null) {
 
 export default function Form({ event, categories, people = [], isEdit, current_user, flash, errors = [] }) {
   const { yandex_maps_api_key } = usePage().props
+  const t = useTranslations()
   const { data, setData, post, put, processing } = useForm({
     event: {
       title: event.title || '',
@@ -63,7 +65,7 @@ export default function Form({ event, categories, people = [], isEdit, current_u
 
   return (
     <Layout current_user={current_user} flash={flash}>
-      <Head title={isEdit ? 'Edit Event' : 'New Event'} />
+      <Head title={isEdit ? t('events.form.edit_title') : t('events.form.new_title')} />
 
       <div className="py-8">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -72,13 +74,13 @@ export default function Form({ event, categories, people = [], isEdit, current_u
               href="/events"
               className="text-blue-600 hover:text-blue-700"
             >
-              &larr; Back to Events
+              &larr; {t('events.form.back')}
             </Link>
           </div>
 
           <div className="bg-white rounded-lg shadow-lg p-8">
             <h1 className="text-2xl font-bold mb-6">
-              {isEdit ? 'Edit Event' : 'Create New Event'}
+              {isEdit ? t('events.form.edit_title') : t('events.form.new_title')}
             </h1>
 
             {errors.length > 0 && (
@@ -92,7 +94,7 @@ export default function Form({ event, categories, people = [], isEdit, current_u
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                  Title
+                  {t('events.form.title')}
                 </label>
                 <input
                   type="text"
@@ -107,7 +109,7 @@ export default function Form({ event, categories, people = [], isEdit, current_u
 
               <div className="mb-4">
                 <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
+                  {t('events.form.description')}
                 </label>
                 <textarea
                   id="description"
@@ -122,7 +124,7 @@ export default function Form({ event, categories, people = [], isEdit, current_u
 
               <div className="mb-4">
                 <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
+                  {t('events.form.category')}
                 </label>
                 <select
                   id="category"
@@ -141,7 +143,7 @@ export default function Form({ event, categories, people = [], isEdit, current_u
                 >
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      {t(`events.categories.${cat}`)}
                     </option>
                   ))}
                 </select>
@@ -150,7 +152,7 @@ export default function Form({ event, categories, people = [], isEdit, current_u
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label htmlFor="start_date" className="block text-sm font-medium text-gray-700 mb-1">
-                    Start Date
+                    {t('events.form.start_date')}
                   </label>
                   <input
                     type="date"
@@ -165,7 +167,7 @@ export default function Form({ event, categories, people = [], isEdit, current_u
 
                 <div>
                   <label htmlFor="end_date" className="block text-sm font-medium text-gray-700 mb-1">
-                    End Date
+                    {t('events.form.end_date')}
                   </label>
                   <input
                     type="date"
@@ -182,7 +184,7 @@ export default function Form({ event, categories, people = [], isEdit, current_u
               {data.event.category === 'person' && (
                 <div className="mb-4">
                   <label htmlFor="people" className="block text-sm font-medium text-gray-700 mb-1">
-                    Associated People
+                    {t('events.form.associated_people')}
                   </label>
                   <select
                     id="people"
@@ -202,14 +204,14 @@ export default function Form({ event, categories, people = [], isEdit, current_u
                     ))}
                   </select>
                   <p className="mt-1 text-xs text-gray-500">
-                    Hold Ctrl (Windows) or Cmd (Mac) to select multiple people
+                    {t('events.form.associated_people_hint')}
                   </p>
                 </div>
               )}
 
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Event Location
+                  {t('events.form.location')}
                 </label>
                 <YandexMapPicker
                   lat={data.event.location_attributes.latitude}
@@ -234,13 +236,15 @@ export default function Form({ event, categories, people = [], isEdit, current_u
                   disabled={processing}
                   className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {processing ? (isEdit ? 'Updating...' : 'Creating...') : (isEdit ? 'Update Event' : 'Create Event')}
+                  {processing
+                    ? (isEdit ? t('events.form.updating') : t('events.form.creating'))
+                    : (isEdit ? t('events.form.update') : t('events.form.create'))}
                 </button>
                 <Link
                   href="/events"
                   className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 text-center"
                 >
-                  Cancel
+                  {t('events.form.cancel')}
                 </Link>
               </div>
             </form>

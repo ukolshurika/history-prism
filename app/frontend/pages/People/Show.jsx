@@ -1,9 +1,11 @@
 import { Head, Link, router } from '@inertiajs/react'
 import Layout from '../Layout'
+import { useTranslations } from '../../lib/useTranslations'
 
 export default function Show({ person, can_edit, can_delete, current_user, flash }) {
+  const t = useTranslations()
   const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this person?')) {
+    if (confirm(t('people.show.delete_confirm'))) {
       router.delete(`/people/${person.id}`)
     }
   }
@@ -19,7 +21,7 @@ export default function Show({ person, can_edit, can_delete, current_user, flash
               href="/people"
               className="text-blue-600 hover:text-blue-700"
             >
-              &larr; Back to People
+              &larr; {t('people.show.back')}
             </Link>
           </div>
 
@@ -38,7 +40,7 @@ export default function Show({ person, can_edit, can_delete, current_user, flash
                         href={`/people/${person.id}/edit`}
                         className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
                       >
-                        Edit
+                        {t('people.show.edit')}
                       </Link>
                     )}
                     {can_delete && (
@@ -46,7 +48,7 @@ export default function Show({ person, can_edit, can_delete, current_user, flash
                         onClick={handleDelete}
                         className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
                       >
-                        Delete
+                        {t('people.show.delete')}
                       </button>
                     )}
                   </div>
@@ -57,7 +59,7 @@ export default function Show({ person, can_edit, can_delete, current_user, flash
             <div className="border-t border-gray-200 pt-6">
               <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">First Name</dt>
+                  <dt className="text-sm font-medium text-gray-500">{t('people.show.first_name')}</dt>
                   <dd className="mt-1 text-sm text-gray-900">
                     {person.first_name}
                   </dd>
@@ -65,7 +67,7 @@ export default function Show({ person, can_edit, can_delete, current_user, flash
 
                 {person.middle_name && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Middle Name</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('people.show.middle_name')}</dt>
                     <dd className="mt-1 text-sm text-gray-900">
                       {person.middle_name}
                     </dd>
@@ -74,7 +76,7 @@ export default function Show({ person, can_edit, can_delete, current_user, flash
 
                 {person.last_name && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Last Name</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('people.show.last_name')}</dt>
                     <dd className="mt-1 text-sm text-gray-900">
                       {person.last_name}
                     </dd>
@@ -82,14 +84,14 @@ export default function Show({ person, can_edit, can_delete, current_user, flash
                 )}
 
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">GEDCOM UUID</dt>
+                  <dt className="text-sm font-medium text-gray-500">{t('people.show.gedcom_uuid')}</dt>
                   <dd className="mt-1 text-sm text-gray-900 font-mono">
                     {person.gedcom_uuid}
                   </dd>
                 </div>
 
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Created At</dt>
+                  <dt className="text-sm font-medium text-gray-500">{t('people.show.created_at')}</dt>
                   <dd className="mt-1 text-sm text-gray-900">
                     {new Date(person.created_at).toLocaleString()}
                   </dd>
@@ -97,7 +99,7 @@ export default function Show({ person, can_edit, can_delete, current_user, flash
 
                 {person.updated_at && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Updated At</dt>
+                    <dt className="text-sm font-medium text-gray-500">{t('people.show.updated_at')}</dt>
                     <dd className="mt-1 text-sm text-gray-900">
                       {new Date(person.updated_at).toLocaleString()}
                     </dd>
@@ -107,7 +109,7 @@ export default function Show({ person, can_edit, can_delete, current_user, flash
 
               {person.events && person.events.length > 0 && (
                 <div className="mt-8">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Associated Events</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">{t('people.show.associated_events')}</h3>
                   <div className="grid gap-4">
                     {person.events.map((event) => (
                       <Link

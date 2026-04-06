@@ -1,9 +1,11 @@
 import { Head, Link, router } from '@inertiajs/react'
 import Layout from '../Layout'
+import { useTranslations } from '../../lib/useTranslations'
 
 export default function Show({ event, can_edit, can_delete, current_user, flash }) {
+  const t = useTranslations()
   const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this event?')) {
+    if (confirm(t('events.show.delete_confirm'))) {
       router.delete(`/events/${event.id}`)
     }
   }
@@ -19,7 +21,7 @@ export default function Show({ event, can_edit, can_delete, current_user, flash 
               href="/events"
               className="text-blue-600 hover:text-blue-700"
             >
-              &larr; Back to Events
+              &larr; {t('events.show.back')}
             </Link>
           </div>
 
@@ -41,7 +43,7 @@ export default function Show({ event, can_edit, can_delete, current_user, flash 
                         href={`/events/${event.id}/edit`}
                         className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
                       >
-                        Edit
+                        {t('events.show.edit')}
                       </Link>
                     )}
                     {can_delete && (
@@ -49,7 +51,7 @@ export default function Show({ event, can_edit, can_delete, current_user, flash 
                         onClick={handleDelete}
                         className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
                       >
-                        Delete
+                        {t('events.show.delete')}
                       </button>
                     )}
                   </div>
@@ -60,35 +62,35 @@ export default function Show({ event, can_edit, can_delete, current_user, flash 
             <div className="border-t border-gray-200 pt-6">
               <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Description</dt>
+                  <dt className="text-sm font-medium text-gray-500">{t('events.show.description')}</dt>
                   <dd className="mt-1 text-sm text-gray-900 whitespace-pre-wrap col-span-2">
                     {event.description}
                   </dd>
                 </div>
 
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Start Date</dt>
+                  <dt className="text-sm font-medium text-gray-500">{t('events.show.start_date')}</dt>
                   <dd className="mt-1 text-sm text-gray-900">
                     {new Date(event.start_date).toLocaleString()}
                   </dd>
                 </div>
 
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">End Date</dt>
+                  <dt className="text-sm font-medium text-gray-500">{t('events.show.end_date')}</dt>
                   <dd className="mt-1 text-sm text-gray-900">
                     {new Date(event.end_date).toLocaleString()}
                   </dd>
                 </div>
 
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Created By</dt>
+                  <dt className="text-sm font-medium text-gray-500">{t('events.show.created_by')}</dt>
                   <dd className="mt-1 text-sm text-gray-900">
                     {event.creator.email}
                   </dd>
                 </div>
 
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Created At</dt>
+                  <dt className="text-sm font-medium text-gray-500">{t('events.show.created_at')}</dt>
                   <dd className="mt-1 text-sm text-gray-900">
                     {new Date(event.created_at).toLocaleString()}
                   </dd>
