@@ -317,11 +317,26 @@ function TrackLegend({ t }) {
 }
 
 function HeroMeta({ timeline, range, eventsCount, t }) {
+  const subjectContent = (
+    <>
+      <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">{t('timelines.show.subject')}</p>
+      <p className="mt-2 text-lg leading-tight text-stone-100">{timeline.person_name}</p>
+    </>
+  )
+
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-start lg:gap-0">
       <div className="border-l border-white/20 pl-4 lg:pr-8">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">{t('timelines.show.subject')}</p>
-        <p className="mt-2 text-lg leading-tight text-stone-100">{timeline.person_name}</p>
+        {timeline.person_id ? (
+          <Link
+            href={`/people/${timeline.person_id}`}
+            className="block rounded-2xl px-2 py-1 -ml-2 transition hover:bg-white/8 focus:outline-none focus:ring-2 focus:ring-white/30"
+          >
+            {subjectContent}
+          </Link>
+        ) : (
+          subjectContent
+        )}
       </div>
       <div className="border-l border-white/20 pl-4 lg:px-8">
         <p className="text-[11px] uppercase tracking-[0.28em] text-stone-400">{t('timelines.show.range')}</p>
@@ -728,9 +743,9 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
 
       <div className="min-h-screen bg-[radial-gradient(circle_at_top,#494136_0%,#221d18_24%,#12100f_58%,#0b0a09_100%)]">
         <div className="relative">
-          <div className="absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_top,rgba(214,197,162,0.18),transparent_58%)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_top,rgba(214,197,162,0.18),transparent_58%)]" />
 
-          <div className="mx-auto max-w-[1440px] px-4 pb-16 pt-8 sm:px-6 lg:px-8">
+          <div className="relative z-10 mx-auto max-w-[1440px] px-4 pb-16 pt-8 sm:px-6 lg:px-8">
             <section className="pb-12">
               <div className="max-w-4xl">
                 <p className="text-[11px] uppercase tracking-[0.4em] text-stone-400">{t('timelines.show.timeline')}</p>

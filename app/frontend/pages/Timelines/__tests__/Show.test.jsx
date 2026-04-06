@@ -176,6 +176,22 @@ describe('Timelines Show', () => {
     expect(screen.getByText('John Doe')).toBeInTheDocument()
   })
 
+  it('links the subject block to the person page', () => {
+    render(
+      <Show
+        timeline={mockTimeline}
+        can_edit={false}
+        can_delete={false}
+        current_user={mockCurrentUser}
+        flash={{}}
+      />
+    )
+
+    const personLink = screen.getByText('John Doe').closest('a')
+    expect(personLink).toBeInTheDocument()
+    expect(personLink).toHaveAttribute('href', '/people/1')
+  })
+
   it('shows "Back to Timelines" link', () => {
     render(
       <Show
@@ -234,6 +250,24 @@ describe('Timelines Show', () => {
     )
 
     expect(screen.getByRole('button', { name: /Generate PDF/i })).toBeInTheDocument()
+  })
+
+  it('posts to export_pdf when clicking "Generate PDF"', () => {
+    const router = getRouter()
+
+    render(
+      <Show
+        timeline={mockTimeline}
+        can_edit={true}
+        can_delete={false}
+        current_user={mockCurrentUser}
+        flash={{}}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /Generate PDF/i }))
+
+    expect(router.post).toHaveBeenCalledWith('/timelines/1/export_pdf')
   })
 
   it('does not show "Generate PDF" button when can_edit is false', () => {
