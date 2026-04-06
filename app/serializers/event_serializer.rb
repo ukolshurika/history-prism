@@ -3,7 +3,8 @@
 class EventSerializer < ActiveModel::Serializer
   attributes :id, :title, :description, :start_date, :end_date, :category, :person_ids,
              :created_at, :updated_at, :source_type, :source_id, :source_name,
-             :page_number, :start_date_display, :start_date_sort, :source_attachment_url,
+             :page_number, :start_date_display, :end_date_display, :start_date_sort,
+             :start_date_attributes, :end_date_attributes, :source_attachment_url,
              :creator
 
   has_many :people, serializer: PersonSerializer
@@ -46,5 +47,35 @@ class EventSerializer < ActiveModel::Serializer
 
   def start_date_sort
     object.start_date&.sort_value
+  end
+
+  def end_date_display
+    object.end_date&.original_text
+  end
+
+  def start_date_attributes
+    serialize_fuzzy_date(object.start_date)
+  end
+
+  def end_date_attributes
+    serialize_fuzzy_date(object.end_date)
+  end
+
+  private
+
+  def serialize_fuzzy_date(fuzzy_date)
+    return nil unless fuzzy_date
+
+    {
+      original_text: fuzzy_date.original_text,
+      date_type: fuzzy_date.date_type,
+      year: fuzzy_date.year,
+      month: fuzzy_date.month,
+      day: fuzzy_date.day,
+      year_end: fuzzy_date.year_end,
+      month_end: fuzzy_date.month_end,
+      day_end: fuzzy_date.day_end,
+      calendar_type: fuzzy_date.calendar_type
+    }
   end
 end

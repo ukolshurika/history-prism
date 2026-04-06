@@ -147,7 +147,7 @@ RSpec.describe 'Events', type: :request do
         get edit_event_path(event)
         expect(response).to redirect_to(root_path)
         follow_redirect!
-        expect(response.body).to include('not authorized')
+        expect(response.body).to include('У вас нет прав для выполнения этого действия.')
       end
     end
 
@@ -204,6 +204,29 @@ RSpec.describe 'Events', type: :request do
           expect(response).to redirect_to(timeline_path(timeline))
           expect(timeline.reload.cached_events_for_display['local']).to include(Event.last.id)
           expect(Event.last.start_date.original_text).to eq('1917-11-07')
+        end
+
+        it 'creates a year-only event without duplicating fuzzy dates for a single-day entry' do
+          expect {
+            post events_path, params: {
+              event: {
+                title: 'Approximate event',
+                description: 'Only a year is known',
+                category: 'person',
+                start_date_attributes: {
+                  year: '1850',
+                  date_type: 'year',
+                  calendar_type: 'gregorian'
+                }
+              }
+            }
+          }.to change(Event, :count).by(1)
+           .and change(FuzzyDate, :count).by(1)
+
+          created_event = Event.last
+          expect(created_event.start_date).to eq(created_event.end_date)
+          expect(created_event.start_date.date_type).to eq('year')
+          expect(created_event.start_date.original_text).to eq('1850')
         end
       end
 
@@ -275,6 +298,39 @@ RSpec.describe 'Events', type: :request do
         expect(event.end_date).to be_a(FuzzyDate)
         expect(event.start_date.original_text).to eq('1945-10-02')
         expect(event.end_date.original_text).to eq('1945-10-03')
+      end
+
+      it 'reuses a single fuzzy date row when start and end are identical' do
+        event
+
+        expect {
+          patch event_path(event), params: {
+            event: {
+              title: 'Updated Event',
+              description: 'Updated Description',
+              start_date_attributes: {
+                year: '1945',
+                month: '10',
+                day: '02',
+                date_type: 'exact',
+                calendar_type: 'gregorian'
+              },
+              end_date_attributes: {
+                year: '1945',
+                month: '10',
+                day: '02',
+                date_type: 'exact',
+                calendar_type: 'gregorian'
+              }
+            }
+          }
+        }.to change(FuzzyDate, :count).by(1)
+
+        event.reload
+
+        expect(response).to redirect_to(event_path(event))
+        expect(event.start_date).to eq(event.end_date)
+        expect(event.start_date.original_text).to eq('1945-10-02')
       end
     end
 

@@ -61,5 +61,37 @@ RSpec.describe Events::CreateService do
 
       expect(result.timeline).to be_nil
     end
+
+    it 'reuses the same fuzzy date row when start and end attributes are identical' do
+      single_day_params = ActionController::Parameters.new(
+        title: 'One day event',
+        description: 'Single-day entry',
+        category: 'local',
+        start_date_attributes: {
+          year: '1917',
+          month: '11',
+          day: '7',
+          date_type: 'exact',
+          calendar_type: 'gregorian'
+        },
+        end_date_attributes: {
+          year: '1917',
+          month: '11',
+          day: '7',
+          date_type: 'exact',
+          calendar_type: 'gregorian'
+        }
+      ).permit!
+
+      result = nil
+
+      expect {
+        result = described_class.new(user: user, params: single_day_params).call
+      }.to change(Event, :count).by(1)
+       .and change(FuzzyDate, :count).by(1)
+
+      expect(result.event.start_date).to eq(result.event.end_date)
+      expect(result.event.start_date.original_text).to eq('1917-11-07')
+    end
   end
 end

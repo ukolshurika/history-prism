@@ -29,26 +29,7 @@ module Events
     end
 
     def assign_fuzzy_date(event, association_name, attrs)
-      return unless attrs.present?
-      return unless attrs[:year].present?
-
-      event.public_send("#{association_name}=", create_fuzzy_date(attrs))
-    end
-
-    def create_fuzzy_date(attrs)
-      date_parts = []
-      date_parts << attrs[:year] if attrs[:year].present?
-      date_parts << attrs[:month].to_s.rjust(2, '0') if attrs[:month].present?
-      date_parts << attrs[:day].to_s.rjust(2, '0') if attrs[:day].present?
-
-      FuzzyDate.create!(
-        original_text: date_parts.join('-'),
-        year: attrs[:year].presence&.to_i,
-        month: attrs[:month].presence&.to_i,
-        day: attrs[:day].presence&.to_i,
-        date_type: attrs[:date_type].presence || 'exact',
-        calendar_type: attrs[:calendar_type].presence || 'gregorian'
-      )
+      event.public_send("#{association_name}=", FuzzyDate.find_or_create_from_attrs!(attrs))
     end
 
     def update_timeline_cache(event)
