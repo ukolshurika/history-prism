@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 module Passwords
-  class SendResetInstructionsJob < ApplicationJob
-    queue_as :default
+  class SendResetInstructionsWorker
+    include Sidekiq::Worker
+
+    sidekiq_options queue: :default
 
     def perform(email)
       return if email.blank?
