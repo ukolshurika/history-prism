@@ -105,31 +105,36 @@ function computeRange(events) {
   return { min, max, span: Math.max(max - min, 1) }
 }
 
-function CreateEventForm({ timeline, category, onClose, t }) {
-  const { data, setData, post, processing, errors } = useForm({
+function EventModalForm({ timeline, category, eventRecord = null, onClose, t }) {
+  const isEdit = Boolean(eventRecord)
+  const resolvedCategory = eventRecord?.formCategory || eventRecord?.category || category
+  const { data, setData, post, put, processing, errors } = useForm({
     event: {
-      title: '',
-      description: '',
-      category,
+      title: eventRecord?.title || '',
+      description: eventRecord?.description || '',
+      category: resolvedCategory,
       timeline_id: timeline.id,
       start_date_attributes: {
         date_type: 'exact',
-        year: '',
-        month: '',
-        day: ''
+        year: eventRecord?.start_year ? String(eventRecord.start_year) : '',
+        month: eventRecord?.start_month ? String(eventRecord.start_month) : '',
+        day: eventRecord?.start_day ? String(eventRecord.start_day) : ''
       },
       end_date_attributes: {
         date_type: 'exact',
-        year: '',
-        month: '',
-        day: ''
+        year: eventRecord?.end_year ? String(eventRecord.end_year) : '',
+        month: eventRecord?.end_month ? String(eventRecord.end_month) : '',
+        day: eventRecord?.end_day ? String(eventRecord.end_day) : ''
       }
     }
   })
 
-  const handleSubmit = (event) => {
-    event.preventDefault()
-    post('/events', {
+  const handleSubmit = (submitEvent) => {
+    submitEvent.preventDefault()
+    const submit = isEdit ? put : post
+    const path = isEdit ? `/events/${eventRecord.id}` : '/events'
+
+    submit(path, {
       preserveScroll: true,
       onSuccess: onClose
     })
@@ -147,20 +152,27 @@ function CreateEventForm({ timeline, category, onClose, t }) {
         <form onSubmit={handleSubmit} className="p-6 sm:p-8">
           <div className="mb-8 flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-stone-500">{t('timelines.show.add_event')}</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-stone-500">
+                {isEdit ? t('timelines.show.edit') : t('timelines.show.add_event')}
+              </p>
               <h2
                 className="mt-2 text-3xl text-stone-900"
                 style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
               >
-                {t('timelines.show.create_new_event', { category: t(`events.categories.${category}`) })}
+                {isEdit
+                  ? t('timelines.show.create_new_event', { category: t(`events.categories.${resolvedCategory}`) })
+                  : t('timelines.show.create_new_event', { category: t(`events.categories.${resolvedCategory}`) })}
               </h2>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-stone-300 px-3 py-1.5 text-sm text-stone-600 transition hover:bg-white"
+              aria-label={t('timelines.show.close')}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-stone-300 text-stone-600 transition hover:bg-white hover:text-stone-900"
             >
-              {t('timelines.show.close')}
+              <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
+                <path d="M5 5L15 15M15 5L5 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
             </button>
           </div>
 
@@ -210,7 +222,9 @@ function CreateEventForm({ timeline, category, onClose, t }) {
               disabled={processing}
               className="rounded-full bg-stone-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {processing ? t('events.form.creating') : t('events.form.create')}
+              {processing
+                ? (isEdit ? t('events.form.updating') : t('events.form.creating'))
+                : (isEdit ? t('events.form.update') : t('events.form.create'))}
             </button>
             <button
               type="button"
@@ -317,7 +331,7 @@ function HeroMeta({ timeline, range, t }) {
         {timeline.person_id ? (
           <Link
             href={`/people/${timeline.person_id}`}
-            className="block -ml-2 rounded-2xl px-2 py-1 transition hover:bg-white/45 focus:outline-none focus:ring-2 focus:ring-stone-600/25"
+            className="block -ml-4 rounded-[22px] px-4 py-2 transition hover:bg-white/45 focus:outline-none focus:ring-2 focus:ring-stone-600/25 lg:-mr-8 lg:pr-8"
           >
             {subjectContent}
           </Link>
@@ -357,7 +371,7 @@ function ScaleControl({ activeScale, onScaleChange, t }) {
   )
 }
 
-function StrataPrototype({ events, bucketSize, activeScale, onScaleChange, selectedEventId, onSelect, canEdit, onRemove, onAddEvent, t }) {
+function StrataPrototype({ events, bucketSize, activeScale, onScaleChange, selectedEventId, onSelect, canEdit, onEdit, onRemove, onAddEvent, t }) {
   const grouped = new Map()
 
   events.forEach((event) => {
@@ -478,12 +492,13 @@ function StrataPrototype({ events, bucketSize, activeScale, onScaleChange, selec
                     {canEdit && (
                       <div className="flex items-center gap-1.5 lg:justify-end">
                         <IconButton
-                          title={t('timelines.show.close_event_details')}
-                          onClick={() => onSelect({ id: null })}
+                          title={t('timelines.show.edit')}
+                          onClick={() => onEdit(selectedInSection.id)}
                           className="flex h-10 w-10 items-center justify-center rounded-full border border-stone-600/18 text-stone-700 transition hover:border-stone-600/32 hover:bg-white/55 hover:text-stone-900"
                         >
                           <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
-                            <path d="M5 5L15 15M15 5L5 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                            <path d="M4.75 14.75L8 14L14.9 7.1A1.5 1.5 0 0 0 14.9 4.98L14.02 4.1A1.5 1.5 0 0 0 11.9 4.1L5 11L4.75 14.75Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M10.75 5.25L13.75 8.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         </IconButton>
                         <IconButton
@@ -493,6 +508,15 @@ function StrataPrototype({ events, bucketSize, activeScale, onScaleChange, selec
                         >
                           <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
                             <path d="M7.5 4.75h5M4.75 6.5h10.5M8.25 8.75v5.5M11.75 8.75v5.5M6.75 6.5l.5 8.25a1 1 0 0 0 1 .94h3.5a1 1 0 0 0 1-.94l.5-8.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </IconButton>
+                        <IconButton
+                          title={t('timelines.show.close_event_details')}
+                          onClick={() => onSelect({ id: null })}
+                          className="flex h-10 w-10 items-center justify-center rounded-full border border-stone-600/18 text-stone-700 transition hover:border-stone-600/32 hover:bg-white/55 hover:text-stone-900"
+                        >
+                          <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
+                            <path d="M5 5L15 15M15 5L5 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
                           </svg>
                         </IconButton>
                       </div>
@@ -624,6 +648,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
   const [selectedEventId, setSelectedEventId] = useState(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [newEventCategory, setNewEventCategory] = useState(null)
+  const [editingEventId, setEditingEventId] = useState(null)
 
   const events = useMemo(() => normalizeTimelineEvents(timeline.categorized_events), [timeline.categorized_events])
   const range = useMemo(() => computeRange(events), [events])
@@ -635,6 +660,15 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
     () => (selectedEventId ? events.find((event) => event.id === selectedEventId) || null : null),
     [events, selectedEventId]
   )
+  const editingEvent = useMemo(
+    () => (editingEventId ? events.find((event) => event.id === editingEventId) || null : null),
+    [events, editingEventId]
+  )
+
+  const handleSelectEvent = (event) => {
+    const nextId = event?.id || null
+    setSelectedEventId((currentId) => (currentId === nextId ? null : nextId))
+  }
 
   const openCreateForm = (category) => {
     setNewEventCategory(category)
@@ -659,6 +693,10 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
         preserveScroll: true
       }
     )
+  }
+
+  const handleEditEvent = (eventId) => {
+    setEditingEventId(eventId)
   }
 
   const renderPrototype = () => {
@@ -687,7 +725,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
             range={range}
             bucketSize={activeScale.bucketSize === 1 ? 2 : activeScale.bucketSize}
             selectedEventId={selectedEvent?.id}
-            onSelect={(event) => setSelectedEventId(event.id)}
+            onSelect={handleSelectEvent}
             t={t}
           />
         )
@@ -700,8 +738,9 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
             activeScale={activeScale}
             onScaleChange={setScaleMode}
             selectedEventId={selectedEvent?.id}
-            onSelect={(event) => setSelectedEventId(event?.id || null)}
+            onSelect={handleSelectEvent}
             canEdit={can_edit}
+            onEdit={handleEditEvent}
             onRemove={handleDeleteEvent}
             onAddEvent={openCreateForm}
             t={t}
@@ -719,7 +758,13 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
           <div className="relative z-10 mx-auto max-w-[1440px] px-4 pb-16 pt-8 sm:px-6 lg:px-8">
             <section className="pb-12">
               <div className="max-w-4xl">
-                <p className="text-[11px] uppercase tracking-[0.4em] text-stone-700">{t('timelines.show.timeline')}</p>
+                <div className="text-[11px] uppercase tracking-[0.4em] text-stone-700">
+                  <Link href="/timelines" className="transition hover:text-stone-950">
+                    {t('timelines.show.timeline')}
+                  </Link>
+                  <span className="px-2 text-stone-500/70" aria-hidden="true">/</span>
+                  <span className="text-stone-950">{timeline.title}</span>
+                </div>
                 <h1
                   className="mt-5 max-w-4xl text-5xl leading-none text-stone-950 sm:text-6xl lg:text-[5.5rem]"
                   style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
@@ -734,17 +779,15 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 xl:justify-end">
-                  <Link
-                    href="/timelines"
-                    className="rounded-full border border-stone-700/30 bg-[#f6f0e5] px-4 py-2 text-[13px] font-medium text-stone-900 transition hover:border-stone-700/40 hover:bg-[#fbf7ef]"
-                  >
-                    {t('timelines.show.back')}
-                  </Link>
                   {can_edit && (
                     <Link
                       href={`/timelines/${timeline.id}/edit`}
-                      className="rounded-full border border-stone-700/30 bg-[#f6f0e5] px-4 py-2 text-[13px] font-medium text-stone-900 transition hover:border-stone-700/40 hover:bg-[#fbf7ef]"
+                      className="inline-flex items-center gap-2 rounded-full border border-stone-700/30 bg-[#f6f0e5] px-5 py-3 text-sm font-medium text-stone-900 transition hover:border-stone-700/40 hover:bg-[#fbf7ef]"
                     >
+                      <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5 shrink-0" aria-hidden="true">
+                        <path d="M4.75 14.75L8 14L14.9 7.1A1.5 1.5 0 0 0 14.9 4.98L14.02 4.1A1.5 1.5 0 0 0 11.9 4.1L5 11L4.75 14.75Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M10.75 5.25L13.75 8.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
                       {t('timelines.show.edit')}
                     </Link>
                   )}
@@ -752,7 +795,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
                     <button
                       type="button"
                       onClick={() => router.post(`/timelines/${timeline.id}/export_pdf`)}
-                      className="rounded-full bg-stone-900 px-4 py-2 text-[13px] font-medium text-stone-50 transition hover:bg-stone-800"
+                      className="rounded-full bg-stone-900 px-5 py-3 text-sm font-medium text-stone-50 transition hover:bg-stone-800"
                     >
                       {t('timelines.show.generate_pdf')}
                     </button>
@@ -760,7 +803,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
                   {timeline.pdf_url && (
                     <Link
                       href={`/timelines/${timeline.id}/download_pdf`}
-                      className="rounded-full border border-stone-700/30 bg-[#f6f0e5] px-4 py-2 text-[13px] font-medium text-stone-900 transition hover:border-stone-700/40 hover:bg-[#fbf7ef]"
+                      className="rounded-full border border-stone-700/30 bg-[#f6f0e5] px-5 py-3 text-sm font-medium text-stone-900 transition hover:border-stone-700/40 hover:bg-[#fbf7ef]"
                     >
                       {t('timelines.show.download_pdf')}
                     </Link>
@@ -777,10 +820,19 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
       </div>
 
       {showCreateForm && (
-        <CreateEventForm
+        <EventModalForm
           timeline={timeline}
           category={newEventCategory}
           onClose={() => setShowCreateForm(false)}
+          t={t}
+        />
+      )}
+
+      {editingEvent && (
+        <EventModalForm
+          timeline={timeline}
+          eventRecord={editingEvent}
+          onClose={() => setEditingEventId(null)}
           t={t}
         />
       )}

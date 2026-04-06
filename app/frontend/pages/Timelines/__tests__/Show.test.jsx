@@ -1,22 +1,20 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import Show from '../Show'
 
+const mockCalls = {
+  post: jest.fn(),
+  put: jest.fn(),
+  setData: jest.fn(),
+}
+
 jest.mock('@inertiajs/react', () => ({
   Head: ({ title }) => <title>{title}</title>,
   Link: ({ href, children, className }) => <a href={href} className={className}>{children}</a>,
-  useForm: jest.fn(() => ({
-    data: {
-      event: {
-        title: '',
-        description: '',
-        category: 'local',
-        timeline_id: 1,
-        start_date_attributes: { date_type: 'exact', year: '', month: '', day: '' },
-        end_date_attributes: { date_type: 'exact', year: '', month: '', day: '' },
-      }
-    },
-    setData: jest.fn(),
-    post: jest.fn(),
+  useForm: jest.fn((initialData) => ({
+    data: initialData,
+    setData: mockCalls.setData,
+    post: mockCalls.post,
+    put: mockCalls.put,
     patch: jest.fn(),
     processing: false,
     errors: {},
@@ -146,6 +144,9 @@ describe('Timelines Show', () => {
     router.delete.mockClear()
     router.put.mockClear()
     router.post.mockClear()
+    mockCalls.post.mockClear()
+    mockCalls.put.mockClear()
+    mockCalls.setData.mockClear()
   })
 
   it('renders timeline.title as heading', () => {
@@ -192,7 +193,7 @@ describe('Timelines Show', () => {
     expect(personLink).toHaveAttribute('href', '/people/1')
   })
 
-  it('shows "Back to Timelines" link', () => {
+  it('shows breadcrumb link to timelines index', () => {
     render(
       <Show
         timeline={mockTimeline}
@@ -203,9 +204,10 @@ describe('Timelines Show', () => {
       />
     )
 
-    const backLink = screen.getByText('Back to Timelines').closest('a')
-    expect(backLink).toBeInTheDocument()
-    expect(backLink).toHaveAttribute('href', '/timelines')
+    const breadcrumbLink = screen.getAllByText('Timeline').find((node) => node.closest('a'))?.closest('a')
+    expect(breadcrumbLink).toBeInTheDocument()
+    expect(breadcrumbLink).toHaveAttribute('href', '/timelines')
+    expect(screen.getByRole('heading', { name: 'Test Timeline' })).toBeInTheDocument()
   })
 
   it('shows Edit link when can_edit is true', () => {
@@ -484,6 +486,66 @@ describe('Timelines Show', () => {
     expect(screen.queryByText('The Great War')).not.toBeInTheDocument()
   })
 
+  it('closes inline event details when clicking the selected event again', () => {
+    render(
+      <Show
+        timeline={mockTimelineWithAllTracks}
+        can_edit={true}
+        can_delete={false}
+        current_user={mockCurrentUser}
+        flash={{}}
+      />
+    )
+
+    const eventButton = screen.getByRole('button', { name: /World War I/i })
+
+    fireEvent.click(eventButton)
+    expect(screen.getByText('The Great War')).toBeInTheDocument()
+
+    fireEvent.click(eventButton)
+    expect(screen.queryByText('The Great War')).not.toBeInTheDocument()
+  })
+
+  it('opens an edit popup from inline event details', () => {
+    render(
+      <Show
+        timeline={mockTimelineWithAllTracks}
+        can_edit={true}
+        can_delete={false}
+        current_user={mockCurrentUser}
+        flash={{}}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /World War I/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^Edit$/i }))
+
+    expect(screen.getByDisplayValue('World War I')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Update Event/i })).toBeInTheDocument()
+  })
+
+  it('submits the event update from the edit popup', () => {
+    render(
+      <Show
+        timeline={mockTimelineWithAllTracks}
+        can_edit={true}
+        can_delete={false}
+        current_user={mockCurrentUser}
+        flash={{}}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /World War I/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^Edit$/i }))
+    fireEvent.change(screen.getByDisplayValue('World War I'), { target: { value: 'Edited Event' } })
+    fireEvent.click(screen.getByRole('button', { name: /Update Event/i }))
+
+    expect(mockCalls.put).toHaveBeenCalledWith(
+      '/events/3',
+      expect.any(Object)
+    )
+  })
+
   it('shows add controls on each track when can_edit is true', () => {
     const { container } = render(
       <Show
@@ -530,7 +592,8 @@ describe('Timelines Show', () => {
     const addLocalButton = container.querySelector('[title="Add Local event"]')
     fireEvent.click(addLocalButton)
 
-    expect(screen.getByText('Create New Event (local)')).toBeInTheDocument()
+    expect(screen.getByLabelText(/Title/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Create Event/i })).toBeInTheDocument()
   })
 
   it('CreateEventForm has Title and Description fields', () => {
@@ -601,13 +664,13 @@ describe('Timelines Show', () => {
     fireEvent.click(addLocalButton)
 
     // Modal is open
-    expect(screen.getByText('Create New Event (local)')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Create Event/i })).toBeInTheDocument()
 
     // Click Cancel button inside the modal
     const cancelButton = screen.getByRole('button', { name: /Cancel/i })
     fireEvent.click(cancelButton)
 
     // Modal should be closed
-    expect(screen.queryByText('Create New Event (local)')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Create Event/i })).not.toBeInTheDocument()
   })
 })
