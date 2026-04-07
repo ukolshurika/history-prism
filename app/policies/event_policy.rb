@@ -3,10 +3,7 @@
 class EventPolicy < ApplicationPolicy
   class Scope < Scope
     def resolve
-      return scope.where.not(category: Event.categories[:person]) unless user
-
-      scope.where.not(category: Event.categories[:person])
-           .or(scope.where(creator_id: user.id))
+      scope.visible_to(user)
     end
   end
 

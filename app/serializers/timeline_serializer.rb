@@ -17,13 +17,17 @@ class TimelineSerializer < ActiveModel::Serializer
     country_event_ids = object.cached_events_for_display['country'] || []
 
     {
-      personal: serialize_events(Event.where(id: person_event_ids)),
-      local: serialize_events(Event.where(id: local_event_ids)),
-      world: serialize_events(Event.where(id: world_event_ids + country_event_ids))
+      personal: serialize_events(visible_events_for(person_event_ids)),
+      local: serialize_events(visible_events_for(local_event_ids)),
+      world: serialize_events(visible_events_for(world_event_ids + country_event_ids))
     }
   end
 
   private
+
+  def visible_events_for(event_ids)
+    Event.where(id: event_ids).visible_to(Current.user)
+  end
 
   def serialize_events(events)
     events.joins(:start_date)

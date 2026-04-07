@@ -30,6 +30,19 @@ RSpec.describe 'Events', type: :request do
       expect(response).to have_http_status(:success)
     end
 
+    it 'hides another user personal events from the index payload' do
+      visible_personal_event = create(:event, creator: user, title: 'My personal event', category: :person)
+      hidden_personal_event = create(:event, creator: other_user, title: 'Hidden personal event', category: :person)
+      public_event = create(:event, :world_event, creator: other_user, title: 'Public event')
+
+      get events_path
+
+      serialized_titles = inertia_props(response).fetch('events').map { |serialized_event| serialized_event.fetch('title') }
+
+      expect(serialized_titles).to include(visible_personal_event.title, public_event.title)
+      expect(serialized_titles).not_to include(hidden_personal_event.title)
+    end
+
     it 'returns standardized meta in props' do
       create_list(:event, 30, creator: user)
 

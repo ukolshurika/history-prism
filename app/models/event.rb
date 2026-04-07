@@ -21,6 +21,11 @@ class Event < ApplicationRecord
       tsearch: { dictionary: 'russian', prefix: true, any_word: true }
     }
 
+  scope :publicly_visible, -> { where.not(category: categories[:person]) }
+  scope :visible_to, ->(user) do
+    user.present? ? publicly_visible.or(where(creator_id: user.id)) : publicly_visible
+  end
+
   scope :sorted_by_date, ->(direction = 'asc') do
     dir = normalize_sort_direction(direction)
 
