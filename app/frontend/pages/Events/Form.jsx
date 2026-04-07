@@ -4,7 +4,7 @@ import Layout from '../Layout'
 import YandexMapPicker from '../../components/YandexMapPicker'
 import { useTranslations } from '../../lib/useTranslations'
 
-const DATE_MODE_OPTIONS = ['single', 'range']
+const DATE_MODE_OPTIONS = ['single', 'about', 'year', 'range']
 const DATE_TYPE_OPTIONS = ['exact', 'about', 'before', 'after', 'estimated', 'calculated', 'year', 'month_year']
 
 function blankDateAttributes() {
@@ -85,6 +85,8 @@ function datesMatch(left, right) {
 
 function inferDateMode(startDate, endDate) {
   if (hasDateValue(endDate) && !datesMatch(startDate, endDate)) return 'range'
+  if (startDate?.date_type === 'about') return 'about'
+  if (startDate?.date_type === 'year') return 'year'
   return 'single'
 }
 
@@ -141,6 +143,16 @@ function validateDateAttributes(attrs, { required, label, t }) {
     errors.push(t('events.form.validation.month_required', { field: label }))
   }
 
+  if (dateType === 'exact') {
+    if (!attrs.month) {
+      errors.push(t('events.form.validation.month_required', { field: label }))
+    }
+
+    if (!attrs.day) {
+      errors.push(t('events.form.validation.day_required', { field: label }))
+    }
+  }
+
   return errors
 }
 
@@ -174,12 +186,22 @@ function validateEventDates(eventData, dateMode, t) {
   return errors
 }
 
-function DateFields({ title, path, data, setData, t }) {
+function DateFields({ title, path, data, setData, setDateMode, t, showDateType = true }) {
   const showsMonth = data.date_type !== 'year'
   const showsDay = !['year', 'month_year'].includes(data.date_type)
 
   const handleDateTypeChange = (nextType) => {
     setData(`${path}.date_type`, nextType)
+
+    if (path === 'event.start_date_attributes' && setDateMode) {
+      if (nextType === 'year') {
+        setDateMode('year')
+      } else if (nextType === 'about') {
+        setDateMode('about')
+      } else {
+        setDateMode('single')
+      }
+    }
 
     if (nextType === 'year') {
       setData(`${path}.month`, '')
@@ -194,23 +216,25 @@ function DateFields({ title, path, data, setData, t }) {
       <legend className="px-2 text-sm font-medium text-gray-700">{title}</legend>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">
-          <label htmlFor={`${path}-date-type`} className="block text-sm font-medium text-gray-700 mb-1">
-            {t('events.form.date_type')}
-          </label>
-          <select
-            id={`${path}-date-type`}
-            value={data.date_type}
-            onChange={(e) => handleDateTypeChange(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {DATE_TYPE_OPTIONS.map((dateType) => (
-              <option key={dateType} value={dateType}>
-                {t(`events.form.date_types.${dateType}`)}
-              </option>
-            ))}
-          </select>
-        </div>
+        {showDateType && (
+          <div className="sm:col-span-2">
+            <label htmlFor={`${path}-date-type`} className="block text-sm font-medium text-gray-700 mb-1">
+              {t('events.form.date_type')}
+            </label>
+            <select
+              id={`${path}-date-type`}
+              value={data.date_type}
+              onChange={(e) => handleDateTypeChange(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {DATE_TYPE_OPTIONS.map((dateType) => (
+                <option key={dateType} value={dateType}>
+                  {t(`events.form.date_types.${dateType}`)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div>
           <label htmlFor={`${path}-year`} className="block text-sm font-medium text-gray-700 mb-1">
@@ -275,6 +299,43 @@ export default function Form({ event, categories, people = [], isEdit, current_u
   const { data, setData, post, put, processing } = useForm({ event: initialState.event })
 
   const visibleErrors = [...new Set([...clientErrors, ...errors])]
+
+  const applyDateMode = (nextMode) => {
+    setDateMode(nextMode)
+    setClientErrors([])
+
+    if (nextMode === 'range') {
+      setData('event.start_date_attributes.date_type', 'exact')
+      setData('event.end_date_attributes', {
+        ...blankDateAttributes(),
+        date_type: 'exact',
+      })
+      return
+    }
+
+    setData('event.end_date_attributes', blankDateAttributes())
+
+    if (nextMode === 'about') {
+      setData('event.start_date_attributes.date_type', 'about')
+      return
+    }
+
+    if (nextMode === 'year') {
+      setData('event.start_date_attributes.date_type', 'year')
+      setData('event.start_date_attributes.month', '')
+      setData('event.start_date_attributes.day', '')
+      return
+    }
+
+    if (data.event.start_date_attributes.date_type === 'year') {
+      setData('event.start_date_attributes.month', '')
+      setData('event.start_date_attributes.day', '')
+    }
+
+    if (!['exact', 'month_year', 'before', 'after', 'estimated', 'calculated'].includes(data.event.start_date_attributes.date_type)) {
+      setData('event.start_date_attributes.date_type', 'exact')
+    }
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -387,15 +448,7 @@ export default function Form({ event, categories, people = [], isEdit, current_u
                 <select
                   id="date_mode"
                   value={dateMode}
-                  onChange={(e) => {
-                    const nextMode = e.target.value
-                    setDateMode(nextMode)
-                    setClientErrors([])
-
-                    if (nextMode !== 'range') {
-                      setData('event.end_date_attributes', blankDateAttributes())
-                    }
-                  }}
+                  onChange={(e) => applyDateMode(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {DATE_MODE_OPTIONS.map((mode) => (
@@ -412,7 +465,9 @@ export default function Form({ event, categories, people = [], isEdit, current_u
                   path="event.start_date_attributes"
                   data={data.event.start_date_attributes}
                   setData={setData}
+                  setDateMode={setDateMode}
                   t={t}
+                  showDateType={dateMode !== 'range'}
                 />
 
                 {dateMode === 'range' && (
@@ -422,6 +477,7 @@ export default function Form({ event, categories, people = [], isEdit, current_u
                     data={data.event.end_date_attributes}
                     setData={setData}
                     t={t}
+                    showDateType={false}
                   />
                 )}
               </div>

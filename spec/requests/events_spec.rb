@@ -228,6 +228,29 @@ RSpec.describe 'Events', type: :request do
           expect(created_event.start_date.date_type).to eq('year')
           expect(created_event.start_date.original_text).to eq('1850')
         end
+
+        it 'creates an approximate event using fuzzy date attributes' do
+          expect {
+            post events_path, params: {
+              event: {
+                title: 'Approximate event',
+                description: 'Circa date',
+                category: 'person',
+                start_date_attributes: {
+                  year: '1850',
+                  date_type: 'about',
+                  calendar_type: 'gregorian'
+                }
+              }
+            }
+          }.to change(Event, :count).by(1)
+           .and change(FuzzyDate, :count).by(1)
+
+          created_event = Event.last
+          expect(created_event.start_date).to eq(created_event.end_date)
+          expect(created_event.start_date.date_type).to eq('about')
+          expect(created_event.start_date.original_text).to eq('ABT 1850')
+        end
       end
 
       context 'with invalid parameters' do

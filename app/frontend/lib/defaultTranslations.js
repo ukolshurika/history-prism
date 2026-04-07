@@ -176,6 +176,8 @@ const defaultTranslations = {
       date_mode: 'Date Entry',
       date_modes: {
         single: 'Single Date',
+        about: 'Approximate Date',
+        year: 'Year Only',
         range: 'Date Range',
       },
       date_type: 'Date Type',
@@ -201,6 +203,7 @@ const defaultTranslations = {
       validation: {
         year_required: '%{field}: year is required.',
         month_required: '%{field}: month is required for this date type.',
+        day_required: '%{field}: day is required for an exact date.',
         day_requires_month: '%{field}: day requires a month.',
         end_before_start: 'End date must not be earlier than start date.',
       },
