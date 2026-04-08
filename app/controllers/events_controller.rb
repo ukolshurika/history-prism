@@ -6,7 +6,7 @@ class EventsController < ApplicationController
   before_action :set_event, only: [:show, :edit, :update, :destroy]
 
   def index
-    @events = Event.includes(:creator, :source, :start_date, :location)
+    @events = policy_scope(Event).includes(:creator, :source, :start_date, :location)
     @events = apply_source_filters(@events)
     @events = apply_search(@events)
     @events = apply_sort(@events)

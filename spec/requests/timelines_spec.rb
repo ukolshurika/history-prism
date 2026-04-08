@@ -80,6 +80,27 @@ RSpec.describe 'Timelines', type: :request do
           get timeline_path(public_timeline)
           expect(response).to have_http_status(:success)
         end
+
+        it 'does not expose another user personal events in categorized events' do
+          own_personal_event = create(:event, creator: other_user, category: :person, title: 'Owner personal event')
+          world_event = create(:event, :world_event, creator: other_user, title: 'Public world event')
+
+          public_timeline.update!(
+            cached_events_for_display: {
+              'person' => [own_personal_event.id],
+              'world' => [world_event.id]
+            }
+          )
+
+          get timeline_path(public_timeline)
+
+          categorized_events = inertia_props(response).fetch('timeline').fetch('categorized_events')
+          personal_titles = categorized_events.fetch('personal').map { |serialized_event| serialized_event.fetch('title') }
+          world_titles = categorized_events.fetch('world').map { |serialized_event| serialized_event.fetch('title') }
+
+          expect(personal_titles).to be_empty
+          expect(world_titles).to include(world_event.title)
+        end
       end
     end
 
