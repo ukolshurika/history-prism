@@ -168,6 +168,8 @@ ru:
         date_mode: "Формат даты"
         date_modes:
           single: "Одна дата"
+          about: "Примерная дата"
+          year: "Только год"
           range: "Диапазон дат"
         date_type: "Тип даты"
         date_types:
@@ -191,6 +193,7 @@ ru:
         validation:
           year_required: "%{field}: укажите год."
           month_required: "%{field}: для этого типа даты нужен месяц."
+          day_required: "%{field}: для точной даты нужен день."
           day_requires_month: "%{field}: день можно указать только вместе с месяцем."
           end_before_start: "Дата окончания не может быть раньше даты начала."
         update: "Обновить событие"

@@ -182,7 +182,10 @@ describe('Events Form — new event', () => {
     fireEvent.change(screen.getByLabelText('Date Entry'), { target: { value: 'range' } })
 
     expect(screen.getByText('End Date')).toBeInTheDocument()
-    expect(mockSetData).not.toHaveBeenCalledWith('event.end_date_attributes', expect.anything())
+    expect(mockSetData).toHaveBeenCalledWith('event.start_date_attributes.date_type', 'exact')
+    expect(mockSetData).toHaveBeenCalledWith('event.end_date_attributes', expect.objectContaining({
+      date_type: 'exact',
+    }))
   })
 
   it('clears hidden end date attributes when switching back to single mode', () => {
@@ -210,12 +213,50 @@ describe('Events Form — new event', () => {
     expect(mockSetData).toHaveBeenCalledWith('event.start_date_attributes.day', '')
   })
 
+  it('switches to approximate mode and updates the start date type', () => {
+    renderForm()
+
+    fireEvent.change(screen.getByLabelText('Date Entry'), { target: { value: 'about' } })
+
+    expect(mockSetData).toHaveBeenCalledWith('event.end_date_attributes', expect.objectContaining({
+      date_type: 'exact',
+      year: '',
+    }))
+    expect(mockSetData).toHaveBeenCalledWith('event.start_date_attributes.date_type', 'about')
+  })
+
+  it('switches to year-only mode and clears month/day from the start date', () => {
+    setupUseForm({
+      start_date_attributes: makeDateAttributes({ year: '1900', month: '04', day: '11' }),
+    })
+
+    renderForm()
+    fireEvent.change(screen.getByLabelText('Date Entry'), { target: { value: 'year' } })
+
+    expect(mockSetData).toHaveBeenCalledWith('event.start_date_attributes.date_type', 'year')
+    expect(mockSetData).toHaveBeenCalledWith('event.start_date_attributes.month', '')
+    expect(mockSetData).toHaveBeenCalledWith('event.start_date_attributes.day', '')
+  })
+
   it('shows client validation errors and blocks submit when start year is missing', () => {
     renderForm()
 
     fireEvent.submit(screen.getByRole('button', { name: 'Create Event' }).closest('form'))
 
     expect(screen.getByText('Start Date: year is required.')).toBeInTheDocument()
+    expect(mockPost).not.toHaveBeenCalled()
+  })
+
+  it('shows exact-date validation errors and blocks submit when month/day are missing', () => {
+    setupUseForm({
+      start_date_attributes: makeDateAttributes({ year: '1945', month: '', day: '', date_type: 'exact' }),
+    })
+
+    renderForm()
+    fireEvent.submit(screen.getByRole('button', { name: 'Create Event' }).closest('form'))
+
+    expect(screen.getByText('Start Date: month is required for this date type.')).toBeInTheDocument()
+    expect(screen.getByText('Start Date: day is required for an exact date.')).toBeInTheDocument()
     expect(mockPost).not.toHaveBeenCalled()
   })
 })
