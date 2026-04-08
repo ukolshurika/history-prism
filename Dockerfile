@@ -1,6 +1,6 @@
 FROM ruby:3.2.0
 
-ENV BUNDLER_VERSION 2.3.26
+ENV BUNDLER_VERSION 2.4.1
 
 # setup nodesource
 RUN mkdir -p /etc/apt/keyrings && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
@@ -30,7 +30,10 @@ RUN gem install bundler -v ${BUNDLER_VERSION}
 # RUN, COPY, and ENTRYPOINT commands.
 RUN mkdir -p /app
 WORKDIR /app
-ENV PATH "$PATH:/app/bin"
+ENV BUNDLE_PATH=/app/vendor/bundle
+ENV BUNDLE_BIN=/app/vendor/bundle/bin
+ENV GEM_HOME=/app/vendor/bundle
+ENV PATH="/app/vendor/bundle/bin:$PATH:/app/bin"
 
 EXPOSE 9292
 EXPOSE 8080
