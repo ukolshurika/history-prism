@@ -32,8 +32,10 @@ class TimelineSerializer < ActiveModel::Serializer
   def serialize_events(events)
     events.joins(:start_date)
       .order('fuzzy_dates.earliest_gregorian ASC')
-      .includes(:end_date)
+      .includes(:end_date, :source)
       .map do |event|
+      serializer = EventSerializer.new(event)
+
       {
         id: event.id,
         title: event.title,
@@ -45,12 +47,25 @@ class TimelineSerializer < ActiveModel::Serializer
         end_year: event.end_date&.year,
         end_month: event.end_date&.month,
         end_day: event.end_date&.day,
-        start_date_text: "#{event.start_date.date_type} #{event.start_date.slice(:year, :month,
-                                                                                 :day).values.compact.join('-')}",
-        end_date_text: event.end_date&.original_text,
+        start_date_text: format_timeline_date(event.start_date),
+        end_date_text: format_timeline_date(event.end_date),
         date_type: event.start_date&.date_type,
-        is_multi_year: event.start_date&.year != event.end_date&.year
+        is_multi_year: event.start_date&.year != event.end_date&.year,
+        source_url: serializer.source_url
       }
     end
+  end
+
+  def format_timeline_date(fuzzy_date)
+    return nil unless fuzzy_date
+
+    year = fuzzy_date.year
+    month = fuzzy_date.month
+    day = fuzzy_date.day
+
+    return format('%<day>02d/%<month>02d/%<year>04d', day:, month:, year:) if day.present? && month.present?
+    return format('%<month>02d/%<year>04d', month:, year:) if month.present?
+
+    year.to_s
   end
 end

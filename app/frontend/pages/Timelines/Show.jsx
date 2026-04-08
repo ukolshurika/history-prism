@@ -57,8 +57,8 @@ function formatEventDate(year, month, day, dateText, unknownLabel) {
   if (dateText) return dateText
   if (!year) return unknownLabel
   if (!month) return `${year}`
-  if (!day) return `${year}-${String(month).padStart(2, '0')}`
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  if (!day) return `${String(month).padStart(2, '0')}/${year}`
+  return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`
 }
 
 function formatRangeLabel(event, unknownLabel) {
@@ -66,7 +66,7 @@ function formatRangeLabel(event, unknownLabel) {
   if (!event.end_year || event.end_year === event.start_year) return start
 
   const end = formatEventDate(event.end_year, event.end_month, event.end_day, event.end_date_text, unknownLabel)
-  return `${start} -> ${end}`
+  return `${start} - ${end}`
 }
 
 function normalizeTimelineEvents(categorizedEvents) {
@@ -160,7 +160,7 @@ function EventModalForm({ timeline, category, eventRecord = null, onClose, t }) 
                 style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
               >
                 {isEdit
-                  ? t('timelines.show.create_new_event', { category: t(`events.categories.${resolvedCategory}`) })
+                  ? t('timelines.show.edit_event', { category: t(`events.categories.${resolvedCategory}`) })
                   : t('timelines.show.create_new_event', { category: t(`events.categories.${resolvedCategory}`) })}
               </h2>
             </div>
@@ -318,28 +318,9 @@ function IconButton({ title, onClick, children, className = '' }) {
 }
 
 function HeroMeta({ timeline, range, t }) {
-  const subjectContent = (
-    <>
-      <p className="text-[11px] uppercase tracking-[0.28em] text-stone-700">{t('timelines.show.subject')}</p>
-      <p className="mt-2 text-lg leading-tight text-stone-950">{timeline.person_name}</p>
-    </>
-  )
-
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-start lg:gap-0">
-      <div className="border-l border-stone-600/25 pl-4 lg:pr-8">
-        {timeline.person_id ? (
-          <Link
-            href={`/people/${timeline.person_id}`}
-            className="block -ml-4 rounded-[22px] px-4 py-2 transition hover:bg-white/45 focus:outline-none focus:ring-2 focus:ring-stone-600/25 lg:-mr-8 lg:pr-8"
-          >
-            {subjectContent}
-          </Link>
-        ) : (
-          subjectContent
-        )}
-      </div>
-      <div className="border-l border-stone-600/25 pl-4 lg:px-8">
+      <div className="border-l border-stone-600/25 pl-4">
         <p className="text-[11px] uppercase tracking-[0.28em] text-stone-700">{t('timelines.show.range')}</p>
         <p className="mt-2 text-lg text-stone-950">{range.min}-{range.max}</p>
       </div>
@@ -349,21 +330,26 @@ function HeroMeta({ timeline, range, t }) {
 
 function ScaleControl({ activeScale, onScaleChange, t }) {
   return (
-    <div className="inline-flex rounded-full border border-stone-600/18 bg-white/40 p-0.5">
+    <div className="inline-flex rounded-full p-0.5">
         {SCALE_MODES.map((mode) => {
           const isActive = mode.id === activeScale.id
+          const label = t(`timelines.show.scale_modes.${mode.id}`)
+          const parts = label.split(' ')
+          const unit = parts.pop() || label
+          const value = parts.join(' ')
 
           return (
             <button
               key={mode.id}
               type="button"
               onClick={() => onScaleChange(mode.id)}
-              className={`rounded-full px-3 py-1.5 text-xs transition ${
-                isActive ? 'bg-stone-900 text-white' : 'text-stone-800 hover:bg-white/60'
+              className={`rounded-full px-3 py-1.5 text-xs transition hover:bg-white/55 ${
+                isActive ? 'font-semibold text-stone-950' : 'text-stone-800'
               }`}
               aria-pressed={isActive}
             >
-              {t(`timelines.show.scale_modes.${mode.id}`)}
+              {value ? `${value} ` : null}
+              <span className={isActive ? 'underline underline-offset-4' : ''}>{unit}</span>
             </button>
           )
         })}
@@ -486,6 +472,18 @@ function StrataPrototype({ events, bucketSize, activeScale, onScaleChange, selec
                         <p className="mt-5 max-w-2xl text-sm leading-7 text-stone-800">{selectedInSection.description}</p>
                       ) : (
                         <p className="mt-5 max-w-2xl text-sm leading-7 text-stone-700">{t('timelines.show.no_description')}</p>
+                      )}
+                      {selectedInSection.source_url && (
+                        <div className="mt-5">
+                          <a
+                            href={selectedInSection.source_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-medium text-stone-800 underline underline-offset-4 transition hover:text-stone-950"
+                          >
+                            {t('timelines.show.source')}
+                          </a>
+                        </div>
                       )}
                     </div>
 
@@ -766,10 +764,23 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
                   <span className="text-stone-950">{timeline.title}</span>
                 </div>
                 <h1
-                  className="mt-5 max-w-4xl text-5xl leading-none text-stone-950 sm:text-6xl lg:text-[5.5rem]"
+                  className="mt-5 max-w-4xl text-5xl leading-none text-stone-700 sm:text-6xl lg:text-[5.5rem]"
                   style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
                 >
-                  {timeline.title}
+                  {timeline.person_name && (
+                    <>
+                      {timeline.person_id ? (
+                        <Link
+                          href={`/people/${timeline.person_id}`}
+                          className="transition hover:text-stone-950 focus:outline-none focus:ring-2 focus:ring-stone-600/25"
+                        >
+                          {timeline.person_name}
+                        </Link>
+                      ) : (
+                        timeline.person_name
+                      )}
+                    </>
+                  )}
                 </h1>
               </div>
 

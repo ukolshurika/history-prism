@@ -302,6 +302,7 @@ ru:
       show:
         add_event: "Добавить событие"
         create_new_event: "Создать новое событие (%{category})"
+        edit_event: "Редактировать событие (%{category})"
         close: "Закрыть"
         date_type: "Тип даты"
         year: "Год"
@@ -336,6 +337,7 @@ ru:
         narrative_lanes: "Повествовательные линии"
         add_track_event: "Добавить событие: %{track}"
         unknown: "Неизвестно"
+        source: "Источник"
         no_description: "Для этого события описание не указано."
         close_event_details: "Закрыть детали события"
         remove_from_timeline: "Убрать из таймлайна"

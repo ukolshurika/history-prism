@@ -66,7 +66,7 @@ describe('Timelines Show', () => {
           end_year: 1900,
           end_month: 1,
           end_day: 1,
-          start_date_text: 'exact 1900-01-01',
+          start_date_text: '01/01/1900',
           is_multi_year: false,
           description: 'Born',
         },
@@ -99,7 +99,7 @@ describe('Timelines Show', () => {
           end_year: 1900,
           end_month: 1,
           end_day: 1,
-          start_date_text: 'exact 1900-01-01',
+          start_date_text: '01/01/1900',
           is_multi_year: false,
           description: 'Born',
         },
@@ -115,7 +115,7 @@ describe('Timelines Show', () => {
           end_year: 1910,
           end_month: 5,
           end_day: 15,
-          start_date_text: 'exact 1910-05-15',
+          start_date_text: '15/05/1910',
           is_multi_year: false,
           description: '',
         },
@@ -131,9 +131,11 @@ describe('Timelines Show', () => {
           end_year: 1918,
           end_month: 11,
           end_day: 11,
-          start_date_text: 'exact 1914-07-28',
+          start_date_text: '28/07/1914',
+          end_date_text: '11/11/1918',
           is_multi_year: true,
           description: 'The Great War',
+          source_url: '/rails/active_storage/blobs/book.pdf#page=42',
         },
       ],
     },
@@ -149,7 +151,7 @@ describe('Timelines Show', () => {
     mockCalls.setData.mockClear()
   })
 
-  it('renders timeline.title as heading', () => {
+  it('renders person name as heading', () => {
     render(
       <Show
         timeline={mockTimeline}
@@ -160,7 +162,7 @@ describe('Timelines Show', () => {
       />
     )
 
-    expect(screen.getByRole('heading', { name: 'Test Timeline' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'John Doe' })).toBeInTheDocument()
   })
 
   it('shows person name', () => {
@@ -207,7 +209,7 @@ describe('Timelines Show', () => {
     const breadcrumbLink = screen.getAllByText('Timeline').find((node) => node.closest('a'))?.closest('a')
     expect(breadcrumbLink).toBeInTheDocument()
     expect(breadcrumbLink).toHaveAttribute('href', '/timelines')
-    expect(screen.getByRole('heading', { name: 'Test Timeline' })).toBeInTheDocument()
+    expect(screen.getByText('Test Timeline')).toBeInTheDocument()
   })
 
   it('shows Edit link when can_edit is true', () => {
@@ -427,7 +429,7 @@ describe('Timelines Show', () => {
             end_year: 1910,
             end_month: 5,
             end_day: 15,
-            start_date_text: 'exact 1910-05-15',
+            start_date_text: '15/05/1910',
             is_multi_year: false,
             description: '',
           },
@@ -464,8 +466,43 @@ describe('Timelines Show', () => {
 
     expect(screen.getAllByText('World War I').length).toBeGreaterThan(1)
     expect(screen.getByText('The Great War')).toBeInTheDocument()
+    expect(screen.getAllByText('28/07/1914 - 11/11/1918').length).toBeGreaterThan(1)
     expect(screen.getByRole('button', { name: /Remove from timeline/i })).toBeInTheDocument()
     expect(screen.queryByText(/^Selected Event$/i)).not.toBeInTheDocument()
+  })
+
+  it('shows source link in inline event details when source_url is present', () => {
+    render(
+      <Show
+        timeline={mockTimelineWithAllTracks}
+        can_edit={true}
+        can_delete={false}
+        current_user={mockCurrentUser}
+        flash={{}}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /World War I/i }))
+
+    const sourceLink = screen.getByRole('link', { name: 'Source' })
+    expect(sourceLink).toBeInTheDocument()
+    expect(sourceLink).toHaveAttribute('href', '/rails/active_storage/blobs/book.pdf#page=42')
+  })
+
+  it('does not show source link for event without source_url', () => {
+    render(
+      <Show
+        timeline={mockTimeline}
+        can_edit={true}
+        can_delete={false}
+        current_user={mockCurrentUser}
+        flash={{}}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /Birth/i }))
+
+    expect(screen.queryByRole('link', { name: 'Source' })).not.toBeInTheDocument()
   })
 
   it('allows closing the inline event details block', () => {
