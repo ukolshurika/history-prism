@@ -1,6 +1,15 @@
 import { Head, Link, router } from '@inertiajs/react'
 import Layout from '../Layout'
 import { useTranslations } from '../../lib/useTranslations'
+import {
+  ActionButton,
+  ActionLink,
+  Card,
+  DefinitionList,
+  PageFrame,
+  SectionIntro,
+  SurfaceCard
+} from '../../components/prism/PrismUI'
 
 export default function Show({ person, can_edit, can_delete, current_user, flash }) {
   const t = useTranslations()
@@ -14,132 +23,73 @@ export default function Show({ person, can_edit, can_delete, current_user, flash
     <Layout current_user={current_user} flash={flash}>
       <Head title={person.full_name} />
 
-      <div className="py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-6">
-            <Link
-              href="/people"
-              className="text-blue-600 hover:text-blue-700"
-            >
-              &larr; {t('people.show.back')}
-            </Link>
-          </div>
+      <PageFrame>
+        <div className="mb-6">
+          <ActionLink href="/people" variant="secondary">
+            &larr; {t('people.show.back')}
+          </ActionLink>
+        </div>
 
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <div className="mb-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    {person.full_name}
-                  </h1>
-                </div>
-                {(can_edit || can_delete) && (
-                  <div className="flex gap-2">
-                    {can_edit && (
-                      <Link
-                        href={`/people/${person.id}/edit`}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                      >
-                        {t('people.show.edit')}
-                      </Link>
-                    )}
-                    {can_delete && (
-                      <button
-                        onClick={handleDelete}
-                        className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
-                      >
-                        {t('people.show.delete')}
-                      </button>
-                    )}
-                  </div>
-                )}
+        <SectionIntro
+          kicker={t('people.show.associated_events')}
+          title={person.full_name}
+          actions={(
+            <>
+              {can_edit && (
+                <ActionLink href={`/people/${person.id}/edit`} variant="primary">
+                  {t('people.show.edit')}
+                </ActionLink>
+              )}
+              {can_delete && (
+                <ActionButton variant="danger" onClick={handleDelete}>
+                  {t('people.show.delete')}
+                </ActionButton>
+              )}
+            </>
+          )}
+        />
+
+        <SurfaceCard className="p-6 sm:p-8">
+          <DefinitionList
+            items={[
+              { label: t('people.show.first_name'), value: person.first_name },
+              ...(person.middle_name ? [{ label: t('people.show.middle_name'), value: person.middle_name }] : []),
+              ...(person.last_name ? [{ label: t('people.show.last_name'), value: person.last_name }] : []),
+              { label: t('people.show.gedcom_uuid'), value: <span className="font-mono">{person.gedcom_uuid}</span> },
+              { label: t('people.show.created_at'), value: new Date(person.created_at).toLocaleString() },
+              ...(person.updated_at ? [{ label: t('people.show.updated_at'), value: new Date(person.updated_at).toLocaleString() }] : [])
+            ]}
+          />
+
+          {person.events && person.events.length > 0 && (
+            <div className="mt-8">
+              <h2 className="prism-kicker">{t('people.show.associated_events')}</h2>
+              <div className="mt-4 grid gap-4">
+                {person.events.map((event) => (
+                  <Card key={event.id} className="p-5">
+                    <Link href={`/events/${event.id}`} className="block">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="text-lg font-semibold text-stone-900">{event.title}</h3>
+                          <p className="mt-2 text-sm leading-7 text-stone-600">{event.description}</p>
+                          {event.start_date_display && (
+                            <p className="mt-3 text-xs uppercase tracking-[0.18em] text-stone-500">
+                              {event.start_date_display}
+                            </p>
+                          )}
+                        </div>
+                        <span className="prism-pill border-stone-300 bg-stone-100 text-stone-700">
+                          {event.category}
+                        </span>
+                      </div>
+                    </Link>
+                  </Card>
+                ))}
               </div>
             </div>
-
-            <div className="border-t border-gray-200 pt-6">
-              <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">{t('people.show.first_name')}</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {person.first_name}
-                  </dd>
-                </div>
-
-                {person.middle_name && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">{t('people.show.middle_name')}</dt>
-                    <dd className="mt-1 text-sm text-gray-900">
-                      {person.middle_name}
-                    </dd>
-                  </div>
-                )}
-
-                {person.last_name && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">{t('people.show.last_name')}</dt>
-                    <dd className="mt-1 text-sm text-gray-900">
-                      {person.last_name}
-                    </dd>
-                  </div>
-                )}
-
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">{t('people.show.gedcom_uuid')}</dt>
-                  <dd className="mt-1 text-sm text-gray-900 font-mono">
-                    {person.gedcom_uuid}
-                  </dd>
-                </div>
-
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">{t('people.show.created_at')}</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {new Date(person.created_at).toLocaleString()}
-                  </dd>
-                </div>
-
-                {person.updated_at && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">{t('people.show.updated_at')}</dt>
-                    <dd className="mt-1 text-sm text-gray-900">
-                      {new Date(person.updated_at).toLocaleString()}
-                    </dd>
-                  </div>
-                )}
-              </dl>
-
-              {person.events && person.events.length > 0 && (
-                <div className="mt-8">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">{t('people.show.associated_events')}</h3>
-                  <div className="grid gap-4">
-                    {person.events.map((event) => (
-                      <Link
-                        key={event.id}
-                        href={`/events/${event.id}`}
-                        className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium text-gray-900">{event.title}</h4>
-                            <p className="text-sm text-gray-600 mt-1">{event.description}</p>
-                            {event.start_date_display && (
-                              <p className="text-xs text-gray-500 mt-2">
-                                {event.start_date_display}
-                              </p>
-                            )}
-                          </div>
-                          <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-blue-100 text-blue-800">
-                            {event.category}
-                          </span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+          )}
+        </SurfaceCard>
+      </PageFrame>
     </Layout>
   )
 }

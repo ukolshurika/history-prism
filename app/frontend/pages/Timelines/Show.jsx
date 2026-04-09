@@ -2,6 +2,7 @@ import { Head, Link, useForm, router } from '@inertiajs/react'
 import { useMemo, useState } from 'react'
 import Layout from '../Layout'
 import { useTranslations } from '../../lib/useTranslations'
+import { ActionButton, ActionLink, SurfaceCard } from '../../components/prism/PrismUI'
 
 const ACTIVE_PROTOTYPE = 'strata'
 const SCALE_MODES = [
@@ -171,8 +172,8 @@ function EventModalForm({ timeline, category, eventRecord = null, onClose, t }) 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
-      <div
-        className="thin-scrollbar max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[28px] border border-stone-200 bg-[#f8f4ee] shadow-2xl"
+      <SurfaceCard
+        className="thin-scrollbar max-h-[90vh] w-full max-w-3xl overflow-y-auto bg-[#f8f4ee]"
         onClick={(event) => event.stopPropagation()}
       >
         <form onSubmit={handleSubmit} className="p-6 sm:p-8">
@@ -261,7 +262,7 @@ function EventModalForm({ timeline, category, eventRecord = null, onClose, t }) 
             </button>
           </div>
         </form>
-      </div>
+      </SurfaceCard>
     </div>
   )
 }
@@ -319,8 +320,8 @@ function EventSearchModal({ timeline, category, onClose, onCreateEvent, onAttach
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
-      <div
-        className="thin-scrollbar max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[28px] border border-stone-200 bg-[#f8f4ee] shadow-2xl"
+      <SurfaceCard
+        className="thin-scrollbar max-h-[90vh] w-full max-w-4xl overflow-y-auto bg-[#f8f4ee]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="p-6 sm:p-8">
@@ -530,7 +531,7 @@ function EventSearchModal({ timeline, category, onClose, onCreateEvent, onAttach
             )}
           </div>
         </div>
-      </div>
+      </SurfaceCard>
     </div>
   )
 }
@@ -1031,7 +1032,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
   const renderPrototype = () => {
     if (events.length === 0) {
       return (
-        <div className="rounded-[34px] border border-dashed border-stone-300 bg-white/55 px-8 py-16 text-center">
+        <SurfaceCard className="border-dashed border-stone-300 bg-white/55 px-8 py-16 text-center">
           <p className="text-xs uppercase tracking-[0.32em] text-stone-500">{t('timelines.show.empty_timeline')}</p>
           <h2
             className="mt-4 text-3xl text-stone-900"
@@ -1042,7 +1043,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
           <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-stone-600">
             {t('timelines.show.empty_description')}
           </p>
-        </div>
+        </SurfaceCard>
       )
     }
 
@@ -1122,33 +1123,36 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
 
                 <div className="flex flex-wrap items-center gap-2 xl:justify-end">
                   {can_edit && (
-                    <Link
+                    <ActionLink
                       href={`/timelines/${timeline.id}/edit`}
-                      className="inline-flex items-center gap-2 rounded-full border border-stone-700/30 bg-[#f6f0e5] px-5 py-3 text-sm font-medium text-stone-900 transition hover:border-stone-700/40 hover:bg-[#fbf7ef]"
+                      variant="secondary"
+                      className="inline-flex items-center gap-2 border-stone-700/30 bg-[#f6f0e5] px-5 py-3 text-sm font-medium text-stone-900 transition hover:border-stone-700/40 hover:bg-[#fbf7ef]"
                     >
                       <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5 shrink-0" aria-hidden="true">
                         <path d="M4.75 14.75L8 14L14.9 7.1A1.5 1.5 0 0 0 14.9 4.98L14.02 4.1A1.5 1.5 0 0 0 11.9 4.1L5 11L4.75 14.75Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         <path d="M10.75 5.25L13.75 8.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                       {t('timelines.show.edit')}
-                    </Link>
+                    </ActionLink>
                   )}
                   {can_edit && (
-                    <button
+                    <ActionButton
                       type="button"
                       onClick={() => router.post(`/timelines/${timeline.id}/export_pdf`)}
-                      className="rounded-full bg-stone-900 px-5 py-3 text-sm font-medium text-stone-50 transition hover:bg-stone-800"
+                      variant="primary"
+                      className="px-5 py-3 text-sm font-medium text-stone-50 transition hover:bg-stone-800"
                     >
                       {t('timelines.show.generate_pdf')}
-                    </button>
+                    </ActionButton>
                   )}
                   {timeline.pdf_url && (
-                    <Link
+                    <ActionLink
                       href={`/timelines/${timeline.id}/download_pdf`}
-                      className="rounded-full border border-stone-700/30 bg-[#f6f0e5] px-5 py-3 text-sm font-medium text-stone-900 transition hover:border-stone-700/40 hover:bg-[#fbf7ef]"
+                      variant="secondary"
+                      className="rounded-full border-stone-700/30 bg-[#f6f0e5] px-5 py-3 text-sm font-medium text-stone-900 transition hover:border-stone-700/40 hover:bg-[#fbf7ef]"
                     >
                       {t('timelines.show.download_pdf')}
-                    </Link>
+                    </ActionLink>
                   )}
                 </div>
               </div>
