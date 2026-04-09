@@ -14,6 +14,10 @@ RSpec.describe 'Events', type: :request do
     JSON.parse(doc.at('[data-page]')['data-page'])['props']
   end
 
+  def json_response(response)
+    JSON.parse(response.body)
+  end
+
   describe 'GET /events' do
     before { sign_in(user) }
 
@@ -59,9 +63,46 @@ RSpec.describe 'Events', type: :request do
       let!(:matching)    { create(:event, creator: user, title: 'Рождение Ивана', description: 'событие') }
       let!(:nonmatching) { create(:event, creator: user, title: 'Battle of Waterloo', description: 'history') }
 
-      it 'returns only matching events' do
-        get events_path, params: { q: 'Иван' }
-        expect(response).to have_http_status(:success)
+      it 'returns only matching events in JSON mode' do
+        get events_path(format: :json), params: { q: 'Иван' }
+
+        payload = json_response(response)
+        titles = payload.fetch('events').map { |serialized_event| serialized_event.fetch('title') }
+
+        expect(titles).to eq([matching.title])
+        expect(payload.fetch('meta').fetch('total')).to eq(1)
+      end
+    end
+
+    context 'with category filter' do
+      let!(:world_event) { create(:event, creator: user, title: 'World Event', category: :world) }
+      let!(:person_event) { create(:event, creator: user, title: 'Personal Event', category: :person) }
+
+      it 'returns only events in the selected category' do
+        get events_path(format: :json), params: { category: 'world' }
+
+        payload = json_response(response)
+        titles = payload.fetch('events').map { |serialized_event| serialized_event.fetch('title') }
+
+        expect(titles).to eq([world_event.title])
+        expect(payload.fetch('meta').fetch('total')).to eq(1)
+      end
+    end
+
+    context 'with location radius filter' do
+      let(:near_location) { create(:location, place: 'Moscow', latitude: 55.7558, longitude: 37.6173) }
+      let(:far_location)  { create(:location, place: 'New York', latitude: 40.7128, longitude: -74.0060) }
+      let!(:near_event) { create(:event, creator: user, title: 'Nearby event', location: near_location) }
+      let!(:far_event) { create(:event, creator: user, title: 'Far event', location: far_location) }
+
+      it 'returns only events within the requested radius' do
+        get events_path(format: :json), params: { latitude: 55.7558, longitude: 37.6173, radius_km: 50 }
+
+        payload = json_response(response)
+        titles = payload.fetch('events').map { |serialized_event| serialized_event.fetch('title') }
+
+        expect(titles).to eq([near_event.title])
+        expect(payload.fetch('meta').fetch('total')).to eq(1)
       end
     end
 
@@ -91,9 +132,16 @@ RSpec.describe 'Events', type: :request do
     end
 
     context 'with page parameter' do
-      it 'responds successfully' do
-        get events_path, params: { page: 1 }
-        expect(response).to have_http_status(:success)
+      it 'returns paginated JSON metadata and the requested page of events' do
+        create_list(:event, 30, creator: user)
+
+        get events_path(format: :json), params: { page: 2 }
+
+        payload = json_response(response)
+
+        expect(payload.fetch('events').length).to eq(5)
+        expect(payload.fetch('meta').fetch('page')).to eq(2)
+        expect(payload.fetch('meta').fetch('total_pages')).to eq(2)
       end
     end
   end

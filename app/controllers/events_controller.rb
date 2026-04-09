@@ -6,24 +6,35 @@ class EventsController < ApplicationController
   before_action :set_event, only: [:show, :edit, :update, :destroy]
 
   def index
-    @events = policy_scope(Event).includes(:creator, :source, :start_date, :location)
-    @events = apply_source_filters(@events)
-    @events = apply_search(@events)
-    @events = apply_sort(@events)
-    @events = paginate(@events)
+    @events = build_index_scope
 
-    render inertia: 'Events/Index', props: {
-      events: ActiveModelSerializers::SerializableResource.new(@events, each_serializer: EventSerializer).as_json,
-      current_user: current_user,
-      meta: pagination_meta(@events),
-      filters: {
-        source_type: params[:source_type],
-        source_id:   params[:source_id],
-        q:           params[:q],
-        sort:        params[:sort],
-        direction:   params[:direction]
-      }
-    }
+    respond_to do |format|
+      format.html do
+        render inertia: 'Events/Index', props: {
+          events: serialized_events(@events),
+          current_user: current_user,
+          meta: pagination_meta(@events),
+          filters: {
+            source_type: params[:source_type],
+            source_id:   params[:source_id],
+            q:           params[:q],
+            category:    params[:category],
+            latitude:    params[:latitude],
+            longitude:   params[:longitude],
+            radius_km:   params[:radius_km],
+            sort:        params[:sort],
+            direction:   params[:direction]
+          }
+        }
+      end
+
+      format.json do
+        render json: {
+          events: serialized_events(@events),
+          meta: pagination_meta(@events)
+        }
+      end
+    end
   end
 
   def show
@@ -181,6 +192,31 @@ class EventsController < ApplicationController
     scope.search_full_text(params[:q])
   end
 
+  def apply_category_filter(scope)
+    return scope unless params[:category].present?
+
+    scope.where(category: params[:category])
+  end
+
+  def apply_location_filter(scope)
+    return scope unless params[:latitude].present? && params[:longitude].present? && params[:radius_km].present?
+
+    latitude = params[:latitude].to_f
+    longitude = params[:longitude].to_f
+    radius_km = params[:radius_km].to_f
+
+    location_rows = scope.except(:includes)
+      .joins(:location)
+      .where.not(locations: { latitude: nil, longitude: nil })
+      .pluck(:id, 'locations.latitude', 'locations.longitude')
+
+    matching_ids = location_rows.select do |_, event_latitude, event_longitude|
+      distance_km(event_latitude, event_longitude, latitude, longitude) <= radius_km
+    end.map(&:first)
+
+    matching_ids.empty? ? scope.none : scope.where(id: matching_ids)
+  end
+
   def apply_sort(scope)
     case params[:sort]
     when 'date'
@@ -196,5 +232,33 @@ class EventsController < ApplicationController
     scope = scope.where(source_type: params[:source_type]) if params[:source_type].present?
     scope = scope.where(source_id: params[:source_id]) if params[:source_id].present?
     scope
+  end
+
+  def build_index_scope
+    scope = policy_scope(Event).includes(:creator, :source, :start_date, :location)
+    scope = apply_source_filters(scope)
+    scope = apply_search(scope)
+    scope = apply_category_filter(scope)
+    scope = apply_location_filter(scope)
+    scope = apply_sort(scope)
+    paginate(scope)
+  end
+
+  def serialized_events(collection)
+    ActiveModelSerializers::SerializableResource.new(collection, each_serializer: EventSerializer).as_json
+  end
+
+  def distance_km(event_latitude, event_longitude, latitude, longitude)
+    earth_radius_km = 6371.0
+    lat1 = event_latitude.to_f * Math::PI / 180.0
+    lon1 = event_longitude.to_f * Math::PI / 180.0
+    lat2 = latitude.to_f * Math::PI / 180.0
+    lon2 = longitude.to_f * Math::PI / 180.0
+
+    delta_lat = lat2 - lat1
+    delta_lon = lon2 - lon1
+
+    a = Math.sin(delta_lat / 2)**2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(delta_lon / 2)**2
+    2 * earth_radius_km * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   end
 end
