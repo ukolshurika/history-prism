@@ -307,7 +307,7 @@ describe('People Show', () => {
         />
       )
 
-      expect(screen.getByText('Associated Events')).toBeInTheDocument()
+      expect(screen.getAllByText('Associated Events').length).toBeGreaterThan(0)
       expect(screen.getByText('Birth of John')).toBeInTheDocument()
       expect(screen.getByText('Marriage')).toBeInTheDocument()
     })
@@ -338,7 +338,9 @@ describe('People Show', () => {
         />
       )
 
-      expect(screen.queryByText('Associated Events')).not.toBeInTheDocument()
+      expect(screen.getByText('Associated Events')).toBeInTheDocument()
+      expect(screen.queryByText('Birth of John')).not.toBeInTheDocument()
+      expect(screen.queryByText('Marriage')).not.toBeInTheDocument()
     })
   })
 })

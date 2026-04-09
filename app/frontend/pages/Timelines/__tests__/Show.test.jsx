@@ -661,7 +661,7 @@ describe('Timelines Show', () => {
 
     expect(screen.getByText('Search Existing Events (Local)')).toBeInTheDocument()
     expect(mockFetch).not.toHaveBeenCalled()
-    expect(screen.queryByText('Local Event')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Attach Event' })).not.toBeInTheDocument()
 
     fireEvent.change(screen.getByPlaceholderText('Search events...'), { target: { value: 'local' } })
     fireEvent.click(screen.getByRole('button', { name: 'Search' }))

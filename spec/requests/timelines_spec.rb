@@ -69,7 +69,7 @@ RSpec.describe 'Timelines', type: :request do
         it 'redirects back with alert' do
           get timeline_path(other_user_timeline)
           expect(response).to have_http_status(:redirect)
-          expect(flash[:alert]).to eq('You are not authorized to perform this action.')
+          expect(flash[:alert]).to eq(I18n.t('errors.unauthorized'))
         end
       end
 
@@ -185,7 +185,7 @@ RSpec.describe 'Timelines', type: :request do
           patch timeline_path(other_user_timeline), params: update_params
 
           expect(response).to have_http_status(:redirect)
-          expect(flash[:alert]).to eq('You are not authorized to perform this action.')
+          expect(flash[:alert]).to eq(I18n.t('errors.unauthorized'))
         end
       end
     end
@@ -219,7 +219,7 @@ RSpec.describe 'Timelines', type: :request do
           }.not_to change(Timeline, :count)
 
           expect(response).to have_http_status(:redirect)
-          expect(flash[:alert]).to eq('You are not authorized to perform this action.')
+          expect(flash[:alert]).to eq(I18n.t('errors.unauthorized'))
         end
       end
     end
