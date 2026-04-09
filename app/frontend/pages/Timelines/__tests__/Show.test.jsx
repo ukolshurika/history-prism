@@ -660,6 +660,13 @@ describe('Timelines Show', () => {
     fireEvent.click(container.querySelector('[title="Add Local event"]'))
 
     expect(screen.getByText('Search Existing Events (Local)')).toBeInTheDocument()
+    expect(mockFetch).not.toHaveBeenCalled()
+    expect(screen.queryByText('Local Event')).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByPlaceholderText('Search events...'), { target: { value: 'local' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Search' }))
+
+    expect(mockFetch).toHaveBeenCalledTimes(1)
     expect(await screen.findByText('Local Event')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Create Event/i })).toBeInTheDocument()
   })
@@ -696,6 +703,8 @@ describe('Timelines Show', () => {
     )
 
     fireEvent.click(container.querySelector('[title="Add Local event"]'))
+    fireEvent.change(screen.getByPlaceholderText('Search events...'), { target: { value: 'local' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Search' }))
     await screen.findByText('Local Event')
     fireEvent.click(screen.getByRole('button', { name: /Create Event/i }))
 
@@ -716,6 +725,9 @@ describe('Timelines Show', () => {
     )
 
     fireEvent.click(container.querySelector('[title="Add Local event"]'))
+    fireEvent.change(screen.getByPlaceholderText('Search events...'), { target: { value: 'local' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Search' }))
+    await screen.findByText('Local Event')
     fireEvent.click(await screen.findByRole('button', { name: 'Attach Event' }))
 
     expect(router.put).toHaveBeenCalledWith(
@@ -763,6 +775,8 @@ describe('Timelines Show', () => {
     )
 
     fireEvent.click(container.querySelector('[title="Add Local event"]'))
+    fireEvent.change(screen.getByPlaceholderText('Search events...'), { target: { value: 'local' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Search' }))
     await screen.findByText('Local Event')
     fireEvent.click(screen.getByRole('button', { name: /Create Event/i }))
 

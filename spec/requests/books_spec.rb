@@ -49,9 +49,13 @@ RSpec.describe 'Books', type: :request do
     context 'when user is signed in' do
       before { sign_in(user) }
 
-      it 'redirects to events filtered by book' do
+      it 'renders the book show page' do
         get book_path(book)
-        expect(response).to redirect_to(events_path(source_type: 'Book', source_id: book.id))
+        expect(response).to have_http_status(:success)
+        props = inertia_props(response)
+        expect(props['book']['id']).to eq(book.id)
+        expect(props['can_edit']).to eq(true)
+        expect(props['can_delete']).to eq(true)
       end
 
       it "denies access to other user's book" do
@@ -67,6 +71,7 @@ RSpec.describe 'Books', type: :request do
         expect(response).to redirect_to(new_session_path)
       end
     end
+  end
 
   describe 'GET /books/new' do
     context 'when user is signed in' do
@@ -247,7 +252,6 @@ RSpec.describe 'Books', type: :request do
       it 'redirects to sign in page' do
         delete book_path(book)
         expect(response).to redirect_to(new_session_path)
-      end
       end
     end
   end

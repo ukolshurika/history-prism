@@ -101,7 +101,7 @@ describe('Events Show', () => {
     expect(screen.getByText('historian@example.com')).toBeInTheDocument();
   });
 
-  it('shows back to events link', () => {
+  it('shows back to timelines link', () => {
     render(
       <Show
         event={mockEvent}
@@ -112,9 +112,9 @@ describe('Events Show', () => {
       />
     );
 
-    const backLink = screen.getByText('← Back to Events');
+    const backLink = screen.getByText('← Back to Timelines');
     expect(backLink).toBeInTheDocument();
-    expect(backLink.closest('a')).toHaveAttribute('href', '/events');
+    expect(backLink.closest('a')).toHaveAttribute('href', '/timelines');
   });
 
   it('shows edit button when user can edit', () => {

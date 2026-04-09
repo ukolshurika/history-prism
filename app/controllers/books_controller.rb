@@ -15,7 +15,13 @@ class BooksController < ApplicationController
 
   def show
     authorize @book
-    redirect_to events_path(source_type: 'Book', source_id: @book.id)
+
+    render inertia: 'Books/Show', props: {
+      book: BookSerializer.new(@book).as_json,
+      can_edit: policy(@book).update?,
+      can_delete: policy(@book).destroy?,
+      current_user: current_user
+    }
   end
 
   def new

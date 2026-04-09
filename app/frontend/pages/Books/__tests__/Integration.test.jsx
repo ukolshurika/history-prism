@@ -207,16 +207,16 @@ describe('Books Integration Tests', () => {
     it('renders all action links for each book', () => {
       render(<Index books={mockBooks} current_user={mockCurrentUser} flash={{}} errors={[]} />)
 
-      expect(screen.getAllByText('View Events')).toHaveLength(2)
+      expect(screen.getAllByText('View Book')).toHaveLength(2)
       expect(screen.getAllByText('Download')).toHaveLength(2)
       expect(screen.getAllByText('Edit')).toHaveLength(2)
       expect(screen.getAllByText('Delete')).toHaveLength(2)
     })
 
-    it('View Events links point to correct book URLs', () => {
+    it('View Book links point to correct book URLs', () => {
       render(<Index books={mockBooks} current_user={mockCurrentUser} flash={{}} errors={[]} />)
 
-      const viewLinks = screen.getAllByText('View Events').map((el) => el.closest('a'))
+      const viewLinks = screen.getAllByText('View Book').map((el) => el.closest('a'))
       expect(viewLinks[0]).toHaveAttribute('href', '/books/1')
       expect(viewLinks[1]).toHaveAttribute('href', '/books/2')
     })

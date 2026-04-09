@@ -2,3 +2,26 @@
 
 @plugin "@tailwindcss/typography";
 @plugin "@tailwindcss/forms";
+
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #8f8578 #f8f4ee;
+}
+
+.thin-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: #f8f4ee;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #8f8578;
+  border: 2px solid #f8f4ee;
+  border-radius: 9999px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #776b5e;
+}
