@@ -116,9 +116,9 @@ describe('Books Index', () => {
       expect(screen.getByText(/Uploaded:/)).toBeInTheDocument()
     })
 
-    it('renders "View Events" link to /books/:id', () => {
+    it('renders "View Book" link to /books/:id', () => {
       render(<Index books={[mockBooks[0]]} current_user={mockCurrentUser} flash={{}} errors={[]} />)
-      const viewLink = screen.getByText('View Events').closest('a')
+      const viewLink = screen.getByText('View Book').closest('a')
       expect(viewLink).toHaveAttribute('href', '/books/1')
     })
 

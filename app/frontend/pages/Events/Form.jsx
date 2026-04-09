@@ -363,7 +363,7 @@ export default function Form({ event, categories, people = [], isEdit, current_u
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-6">
             <Link
-              href="/events"
+              href="/timelines"
               className="text-blue-600 hover:text-blue-700"
             >
               &larr; {t('events.form.back')}
@@ -542,7 +542,7 @@ export default function Form({ event, categories, people = [], isEdit, current_u
                     : (isEdit ? t('events.form.update') : t('events.form.create'))}
                 </button>
                 <Link
-                  href="/events"
+                  href="/timelines"
                   className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 text-center"
                 >
                   {t('events.form.cancel')}

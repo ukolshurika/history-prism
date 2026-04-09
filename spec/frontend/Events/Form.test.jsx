@@ -134,15 +134,15 @@ describe('Events Form — new event', () => {
     expect(screen.queryByText('End Date')).not.toBeInTheDocument()
   })
 
-  it('has Cancel link pointing to /events', () => {
+  it('has Cancel link pointing to /timelines', () => {
     renderForm()
-    expect(screen.getByText('Cancel').closest('a')).toHaveAttribute('href', '/events')
+    expect(screen.getByText('Cancel').closest('a')).toHaveAttribute('href', '/timelines')
   })
 
-  it('has Back to Events link', () => {
+  it('has Back to Timelines link', () => {
     renderForm()
-    const backLink = screen.getByText(/Back to Events/)
-    expect(backLink.closest('a')).toHaveAttribute('href', '/events')
+    const backLink = screen.getByText(/Back to Timelines/)
+    expect(backLink.closest('a')).toHaveAttribute('href', '/timelines')
   })
 
   it('renders inside Layout', () => {

@@ -9,11 +9,6 @@ RSpec.describe 'Events', type: :request do
     log_in_as_user user
   end
 
-  def inertia_props(response)
-    doc = Nokogiri::HTML(response.body)
-    JSON.parse(doc.at('[data-page]')['data-page'])['props']
-  end
-
   def json_response(response)
     JSON.parse(response.body)
   end
@@ -21,17 +16,9 @@ RSpec.describe 'Events', type: :request do
   describe 'GET /events' do
     before { sign_in(user) }
 
-    it 'renders the events index page' do
+    it 'redirects html requests to timelines index' do
       get events_path
-      expect(response).to have_http_status(:success)
-    end
-
-    it 'displays all events' do
-      create(:event, creator: user, title: 'Event 1', description: 'Desc 1', category: :person)
-      create(:event, creator: user, title: 'Event 2', description: 'Desc 2', category: :world)
-
-      get events_path
-      expect(response).to have_http_status(:success)
+      expect(response).to redirect_to(timelines_path)
     end
 
     it 'hides another user personal events from the index payload' do
@@ -39,9 +26,9 @@ RSpec.describe 'Events', type: :request do
       hidden_personal_event = create(:event, creator: other_user, title: 'Hidden personal event', category: :person)
       public_event = create(:event, :world_event, creator: other_user, title: 'Public event')
 
-      get events_path
+      get events_path(format: :json)
 
-      serialized_titles = inertia_props(response).fetch('events').map { |serialized_event| serialized_event.fetch('title') }
+      serialized_titles = json_response(response).fetch('events').map { |serialized_event| serialized_event.fetch('title') }
 
       expect(serialized_titles).to include(visible_personal_event.title, public_event.title)
       expect(serialized_titles).not_to include(hidden_personal_event.title)
@@ -50,9 +37,9 @@ RSpec.describe 'Events', type: :request do
     it 'returns standardized meta in props' do
       create_list(:event, 30, creator: user)
 
-      get events_path
+      get events_path(format: :json)
       expect(response).to have_http_status(:success)
-      meta = inertia_props(response)['meta']
+      meta = json_response(response)['meta']
       expect(meta['per_page']).to eq(25)
       expect(meta['total']).to eq(30)
       expect(meta['page']).to eq(1)
@@ -111,23 +98,44 @@ RSpec.describe 'Events', type: :request do
       let!(:book_event)  { create(:event, creator: user, source: book) }
       let!(:other_event) { create(:event, creator: user) }
 
-      it 'filters events by source' do
-        get events_path, params: { source_type: 'Book', source_id: book.id }
-        expect(response).to have_http_status(:success)
+      it 'filters events by source in JSON mode' do
+        get events_path(format: :json), params: { source_type: 'Book', source_id: book.id }
+
+        payload = json_response(response)
+        titles = payload.fetch('events').map { |serialized_event| serialized_event.fetch('title') }
+
+        expect(titles).to eq([book_event.title])
+        expect(payload.fetch('meta').fetch('total')).to eq(1)
       end
     end
 
     context 'with sort=date' do
-      it 'responds successfully' do
-        get events_path, params: { sort: 'date', direction: 'asc' }
-        expect(response).to have_http_status(:success)
+      let!(:later_event) { create(:event, creator: user, title: 'Later', start_date: create(:fuzzy_date, year: 1918, month: 1, day: 1)) }
+      let!(:earlier_event) { create(:event, creator: user, title: 'Earlier', start_date: create(:fuzzy_date, year: 1917, month: 1, day: 1)) }
+
+      it 'sorts events by date in JSON mode' do
+        get events_path(format: :json), params: { sort: 'date', direction: 'asc' }
+
+        payload = json_response(response)
+        titles = payload.fetch('events').map { |serialized_event| serialized_event.fetch('title') }
+
+        expect(titles.first).to eq(earlier_event.title)
       end
     end
 
     context 'with sort=place' do
-      it 'responds successfully' do
-        get events_path, params: { sort: 'place', direction: 'asc' }
-        expect(response).to have_http_status(:success)
+      let!(:zurich_location) { create(:location, place: 'Zurich') }
+      let!(:amsterdam_location) { create(:location, place: 'Amsterdam') }
+      let!(:zurich_event) { create(:event, creator: user, title: 'Zurich event', location: zurich_location) }
+      let!(:amsterdam_event) { create(:event, creator: user, title: 'Amsterdam event', location: amsterdam_location) }
+
+      it 'sorts events by place in JSON mode' do
+        get events_path(format: :json), params: { sort: 'place', direction: 'asc' }
+
+        payload = json_response(response)
+        titles = payload.fetch('events').map { |serialized_event| serialized_event.fetch('title') }
+
+        expect(titles.first).to eq(amsterdam_event.title)
       end
     end
 
@@ -154,7 +162,7 @@ RSpec.describe 'Events', type: :request do
       expect(response).to have_http_status(:success)
     end
 
-    it 'redirects another user away from a personal event' do
+      it 'redirects another user away from a personal event' do
       sign_in(other_user)
 
       get event_path(event)
@@ -448,7 +456,7 @@ RSpec.describe 'Events', type: :request do
         expect {
           delete event_path(event_to_delete)
         }.to change(Event, :count).by(-1)
-        expect(response).to redirect_to(events_path)
+        expect(response).to redirect_to(timelines_path)
       end
     end
 

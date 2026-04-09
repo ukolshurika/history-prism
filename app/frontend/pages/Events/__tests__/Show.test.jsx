@@ -63,10 +63,10 @@ describe('Events Show', () => {
     expect(screen.getByText('military')).toBeInTheDocument()
   })
 
-  it('shows "Back to Events" link to /events', () => {
+  it('shows "Back to Timelines" link to /timelines', () => {
     render(<Show {...defaultProps} />)
-    const backLink = screen.getByText(/Back to Events/i).closest('a')
-    expect(backLink).toHaveAttribute('href', '/events')
+    const backLink = screen.getByText(/Back to Timelines/i).closest('a')
+    expect(backLink).toHaveAttribute('href', '/timelines')
   })
 
   it('shows Description field label', () => {

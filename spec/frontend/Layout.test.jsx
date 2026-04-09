@@ -34,16 +34,14 @@ describe('Layout', () => {
       expect(screen.getByText('History Prism')).toBeInTheDocument();
     });
 
-    it('renders Events link in navbar', () => {
+    it('does not render Events link in navbar', () => {
       render(
         <Layout current_user={null} flash={{}}>
           <div>Content</div>
         </Layout>
       );
 
-      const eventsLink = screen.getByRole('link', { name: 'Events' });
-      expect(eventsLink).toBeInTheDocument();
-      expect(eventsLink).toHaveAttribute('href', '/events');
+      expect(screen.queryByRole('link', { name: 'Events' })).not.toBeInTheDocument();
     });
 
     it('renders People link in navbar', () => {

@@ -34,16 +34,6 @@ export default function Layout({ children, current_user, flash = {}, immersive =
 
             <div className="flex items-center gap-6">
               <Link
-                href="/events"
-                className={
-                  immersive
-                    ? 'text-sm font-medium text-stone-300 transition-colors hover:text-white'
-                    : 'text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors'
-                }
-              >
-                {t('layout.nav.events')}
-              </Link>
-              <Link
                 href="/people"
                 className={
                   immersive

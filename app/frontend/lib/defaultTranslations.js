@@ -2,7 +2,6 @@ const defaultTranslations = {
   layout: {
     brand: 'History Prism',
     nav: {
-      events: 'Events',
       people: 'People',
       timelines: 'Timelines',
       books: 'Books',
@@ -90,11 +89,22 @@ const defaultTranslations = {
       empty_description: 'Upload your first book above to extract historical events from PDFs.',
       uploaded_on: 'Uploaded: %{date}',
       events_count: 'Events: %{count}',
-      view_events: 'View Events',
+      view_book: 'View Book',
       download: 'Download',
       edit: 'Edit',
       delete: 'Delete',
       delete_confirm: 'Are you sure you want to delete "%{name}"? This will also delete all associated events.',
+    },
+    show: {
+      back: 'Back to Books',
+      uploaded_on: 'Uploaded on %{date}',
+      events_count: 'Events: %{count}',
+      download: 'Download PDF',
+      edit: 'Edit Book',
+      delete: 'Delete Book',
+      location: 'Location',
+      file: 'File',
+      no_location: 'Location not specified',
     },
     form: {
       back: 'Back to Books',
@@ -168,7 +178,7 @@ const defaultTranslations = {
       },
     },
     form: {
-      back: 'Back to Events',
+      back: 'Back to Timelines',
       edit_title: 'Edit Event',
       new_title: 'Create New Event',
       title: 'Title',
@@ -215,7 +225,7 @@ const defaultTranslations = {
       cancel: 'Cancel',
     },
     show: {
-      back: 'Back to Events',
+      back: 'Back to Timelines',
       edit: 'Edit',
       delete: 'Delete',
       delete_confirm: 'Are you sure you want to delete this event?',

@@ -18,7 +18,7 @@ export default function Show({ event, can_edit, can_delete, current_user, flash 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-6">
             <Link
-              href="/events"
+              href="/timelines"
               className="text-blue-600 hover:text-blue-700"
             >
               &larr; {t('events.show.back')}
