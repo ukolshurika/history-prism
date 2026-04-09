@@ -4,7 +4,7 @@ class EventSerializer < ActiveModel::Serializer
   attributes :id, :title, :description, :start_date, :end_date, :category, :person_ids,
              :created_at, :updated_at, :source_type, :source_id, :source_name,
              :page_number, :start_date_display, :end_date_display, :start_date_sort,
-             :start_date_attributes, :end_date_attributes, :source_attachment_url,
+             :start_date_attributes, :end_date_attributes, :source_attachment_url, :source_url,
              :creator
 
   has_many :people, serializer: PersonSerializer
@@ -28,6 +28,22 @@ class EventSerializer < ActiveModel::Serializer
     return nil unless object.source&.attachment&.attached?
 
     Rails.application.routes.url_helpers.rails_blob_path(object.source.attachment, only_path: true)
+  end
+
+  def source_url
+    return nil unless object.source
+
+    case object.source_type
+    when 'Book'
+      return nil unless object.source.attachment.attached?
+
+      url = Rails.application.routes.url_helpers.rails_blob_path(object.source.attachment, only_path: true)
+      object.page_number.present? ? "#{url}#page=#{object.page_number}" : url
+    when 'GedcomFile'
+      return nil unless object.source.file.attached?
+
+      Rails.application.routes.url_helpers.rails_blob_path(object.source.file, only_path: true)
+    end
   end
 
   def source_name

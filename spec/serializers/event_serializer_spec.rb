@@ -45,6 +45,10 @@ RSpec.describe EventSerializer do
       expect(subject).to have_key(:source_type)
       expect(subject).to have_key(:source_id)
     end
+
+    it 'includes source_url' do
+      expect(subject).to have_key(:source_url)
+    end
   end
 
   describe '#location' do
@@ -95,6 +99,35 @@ RSpec.describe EventSerializer do
 
       it 'returns nil' do
         expect(serializer.source_name).to be_nil
+      end
+    end
+  end
+
+  describe '#source_url' do
+    context 'when source is a Book' do
+      let(:book) { create(:book, creator: user) }
+      let(:event) { create(:event, creator: user, source: book, page_number: 12) }
+
+      it 'returns attachment url with page anchor' do
+        expect(serializer.source_url).to include('#page=12')
+      end
+    end
+
+    context 'when source is a GedcomFile' do
+      let(:gedcom_file) { create(:gedcom_file, user: user) }
+      let(:event) { create(:event, creator: user, source: gedcom_file) }
+
+      it 'returns file url' do
+        expect(serializer.source_url).to be_present
+        expect(serializer.source_url).not_to include('#page=')
+      end
+    end
+
+    context 'when event has no source' do
+      let(:event) { create(:event, creator: user) }
+
+      it 'returns nil' do
+        expect(serializer.source_url).to be_nil
       end
     end
   end

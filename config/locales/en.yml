@@ -302,6 +302,7 @@ en:
       show:
         add_event: "Add Event"
         create_new_event: "Create New Event (%{category})"
+        edit_event: "Edit Event (%{category})"
         close: "Close"
         date_type: "Date Type"
         year: "Year"

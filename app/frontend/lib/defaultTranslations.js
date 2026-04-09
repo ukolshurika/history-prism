@@ -322,6 +322,7 @@ const defaultTranslations = {
     show: {
       add_event: 'Add Event',
       create_new_event: 'Create New Event (%{category})',
+      edit_event: 'Edit Event (%{category})',
       close: 'Close',
       date_type: 'Date Type',
       year: 'Year',
@@ -360,6 +361,7 @@ const defaultTranslations = {
       narrative_lanes: 'Narrative Lanes',
       add_track_event: 'Add %{track} event',
       unknown: 'Unknown',
+      source: 'Source',
       no_description: 'No description was provided for this event.',
       close_event_details: 'Close event details',
       remove_from_timeline: 'Remove from timeline',
