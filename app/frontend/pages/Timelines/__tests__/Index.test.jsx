@@ -72,7 +72,7 @@ describe('Timelines Index', () => {
       />
     )
 
-    expect(screen.getByText('Timelines')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Timelines' })).toBeInTheDocument()
   })
 
   it('shows "Create Timeline" link when current_user is present', () => {

@@ -119,4 +119,18 @@ describe('GedcomFiles Index', () => {
     render(<Index {...defaultProps} current_user={mockCurrentUser} errors={[]} />)
     expect(screen.queryByText(/File is not a valid GEDCOM file/i)).not.toBeInTheDocument()
   })
+
+  it('shows pagination summary and controls when multiple pages are present', () => {
+    render(
+      <Index
+        {...defaultProps}
+        gedcom_files={mockGedcomFiles}
+        meta={{ page: 1, total_pages: 3, total: 60, per_page: 25 }}
+      />
+    )
+
+    expect(screen.getByText('Total: 60')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '«' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '»' })).toBeInTheDocument()
+  })
 })

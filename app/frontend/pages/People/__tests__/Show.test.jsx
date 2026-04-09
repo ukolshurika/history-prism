@@ -307,9 +307,24 @@ describe('People Show', () => {
         />
       )
 
-      expect(screen.getByText('Associated Events')).toBeInTheDocument()
+      expect(screen.getAllByText('Associated Events').length).toBeGreaterThan(0)
       expect(screen.getByText('Birth of John')).toBeInTheDocument()
       expect(screen.getByText('Marriage')).toBeInTheDocument()
+    })
+
+    it('links associated events to event show pages', () => {
+      render(
+        <Show
+          person={{ ...mockPerson, events: mockEvents }}
+          can_edit={false}
+          can_delete={false}
+          current_user={mockCurrentUser}
+          flash={{}}
+        />
+      )
+
+      expect(screen.getByText('Birth of John').closest('a')).toHaveAttribute('href', '/events/101')
+      expect(screen.getByText('Marriage').closest('a')).toHaveAttribute('href', '/events/102')
     })
 
     it('does not show events section when person.events is empty', () => {
@@ -323,7 +338,9 @@ describe('People Show', () => {
         />
       )
 
-      expect(screen.queryByText('Associated Events')).not.toBeInTheDocument()
+      expect(screen.getByText('Associated Events')).toBeInTheDocument()
+      expect(screen.queryByText('Birth of John')).not.toBeInTheDocument()
+      expect(screen.queryByText('Marriage')).not.toBeInTheDocument()
     })
   })
 })
