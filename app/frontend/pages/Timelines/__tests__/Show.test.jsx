@@ -6,6 +6,28 @@ const mockCalls = {
   put: jest.fn(),
   setData: jest.fn(),
 }
+const mockFetch = jest.fn()
+
+const defaultSearchResponse = {
+  events: [
+    {
+      id: 21,
+      title: 'Local Event',
+      category: 'local',
+      description: 'Nearby event',
+      start_date_display: '1910-05-15',
+      location: { place: 'Moscow' },
+    },
+  ],
+  meta: { page: 1, per_page: 25, total: 1, total_pages: 1 },
+}
+
+function mockFetchResponse(payload = defaultSearchResponse) {
+  return {
+    ok: true,
+    json: () => Promise.resolve(payload),
+  }
+}
 
 jest.mock('@inertiajs/react', () => ({
   Head: ({ title }) => <title>{title}</title>,
@@ -25,6 +47,8 @@ jest.mock('@inertiajs/react', () => ({
     post: jest.fn(),
   },
 }))
+
+global.fetch = mockFetch
 
 // Mock Layout
 jest.mock('../../Layout', () => {
@@ -87,6 +111,11 @@ describe('Timelines Show', () => {
 
   const mockTimelineWithAllTracks = {
     ...mockTimeline,
+    cached_events_for_display: {
+      person: [1],
+      local: [2],
+      world: [3],
+    },
     categorized_events: {
       personal: [
         {
@@ -149,6 +178,8 @@ describe('Timelines Show', () => {
     mockCalls.post.mockClear()
     mockCalls.put.mockClear()
     mockCalls.setData.mockClear()
+    mockFetch.mockReset()
+    mockFetch.mockResolvedValue(mockFetchResponse())
   })
 
   it('renders person name as heading', () => {
@@ -615,7 +646,7 @@ describe('Timelines Show', () => {
     expect(container.querySelector('[title="Add World event"]')).not.toBeInTheDocument()
   })
 
-  it('clicking Local add control opens CreateEventForm modal with category "local"', () => {
+  it('clicking Local add control opens the search modal and shows results', async () => {
     const { container } = render(
       <Show
         timeline={mockTimelineWithAllTracks}
@@ -626,14 +657,14 @@ describe('Timelines Show', () => {
       />
     )
 
-    const addLocalButton = container.querySelector('[title="Add Local event"]')
-    fireEvent.click(addLocalButton)
+    fireEvent.click(container.querySelector('[title="Add Local event"]'))
 
-    expect(screen.getByLabelText(/Title/i)).toBeInTheDocument()
+    expect(screen.getByText('Search Existing Events (Local)')).toBeInTheDocument()
+    expect(await screen.findByText('Local Event')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Create Event/i })).toBeInTheDocument()
   })
 
-  it('CreateEventForm has Title and Description fields', () => {
+  it('switches the search modal to advanced search and exposes location filters', async () => {
     const { container } = render(
       <Show
         timeline={mockTimelineWithAllTracks}
@@ -644,31 +675,83 @@ describe('Timelines Show', () => {
       />
     )
 
-    const addLocalButton = container.querySelector('[title="Add Local event"]')
-    fireEvent.click(addLocalButton)
+    fireEvent.click(container.querySelector('[title="Add Local event"]'))
+    fireEvent.click(screen.getByRole('button', { name: 'Advanced Search' }))
+
+    expect(screen.getByLabelText('Category')).toBeInTheDocument()
+    expect(screen.getByLabelText('Latitude')).toBeInTheDocument()
+    expect(screen.getByLabelText('Longitude')).toBeInTheDocument()
+    expect(screen.getByLabelText('Radius (km)')).toBeInTheDocument()
+  })
+
+  it('clicking Create Event in the search modal opens the create form for the current category', async () => {
+    const { container } = render(
+      <Show
+        timeline={mockTimelineWithAllTracks}
+        can_edit={true}
+        can_delete={false}
+        current_user={mockCurrentUser}
+        flash={{}}
+      />
+    )
+
+    fireEvent.click(container.querySelector('[title="Add Local event"]'))
+    await screen.findByText('Local Event')
+    fireEvent.click(screen.getByRole('button', { name: /Create Event/i }))
+
+    expect(await screen.findByLabelText(/Title/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Create Event/i })).toBeInTheDocument()
+  })
+
+  it('attaches a found event to the timeline from the search modal', async () => {
+    const router = getRouter()
+    const { container } = render(
+      <Show
+        timeline={mockTimelineWithAllTracks}
+        can_edit={true}
+        can_delete={true}
+        current_user={mockCurrentUser}
+        flash={{}}
+      />
+    )
+
+    fireEvent.click(container.querySelector('[title="Add Local event"]'))
+    fireEvent.click(await screen.findByRole('button', { name: 'Attach Event' }))
+
+    expect(router.put).toHaveBeenCalledWith(
+      '/timelines/1',
+      {
+        timeline: {
+          cached_events_for_display: {
+            person: [1],
+            local: [2, 21],
+            world: [3],
+          },
+        },
+      },
+      expect.objectContaining({ preserveScroll: true, onSuccess: expect.any(Function) })
+    )
+  })
+
+  it('clicking Personal add control opens the create form directly', () => {
+    const { container } = render(
+      <Show
+        timeline={mockTimelineWithAllTracks}
+        can_edit={true}
+        can_delete={false}
+        current_user={mockCurrentUser}
+        flash={{}}
+      />
+    )
+
+    fireEvent.click(container.querySelector('[title="Add Personal event"]'))
 
     expect(screen.getByLabelText(/Title/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/Description/i)).toBeInTheDocument()
-  })
-
-  it('CreateEventForm has Start Date section', () => {
-    const { container } = render(
-      <Show
-        timeline={mockTimelineWithAllTracks}
-        can_edit={true}
-        can_delete={false}
-        current_user={mockCurrentUser}
-        flash={{}}
-      />
-    )
-
-    const addLocalButton = container.querySelector('[title="Add Local event"]')
-    fireEvent.click(addLocalButton)
-
     expect(screen.getByText('Start Date *')).toBeInTheDocument()
   })
 
-  it('CreateEventForm has Create Event and Cancel buttons', () => {
+  it('clicking Cancel closes the create form from the search flow', async () => {
     const { container } = render(
       <Show
         timeline={mockTimelineWithAllTracks}
@@ -679,35 +762,15 @@ describe('Timelines Show', () => {
       />
     )
 
-    const addLocalButton = container.querySelector('[title="Add Local event"]')
-    fireEvent.click(addLocalButton)
+    fireEvent.click(container.querySelector('[title="Add Local event"]'))
+    await screen.findByText('Local Event')
+    fireEvent.click(screen.getByRole('button', { name: /Create Event/i }))
 
-    expect(screen.getByRole('button', { name: /Create Event/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument()
-  })
+    expect(await screen.findByLabelText(/Title/i)).toBeInTheDocument()
 
-  it('clicking Cancel closes the CreateEventForm modal', () => {
-    const { container } = render(
-      <Show
-        timeline={mockTimelineWithAllTracks}
-        can_edit={true}
-        can_delete={false}
-        current_user={mockCurrentUser}
-        flash={{}}
-      />
-    )
+    fireEvent.click(screen.getByRole('button', { name: /Cancel/i }))
 
-    const addLocalButton = container.querySelector('[title="Add Local event"]')
-    fireEvent.click(addLocalButton)
-
-    // Modal is open
-    expect(screen.getByRole('button', { name: /Create Event/i })).toBeInTheDocument()
-
-    // Click Cancel button inside the modal
-    const cancelButton = screen.getByRole('button', { name: /Cancel/i })
-    fireEvent.click(cancelButton)
-
-    // Modal should be closed
-    expect(screen.queryByRole('button', { name: /Create Event/i })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/Title/i)).not.toBeInTheDocument()
+    expect(screen.queryByText('Search Existing Events (Local)')).not.toBeInTheDocument()
   })
 })

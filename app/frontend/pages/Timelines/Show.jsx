@@ -1,5 +1,5 @@
 import { Head, Link, useForm, router } from '@inertiajs/react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Layout from '../Layout'
 import { useTranslations } from '../../lib/useTranslations'
 
@@ -44,6 +44,8 @@ const DATE_TYPES = [
   { value: 'year' },
   { value: 'month_year' }
 ]
+
+const EVENT_SEARCH_CATEGORIES = ['person', 'local', 'world', 'country']
 
 function getFractionalYear(year, month, day) {
   if (!year) return null
@@ -103,6 +105,30 @@ function computeRange(events) {
   const min = Math.floor(Math.min(...values))
   const max = Math.ceil(Math.max(...values))
   return { min, max, span: Math.max(max - min, 1) }
+}
+
+function emptySearchState(category) {
+  return {
+    q: '',
+    category,
+    latitude: '',
+    longitude: '',
+    radius_km: '100'
+  }
+}
+
+function buildSearchParams(filters, page) {
+  const params = new URLSearchParams()
+  params.set('format', 'json')
+  params.set('page', String(page))
+
+  if (filters.q) params.set('q', filters.q)
+  if (filters.category) params.set('category', filters.category)
+  if (filters.latitude) params.set('latitude', filters.latitude)
+  if (filters.longitude) params.set('longitude', filters.longitude)
+  if (filters.radius_km) params.set('radius_km', filters.radius_km)
+
+  return params.toString()
 }
 
 function EventModalForm({ timeline, category, eventRecord = null, onClose, t }) {
@@ -235,6 +261,286 @@ function EventModalForm({ timeline, category, eventRecord = null, onClose, t }) 
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  )
+}
+
+function EventSearchModal({ timeline, category, onClose, onCreateEvent, onAttachEvent, t }) {
+  const [mode, setMode] = useState('simple')
+  const [draftFilters, setDraftFilters] = useState(() => emptySearchState(category))
+  const [appliedFilters, setAppliedFilters] = useState(() => emptySearchState(category))
+  const [page, setPage] = useState(1)
+  const [results, setResults] = useState([])
+  const [meta, setMeta] = useState({ page: 1, per_page: 25, total: 0, total_pages: 1 })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    let active = true
+
+    async function fetchSearchResults() {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const response = await fetch(`/events.json?${buildSearchParams(appliedFilters, page)}`)
+
+        if (!response.ok) {
+          throw new Error('Search failed')
+        }
+
+        const payload = await response.json()
+
+        if (!active) return
+
+        setResults(payload.events || [])
+        setMeta(payload.meta || { page: 1, per_page: 25, total: 0, total_pages: 1 })
+      } catch (fetchError) {
+        if (!active) return
+
+        setError(fetchError)
+        setResults([])
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+
+    fetchSearchResults()
+
+    return () => {
+      active = false
+    }
+  }, [appliedFilters, page])
+
+  const currentCategory = draftFilters.category || category || 'world'
+
+  const handleSubmit = (submitEvent) => {
+    submitEvent.preventDefault()
+    setPage(1)
+    setAppliedFilters({ ...draftFilters, category: draftFilters.category || category || '' })
+  }
+
+  const handlePageChange = (nextPage) => {
+    setPage(nextPage)
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[28px] border border-stone-200 bg-[#f8f4ee] shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="p-6 sm:p-8">
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-stone-500">{t('timelines.show.search_events_label')}</p>
+              <h2
+                className="mt-2 text-3xl text-stone-900"
+                style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", serif' }}
+              >
+                {t('timelines.show.search_existing_events', {
+                  category: t(`events.categories.${currentCategory}`)
+                })}
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-600">
+                {t('timelines.show.search_events_hint')}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={t('timelines.show.close')}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-stone-300 text-stone-600 transition hover:bg-white hover:text-stone-900"
+            >
+              <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
+                <path d="M5 5L15 15M15 5L5 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5 rounded-[24px] border border-stone-200 bg-white/70 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="inline-flex rounded-full bg-stone-100 p-1 text-xs font-medium">
+                <button
+                  type="button"
+                  onClick={() => setMode('simple')}
+                  className={`rounded-full px-3 py-1.5 transition ${mode === 'simple' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600'}`}
+                >
+                  {t('timelines.show.simple_search')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode('advanced')}
+                  className={`rounded-full px-3 py-1.5 transition ${mode === 'advanced' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600'}`}
+                >
+                  {t('timelines.show.advanced_search')}
+                </button>
+              </div>
+
+              <p className="text-xs uppercase tracking-[0.24em] text-stone-500">
+                {t('timelines.show.results_count', { count: meta.total || 0 })}
+              </p>
+            </div>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-stone-700">{t('timelines.show.search_query_label')}</span>
+              <input
+                type="text"
+                value={draftFilters.q}
+                onChange={(event) => setDraftFilters((current) => ({ ...current, q: event.target.value }))}
+                placeholder={t('events.index.search_placeholder')}
+                className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-900 focus:border-stone-500 focus:ring-0"
+              />
+            </label>
+
+            {mode === 'advanced' && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-stone-700">{t('timelines.show.category_filter')}</span>
+                  <select
+                    value={draftFilters.category}
+                    onChange={(event) => setDraftFilters((current) => ({ ...current, category: event.target.value }))}
+                    className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-900 focus:border-stone-500 focus:ring-0"
+                  >
+                    {EVENT_SEARCH_CATEGORIES.map((option) => (
+                      <option key={option} value={option}>
+                        {t(`events.categories.${option}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-stone-700">{t('timelines.show.radius_km')}</span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={draftFilters.radius_km}
+                    onChange={(event) => setDraftFilters((current) => ({ ...current, radius_km: event.target.value }))}
+                    className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-900 focus:border-stone-500 focus:ring-0"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-stone-700">{t('timelines.show.latitude')}</span>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={draftFilters.latitude}
+                    onChange={(event) => setDraftFilters((current) => ({ ...current, latitude: event.target.value }))}
+                    className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-900 focus:border-stone-500 focus:ring-0"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-stone-700">{t('timelines.show.longitude')}</span>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={draftFilters.longitude}
+                    onChange={(event) => setDraftFilters((current) => ({ ...current, longitude: event.target.value }))}
+                    className="w-full rounded-2xl border border-stone-300 bg-white px-4 py-3 text-stone-900 focus:border-stone-500 focus:ring-0"
+                  />
+                </label>
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="submit"
+                className="rounded-full bg-stone-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-stone-800"
+              >
+                {t('timelines.show.search')}
+              </button>
+              <button
+                type="button"
+                onClick={() => onCreateEvent(draftFilters.category || category)}
+                className="text-sm font-medium text-stone-700 underline decoration-stone-400 underline-offset-4 transition hover:text-stone-950"
+              >
+                {t('timelines.show.create_event')}
+              </button>
+            </div>
+          </form>
+
+          <div className="mt-6 space-y-4">
+            {loading && <p className="text-sm text-stone-600">{t('timelines.show.searching')}</p>}
+            {error && <p className="text-sm text-red-600">{t('timelines.show.search_failed')}</p>}
+
+            {!loading && !error && results.length === 0 && (
+              <p className="rounded-[22px] border border-dashed border-stone-300 bg-white/60 px-4 py-6 text-sm text-stone-600">
+                {t('timelines.show.no_search_results')}
+              </p>
+            )}
+
+            {results.length > 0 && (
+              <div className="grid gap-3">
+                {results.map((event) => (
+                  <div
+                    key={event.id}
+                    className="rounded-[22px] border border-stone-200 bg-white/80 px-4 py-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <Link
+                          href={`/events/${event.id}`}
+                          className="text-sm font-medium text-stone-900 underline decoration-stone-300 underline-offset-4 transition hover:text-stone-700"
+                        >
+                          {event.title}
+                        </Link>
+                        <div className="mt-1 text-xs uppercase tracking-[0.18em] text-stone-500">
+                          {t(`events.categories.${event.category}`)}
+                        </div>
+                      </div>
+                      <div className="text-right text-xs text-stone-500">
+                        <div>{event.start_date_display || event.start_date || t('timelines.show.unknown')}</div>
+                        {event.location?.place && <div className="mt-1">{event.location.place}</div>}
+                      </div>
+                    </div>
+                    {event.description && <p className="mt-3 text-sm leading-6 text-stone-700">{event.description}</p>}
+                    <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={() => onAttachEvent(event)}
+                        className="rounded-full border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-white"
+                      >
+                        {t('timelines.show.attach_event')}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {meta.total_pages > 1 && (
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => handlePageChange(page - 1)}
+                  className="rounded-full border border-stone-300 px-4 py-2 text-sm text-stone-700 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {t('timelines.show.previous_page')}
+                </button>
+                <p className="text-xs uppercase tracking-[0.2em] text-stone-500">
+                  {t('timelines.show.page_info', { page, total_pages: meta.total_pages })}
+                </p>
+                <button
+                  type="button"
+                  disabled={page >= meta.total_pages}
+                  onClick={() => handlePageChange(page + 1)}
+                  className="rounded-full border border-stone-300 px-4 py-2 text-sm text-stone-700 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {t('timelines.show.next_page')}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -645,6 +951,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
   const [scaleMode, setScaleMode] = useState('mid')
   const [selectedEventId, setSelectedEventId] = useState(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showSearchForm, setShowSearchForm] = useState(false)
   const [newEventCategory, setNewEventCategory] = useState(null)
   const [editingEventId, setEditingEventId] = useState(null)
 
@@ -668,9 +975,44 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
     setSelectedEventId((currentId) => (currentId === nextId ? null : nextId))
   }
 
-  const openCreateForm = (category) => {
+  const handleAddEvent = (category) => {
     setNewEventCategory(category)
+
+    if (category === 'person') {
+      setShowCreateForm(true)
+      return
+    }
+
+    setShowSearchForm(true)
+  }
+
+  const handleCreateFromSearch = (category) => {
+    setNewEventCategory(category)
+    setShowSearchForm(false)
     setShowCreateForm(true)
+  }
+
+  const handleAttachEvent = (eventRecord) => {
+    const currentCache = timeline.cached_events_for_display || {}
+    const cacheKey = eventRecord.category
+    const updatedEventIds = [...new Set([...(currentCache[cacheKey] || []), eventRecord.id])]
+    const updatedCache = { ...currentCache, [cacheKey]: updatedEventIds }
+
+    router.put(
+      `/timelines/${timeline.id}`,
+      {
+        timeline: {
+          cached_events_for_display: updatedCache
+        }
+      },
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          setShowSearchForm(false)
+          setNewEventCategory(null)
+        }
+      }
+    )
   }
 
   const handleDeleteEvent = (eventId, category) => {
@@ -740,7 +1082,7 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
             canEdit={can_edit}
             onEdit={handleEditEvent}
             onRemove={handleDeleteEvent}
-            onAddEvent={openCreateForm}
+            onAddEvent={handleAddEvent}
             t={t}
           />
         )
@@ -834,7 +1176,24 @@ export default function Show({ timeline, can_edit, can_delete, current_user, fla
         <EventModalForm
           timeline={timeline}
           category={newEventCategory}
-          onClose={() => setShowCreateForm(false)}
+          onClose={() => {
+            setShowCreateForm(false)
+            setNewEventCategory(null)
+          }}
+          t={t}
+        />
+      )}
+
+      {showSearchForm && (
+        <EventSearchModal
+          timeline={timeline}
+          category={newEventCategory}
+          onClose={() => {
+            setShowSearchForm(false)
+            setNewEventCategory(null)
+          }}
+          onCreateEvent={handleCreateFromSearch}
+          onAttachEvent={handleAttachEvent}
           t={t}
         />
       )}
