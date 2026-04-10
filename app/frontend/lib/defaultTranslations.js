@@ -35,6 +35,7 @@ const defaultTranslations = {
     password_confirmation: 'Confirm Password',
     submit: 'Sign Up',
     submitting: 'Creating account...',
+    back_to_login: 'Вернуться к входу',
   },
   forgot_password: {
     title: 'Восстановление пароля',
@@ -120,6 +121,7 @@ const defaultTranslations = {
       current_file: 'Current File',
       uploaded_on: 'Uploaded on %{date}',
       download: 'Download',
+      error_heading_one: 'There was 1 error with your submission',
       errors_heading: 'There were %{count} errors with your submission',
       cancel: 'Cancel',
       saving: 'Saving...',

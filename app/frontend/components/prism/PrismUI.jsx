@@ -17,6 +17,30 @@ export function PageFrame({ children, wide = false, className = '' }) {
   )
 }
 
+export function PageSection({
+  kicker,
+  title,
+  description,
+  actions,
+  children,
+  className = '',
+  surfaceClassName = '',
+}) {
+  return (
+    <section className={className}>
+      <SectionIntro
+        kicker={kicker}
+        title={title}
+        description={description}
+        actions={actions}
+      />
+      <SurfaceCard className={surfaceClassName}>
+        {children}
+      </SurfaceCard>
+    </section>
+  )
+}
+
 export function SectionIntro({ kicker, title, description, actions, className = '' }) {
   return (
     <div className={`prism-section-header ${className}`}>
@@ -35,6 +59,42 @@ export function SurfaceCard({ children, className = '', ...props }) {
     <section className={`prism-surface ${className}`} {...props}>
       {children}
     </section>
+  )
+}
+
+export function CenteredPage({
+  kicker,
+  title,
+  description,
+  children,
+  footer,
+  className = '',
+  surfaceClassName = '',
+}) {
+  return (
+    <PageFrame className={className}>
+      <div className="mx-auto flex min-h-[calc(100vh-6rem)] max-w-md items-center px-4 sm:px-6 lg:px-8">
+        <SurfaceCard className={`w-full p-6 sm:p-8 ${surfaceClassName}`}>
+          <div className="space-y-8">
+            {(kicker || title || description) && (
+              <div>
+                {kicker && <p className="prism-kicker">{kicker}</p>}
+                {title && <h1 className="prism-title mt-2">{title}</h1>}
+                {description && <p className="prism-subtitle mt-3">{description}</p>}
+              </div>
+            )}
+
+            <div>{children}</div>
+
+            {footer && (
+              <div className="border-t border-stone-200/80 pt-5 text-center">
+                {footer}
+              </div>
+            )}
+          </div>
+        </SurfaceCard>
+      </div>
+    </PageFrame>
   )
 }
 

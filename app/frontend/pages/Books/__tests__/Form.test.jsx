@@ -255,7 +255,7 @@ describe('Books Form', () => {
           isEdit={false}
         />
       )
-      const backLink = screen.getByText('Back to Books').closest('a')
+      const backLink = screen.getByRole('link', { name: /back to books/i })
       expect(backLink).toHaveAttribute('href', '/books')
     })
 

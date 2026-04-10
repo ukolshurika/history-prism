@@ -99,6 +99,19 @@
 
 ---
 
+### T-031 | Декомпозиция remaining frontend page families в shared shells и primitives
+**Категории:** 🎯 Архитектура, 👤 Пользовательский опыт, 👨‍💻 Разработка
+**Статус:** ✅ Выполнено
+**Факт:** Добавлены shared page shells `PageSection` и `CenteredPage`, после чего оставшиеся страницы вне общего shell-а (`Home`, auth-flow, `Books/*`, `GedcomFiles/Index`, `People/Form`, `Events/Show`) переведены на общие primitives. Уже приведённые ранее к Prism-shell страницы (`Timelines/*`, `People/Index`, `People/Show`) не дублировались. Дублирующиеся centered/card wrappers убраны, а shell-композиция закреплена Jest-тестами.
+**Подзадачи:**
+- [x] Провести аудит page families: auth, home, collection/index, show/detail, form/create-edit
+- [x] Выделить shared primitives и shell-компоненты для общих page-структур, action bars, empty states и form surfaces
+- [x] Перевести страницы `Books/*`, `People/Form`, `GedcomFiles/Index`, `Events/Show`, auth-страницы и `Home` на общие primitives
+- [x] Убрать дублирующиеся layout/styling-паттерны из страниц, оставив локально только domain-specific markup
+- [x] Обновить Jest-спеки для страниц и shared-компонентов, чтобы закрепить новую композицию без поведенческих regressions
+
+---
+
 ### T-003 | База знаний исторических событий
 **Категории:** 🎯 Архитектура, 👨‍💻 Разработка
 **Статус:** Активна (эпик)

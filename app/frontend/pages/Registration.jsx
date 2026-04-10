@@ -1,6 +1,7 @@
-import { Head, useForm } from '@inertiajs/react'
+import { Head, Link, useForm } from '@inertiajs/react'
 import Layout from './Layout'
 import { useTranslations } from '../lib/useTranslations'
+import { CenteredPage } from '../components/prism/PrismUI'
 
 export default function Registration({ current_user, flash, errors = [] }) {
   const t = useTranslations()
@@ -21,74 +22,77 @@ export default function Registration({ current_user, flash, errors = [] }) {
     <Layout current_user={current_user} flash={flash}>
       <Head title={t('registration.title')} />
 
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-          <h1 className="text-2xl font-bold mb-6">{t('registration.title')}</h1>
+      <CenteredPage
+        title={t('registration.title')}
+        footer={(
+          <Link href="/session/new" className="text-sm font-medium text-stone-800 underline underline-offset-4">
+            {t('registration.back_to_login')}
+          </Link>
+        )}
+      >
+        {errors.length > 0 && (
+          <div className="rounded-[20px] border border-red-200 bg-red-50 p-4">
+            {errors.map((error, index) => (
+              <p key={index} className="text-sm text-red-600">{error}</p>
+            ))}
+          </div>
+        )}
 
-          {errors.length > 0 && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
-              {errors.map((error, index) => (
-                <p key={index} className="text-red-600 text-sm">{error}</p>
-              ))}
-            </div>
-          )}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label htmlFor="email" className="prism-label">
+              {t('registration.email')}
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="user[email]"
+              value={data.user.email}
+              onChange={(e) => setData('user.email', e.target.value)}
+              className="prism-input"
+              required
+            />
+          </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                {t('registration.email')}
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="user[email]"
-                value={data.user.email}
-                onChange={(e) => setData('user.email', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
+          <div>
+            <label htmlFor="password" className="prism-label">
+              {t('registration.password')}
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="user[password]"
+              value={data.user.password}
+              onChange={(e) => setData('user.password', e.target.value)}
+              className="prism-input"
+              required
+            />
+          </div>
 
-            <div className="mb-4">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                {t('registration.password')}
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="user[password]"
-                value={data.user.password}
-                onChange={(e) => setData('user.password', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
+          <div>
+            <label htmlFor="password_confirmation" className="prism-label">
+              {t('registration.password_confirmation')}
+            </label>
+            <input
+              type="password"
+              id="password_confirmation"
+              name="user[password_confirmation]"
+              value={data.user.password_confirmation}
+              onChange={(e) => setData('user.password_confirmation', e.target.value)}
+              className="prism-input"
+              required
+            />
+          </div>
 
-            <div className="mb-6">
-              <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700 mb-1">
-                {t('registration.password_confirmation')}
-              </label>
-              <input
-                type="password"
-                id="password_confirmation"
-                name="user[password_confirmation]"
-                value={data.user.password_confirmation}
-                onChange={(e) => setData('user.password_confirmation', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={processing}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {processing ? t('registration.submitting') : t('registration.submit')}
-            </button>
-          </form>
-        </div>
-      </div>
+          <button
+            type="submit"
+            disabled={processing}
+            className="prism-button prism-button-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {processing ? t('registration.submitting') : t('registration.submit')}
+          </button>
+        </form>
+      </CenteredPage>
     </Layout>
   )
 }

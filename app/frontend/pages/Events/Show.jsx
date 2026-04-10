@@ -1,9 +1,17 @@
 import { Head, Link, router } from '@inertiajs/react'
 import Layout from '../Layout'
 import { useTranslations } from '../../lib/useTranslations'
+import {
+  ActionButton,
+  ActionLink,
+  DefinitionList,
+  PageFrame,
+  PageSection,
+} from '../../components/prism/PrismUI'
 
 export default function Show({ event, can_edit, can_delete, current_user, flash }) {
   const t = useTranslations()
+
   const handleDelete = () => {
     if (confirm(t('events.show.delete_confirm'))) {
       router.delete(`/events/${event.id}`)
@@ -14,92 +22,61 @@ export default function Show({ event, can_edit, can_delete, current_user, flash 
     <Layout current_user={current_user} flash={flash}>
       <Head title={event.title} />
 
-      <div className="py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-6">
-            <Link
-              href="/timelines"
-              className="text-blue-600 hover:text-blue-700"
-            >
-              &larr; {t('events.show.back')}
-            </Link>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <div className="mb-6">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <span className="inline-block px-3 py-1 text-sm font-semibold rounded bg-blue-100 text-blue-800 mb-2">
-                    {event.category}
-                  </span>
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    {event.title}
-                  </h1>
-                </div>
-                {(can_edit || can_delete) && (
-                  <div className="flex gap-2">
-                    {can_edit && (
-                      <Link
-                        href={`/events/${event.id}/edit`}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                      >
-                        {t('events.show.edit')}
-                      </Link>
-                    )}
-                    {can_delete && (
-                      <button
-                        onClick={handleDelete}
-                        className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
-                      >
-                        {t('events.show.delete')}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="border-t border-gray-200 pt-6">
-              <dl className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">{t('events.show.description')}</dt>
-                  <dd className="mt-1 text-sm text-gray-900 whitespace-pre-wrap col-span-2">
-                    {event.description}
-                  </dd>
-                </div>
-
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">{t('events.show.start_date')}</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {new Date(event.start_date).toLocaleString()}
-                  </dd>
-                </div>
-
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">{t('events.show.end_date')}</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {new Date(event.end_date).toLocaleString()}
-                  </dd>
-                </div>
-
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">{t('events.show.created_by')}</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {event.creator.email}
-                  </dd>
-                </div>
-
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">{t('events.show.created_at')}</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {new Date(event.created_at).toLocaleString()}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </div>
+      <PageFrame>
+        <div className="mb-6">
+          <ActionLink href="/timelines" variant="secondary">
+            &larr; {t('events.show.back')}
+          </ActionLink>
         </div>
-      </div>
+
+        <PageSection
+          title={event.title}
+          description={event.category}
+          actions={(
+            <div className="flex flex-wrap gap-3">
+              {can_edit && (
+                <Link
+                  href={`/events/${event.id}/edit`}
+                  className="prism-button prism-button-primary"
+                >
+                  {t('events.show.edit')}
+                </Link>
+              )}
+              {can_delete && (
+                <ActionButton variant="danger" onClick={handleDelete}>
+                  {t('events.show.delete')}
+                </ActionButton>
+              )}
+            </div>
+          )}
+          surfaceClassName="p-6 sm:p-8"
+        >
+          <DefinitionList
+            items={[
+              {
+                label: t('events.show.description'),
+                value: <span className="whitespace-pre-wrap">{event.description}</span>,
+              },
+              {
+                label: t('events.show.start_date'),
+                value: new Date(event.start_date).toLocaleString(),
+              },
+              {
+                label: t('events.show.end_date'),
+                value: new Date(event.end_date).toLocaleString(),
+              },
+              {
+                label: t('events.show.created_by'),
+                value: event.creator.email,
+              },
+              {
+                label: t('events.show.created_at'),
+                value: new Date(event.created_at).toLocaleString(),
+              },
+            ]}
+          />
+        </PageSection>
+      </PageFrame>
     </Layout>
   )
 }
