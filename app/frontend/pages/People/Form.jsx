@@ -1,6 +1,11 @@
 import { Head, useForm, Link } from '@inertiajs/react'
 import Layout from '../Layout'
 import { useTranslations } from '../../lib/useTranslations'
+import {
+  ActionLink,
+  PageFrame,
+  PageSection,
+} from '../../components/prism/PrismUI'
 
 export default function Form({ person, events = [], isEdit, current_user, flash, errors = [] }) {
   const t = useTranslations()
@@ -28,158 +33,152 @@ export default function Form({ person, events = [], isEdit, current_user, flash,
     <Layout current_user={current_user} flash={flash}>
       <Head title={isEdit ? t('people.form.edit_title') : t('people.form.new_title')} />
 
-      <div className="py-8">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-6">
-            <Link
-              href="/people"
-              className="text-blue-600 hover:text-blue-700"
-            >
-              &larr; {t('people.form.back')}
-            </Link>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <h1 className="text-2xl font-bold mb-6">
-              {isEdit ? t('people.form.edit_title') : t('people.form.new_title')}
-            </h1>
-
-            {errors.length > 0 && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
-                {errors.map((error, index) => (
-                  <p key={index} className="text-red-600 text-sm">{error}</p>
-                ))}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('people.form.name')} *
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="person[name]"
-                  value={data.person.name}
-                  onChange={(e) => setData('person.name', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('people.form.first_name')} *
-                </label>
-                <input
-                  type="text"
-                  id="first_name"
-                  name="person[first_name]"
-                  value={data.person.first_name}
-                  onChange={(e) => setData('person.first_name', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="middle_name" className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('people.form.middle_name')}
-                </label>
-                <input
-                  type="text"
-                  id="middle_name"
-                  name="person[middle_name]"
-                  value={data.person.middle_name}
-                  onChange={(e) => setData('person.middle_name', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('people.form.last_name')}
-                </label>
-                <input
-                  type="text"
-                  id="last_name"
-                  name="person[last_name]"
-                  value={data.person.last_name}
-                  onChange={(e) => setData('person.last_name', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="gedcom_uuid" className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('people.form.gedcom_uuid')} *
-                </label>
-                <input
-                  type="text"
-                  id="gedcom_uuid"
-                  name="person[gedcom_uuid]"
-                  value={data.person.gedcom_uuid}
-                  onChange={(e) => setData('person.gedcom_uuid', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                  required
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  {t('people.form.gedcom_uuid_hint')}
-                </p>
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="events" className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('people.form.associated_events')}
-                </label>
-                <select
-                  id="events"
-                  name="person[event_ids][]"
-                  multiple
-                  value={data.person.event_ids}
-                  onChange={(e) => {
-                    const selected = Array.from(e.target.selectedOptions, option => parseInt(option.value))
-                    setData('person.event_ids', selected)
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
-                >
-                  {events.length === 0 ? (
-                    <option disabled>{t('people.form.no_person_events')}</option>
-                  ) : (
-                    events.map((event) => (
-                      <option key={event.id} value={event.id}>
-                        {event.title} ({new Date(event.start_date).toLocaleDateString()})
-                      </option>
-                    ))
-                  )}
-                </select>
-                <p className="mt-1 text-xs text-gray-500">
-                  {t('people.form.associated_events_hint')}
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  disabled={processing}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {processing
-                    ? (isEdit ? t('people.form.updating') : t('people.form.creating'))
-                    : (isEdit ? t('people.form.update') : t('people.form.create'))}
-                </button>
-                <Link
-                  href="/people"
-                  className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-300 text-center"
-                >
-                  {t('people.form.cancel')}
-                </Link>
-              </div>
-            </form>
-          </div>
+      <PageFrame>
+        <div className="mb-6">
+          <ActionLink href="/people" variant="secondary">
+            &larr; {t('people.form.back')}
+          </ActionLink>
         </div>
-      </div>
+
+        <PageSection
+          title={isEdit ? t('people.form.edit_title') : t('people.form.new_title')}
+          surfaceClassName="p-6 sm:p-8"
+        >
+          {errors.length > 0 && (
+            <div className="mb-6 rounded-[20px] border border-red-200 bg-red-50 p-4">
+              {errors.map((error, index) => (
+                <p key={index} className="text-sm text-red-600">{error}</p>
+              ))}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="name" className="prism-label">
+                {t('people.form.name')} *
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="person[name]"
+                value={data.person.name}
+                onChange={(e) => setData('person.name', e.target.value)}
+                className="prism-input"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="first_name" className="prism-label">
+                {t('people.form.first_name')} *
+              </label>
+              <input
+                type="text"
+                id="first_name"
+                name="person[first_name]"
+                value={data.person.first_name}
+                onChange={(e) => setData('person.first_name', e.target.value)}
+                className="prism-input"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="middle_name" className="prism-label">
+                {t('people.form.middle_name')}
+              </label>
+              <input
+                type="text"
+                id="middle_name"
+                name="person[middle_name]"
+                value={data.person.middle_name}
+                onChange={(e) => setData('person.middle_name', e.target.value)}
+                className="prism-input"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="last_name" className="prism-label">
+                {t('people.form.last_name')}
+              </label>
+              <input
+                type="text"
+                id="last_name"
+                name="person[last_name]"
+                value={data.person.last_name}
+                onChange={(e) => setData('person.last_name', e.target.value)}
+                className="prism-input"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="gedcom_uuid" className="prism-label">
+                {t('people.form.gedcom_uuid')} *
+              </label>
+              <input
+                type="text"
+                id="gedcom_uuid"
+                name="person[gedcom_uuid]"
+                value={data.person.gedcom_uuid}
+                onChange={(e) => setData('person.gedcom_uuid', e.target.value)}
+                className="prism-input font-mono"
+                required
+              />
+              <p className="mt-2 text-xs leading-6 text-stone-500">
+                {t('people.form.gedcom_uuid_hint')}
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="events" className="prism-label">
+                {t('people.form.associated_events')}
+              </label>
+              <select
+                id="events"
+                name="person[event_ids][]"
+                multiple
+                value={data.person.event_ids}
+                onChange={(e) => {
+                  const selected = Array.from(e.target.selectedOptions, option => parseInt(option.value))
+                  setData('person.event_ids', selected)
+                }}
+                className="prism-select min-h-[120px]"
+              >
+                {events.length === 0 ? (
+                  <option disabled>{t('people.form.no_person_events')}</option>
+                ) : (
+                  events.map((event) => (
+                    <option key={event.id} value={event.id}>
+                      {event.title} ({new Date(event.start_date).toLocaleDateString()})
+                    </option>
+                  ))
+                )}
+              </select>
+              <p className="mt-2 text-xs leading-6 text-stone-500">
+                {t('people.form.associated_events_hint')}
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={processing}
+                className="prism-button prism-button-primary flex-1 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {processing
+                  ? (isEdit ? t('people.form.updating') : t('people.form.creating'))
+                  : (isEdit ? t('people.form.update') : t('people.form.create'))}
+              </button>
+              <Link
+                href="/people"
+                className="prism-button prism-button-secondary flex-1 text-center"
+              >
+                {t('people.form.cancel')}
+              </Link>
+            </div>
+          </form>
+        </PageSection>
+      </PageFrame>
     </Layout>
   )
 }

@@ -1,5 +1,14 @@
 import { render, screen } from '@testing-library/react'
-import { ActionButton, ActionLink, EmptyState, PageFrame, SectionIntro, SurfaceCard } from '../PrismUI'
+import {
+  ActionButton,
+  ActionLink,
+  CenteredPage,
+  EmptyState,
+  PageFrame,
+  PageSection,
+  SectionIntro,
+  SurfaceCard,
+} from '../PrismUI'
 
 jest.mock('@inertiajs/react', () => ({
   Link: ({ href, children, className, ...props }) => (
@@ -35,6 +44,32 @@ describe('PrismUI', () => {
     expect(screen.getByRole('heading', { name: 'Title' })).toBeInTheDocument()
     expect(screen.getByText('Description')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Action' })).toHaveAttribute('href', '/test')
+  })
+
+  it('renders a page section with header and surface content', () => {
+    render(
+      <PageSection title="Section title">
+        <div>Section content</div>
+      </PageSection>
+    )
+
+    expect(screen.getByRole('heading', { name: 'Section title' })).toBeInTheDocument()
+    expect(screen.getByText('Section content').closest('.prism-surface')).toBeInTheDocument()
+  })
+
+  it('renders a centered page shell with footer actions', () => {
+    render(
+      <CenteredPage
+        title="Centered title"
+        footer={<a href="/login">Login</a>}
+      >
+        <div>Centered content</div>
+      </CenteredPage>
+    )
+
+    expect(screen.getByRole('heading', { name: 'Centered title' })).toBeInTheDocument()
+    expect(screen.getByText('Centered content')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Login' })).toHaveAttribute('href', '/login')
   })
 
   it('renders action button and empty state content', () => {

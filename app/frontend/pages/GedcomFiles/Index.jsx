@@ -7,8 +7,8 @@ import {
   Card,
   EmptyState,
   PageFrame,
+  PageSection,
   SectionIntro,
-  SurfaceCard
 } from '../../components/prism/PrismUI'
 
 export default function Index({ gedcom_files, current_user, flash, errors, meta }) {
@@ -59,10 +59,13 @@ export default function Index({ gedcom_files, current_user, flash, errors, meta 
         />
 
         {current_user && (
-          <SurfaceCard className="mb-6 p-6 sm:p-8">
-            <h2 className="prism-kicker mb-4">{t('gedcom_files.index.upload_heading')}</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
+          <PageSection
+            title={t('gedcom_files.index.upload_heading')}
+            className="mb-6"
+            surfaceClassName="p-6 sm:p-8"
+          >
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
                 <label
                   htmlFor="file-upload"
                   className="prism-button prism-button-secondary cursor-pointer"
@@ -85,8 +88,8 @@ export default function Index({ gedcom_files, current_user, flash, errors, meta 
               </div>
 
               {errors && errors.length > 0 && (
-                <div className="mb-4 rounded-[20px] border border-red-200 bg-red-50 p-4">
-                  <ul className="list-disc list-inside text-red-700">
+                <div className="rounded-[20px] border border-red-200 bg-red-50 p-4">
+                  <ul className="list-disc list-inside text-sm text-red-700">
                     {errors.map((error, index) => (
                       <li key={index}>{error}</li>
                     ))}
@@ -102,7 +105,7 @@ export default function Index({ gedcom_files, current_user, flash, errors, meta 
                 {processing ? t('gedcom_files.index.uploading') : t('gedcom_files.index.upload')}
               </button>
             </form>
-          </SurfaceCard>
+          </PageSection>
         )}
 
         {gedcom_files.length === 0 ? (

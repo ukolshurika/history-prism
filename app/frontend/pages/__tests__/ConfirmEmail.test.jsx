@@ -55,7 +55,7 @@ describe('ConfirmEmail', () => {
           resend={false}
         />
       )
-      expect(screen.getByText('test@test.com')).toBeInTheDocument()
+      expect(screen.getByText(/test@test\.com/)).toBeInTheDocument()
     })
 
     it('has "Отправить повторно" link to /confirmation/new', () => {
